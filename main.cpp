@@ -6,11 +6,12 @@
 
 // const int PWM_FAST_OUT_19 = 0;
 // const int PWM_FAST_OUT_38 = 1;
-const int PWM_FAST_SLICE = 7;
+const int PWM_FAST_SLICE = 1;
 
 // const int PWM_AUDIO_OUT_L = 14;
 // const int PWM_AUDIO_OUT_R = 15;
-const int PWM_AUDIO_SLICE = 0;
+const int PWM_AUDIO_SLICE = 7;
+const int PWM_AUDIO_SLICE_LOW = 0;
 
 //#include "audio.h"
 
@@ -103,6 +104,24 @@ uint16_t scale_and_center(uint16_t sample) {
     return (uint16_t) sig;
 }
 
+uint16_t scale_and_center_low(uint16_t sample) {
+    int16_t sig = (int16_t) sample;
+
+    // extract
+    sig %= pow2(16 - BITS);
+
+    // sig is 16 - BITS wide
+    // needs to be BITS wide
+
+    // scale
+    //sig *= pow2(2*BITS - 16);
+
+    // center
+    sig += CENTER;
+
+    return (uint16_t) sig;
+}
+
 volatile int aread = 0; // non-wrapping index
 volatile int aidx = 0;  // wrapping index
 
@@ -119,6 +138,9 @@ void pwm_audio_wrap_irq() {
     rs = scale_and_center(rs_raw);
 
     pwm_set_both_levels(PWM_AUDIO_SLICE, ls, rs);
+    pwm_set_both_levels(PWM_AUDIO_SLICE_LOW,
+                        scale_and_center_low(ls_raw),
+                        scale_and_center_low(rs_raw));
 
     aread+=4;
     aidx+=4;
@@ -129,6 +151,7 @@ void pwm_audio_wrap_irq() {
     if (aread == hdr.get_data_size()) {
         // stop pwm
         pwm_set_enabled(PWM_AUDIO_SLICE, false);
+        pwm_set_enabled(PWM_AUDIO_SLICE_LOW, false);
     }
 }
 
@@ -140,9 +163,14 @@ void pwm_wrap_irq() {
         pwm_fast_wrap_irq();
 }
 
-void init_pwm(uint slice, pwm_config* cfg, bool irq_en, bool start) {
+void init_pwm(uint slice, pwm_config* cfg, bool irq_en, bool start, bool snd = false) {
     uint pinA = (slice << 1);
     uint pinB = (slice << 1) + 1;
+
+    if (snd) {
+        pinA += 16;
+        pinB += 16;
+    }
 
     gpio_set_function(pinA, GPIO_FUNC_PWM);
     gpio_set_function(pinB, GPIO_FUNC_PWM);
@@ -213,7 +241,16 @@ int main() {
         err;
     #endif
 
+//    init_pwm(PWM_AUDIO_SLICE, &cfg, false, true);
+//    init_pwm(PWM_AUDIO_SLICE_LOW, &cfg, false, true, true); // no irq
+
+//    pwm_set_both_levels(PWM_AUDIO_SLICE, 1, 1);
+//    pwm_set_both_levels(PWM_AUDIO_SLICE_LOW, 32, 32);
+
+//    while(1);
+
     init_pwm(PWM_AUDIO_SLICE, &cfg, true, false);
+    init_pwm(PWM_AUDIO_SLICE_LOW, &cfg, false, false, true); // no irq, other
 
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pwm_wrap_irq);
     irq_set_enabled(PWM_IRQ_WRAP, true);
@@ -243,12 +280,14 @@ int main() {
 
     puts("\n");
 
+//    const char* path = "silence.wav";
+//    const char* path = "Ed44.wav";
 //    const char* path = "The Memory Remains.wav";
-//    const char* path = "Rock or Bust/01. Rock Or Bust.wav";
+    const char* path = "Rock or Bust/01. Rock Or Bust.wav";
 //    const char* path = "4mmc.wav";
-    const char* path = "too_much_short.wav";
+//    const char* path = "too_much_short.wav";
 
-    printf("opening: %s\n", path);
+    printf("opening: %s\n\n", path);
 
     fr = f_open(&fp, path, FA_READ);
     if (fr != FR_OK) {
@@ -278,6 +317,7 @@ int main() {
 
     // start pwm
     pwm_set_enabled(PWM_AUDIO_SLICE, true);
+    pwm_set_enabled(PWM_AUDIO_SLICE_LOW, true);
 
     int start = 0;
     uint last_seconds = 0;
