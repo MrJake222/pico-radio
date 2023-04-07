@@ -4,9 +4,11 @@ cmake_minimum_required(VERSION 3.13)
 # pico sdk
 include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
-# own libraries
+# libraries
 # add_subdirectory(../pagers-common pagers-common)
+add_subdirectory(sd_lib/FatFs_SPI)
 
+# project setup
 project(pico-radio C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
@@ -18,6 +20,7 @@ pico_sdk_init()
 # this project private files files
 add_executable(${PROJECT_NAME}
         main.cpp
+        sd_hw_config.c
         )
 
 pico_add_extra_outputs(${PROJECT_NAME})
@@ -25,6 +28,7 @@ pico_add_extra_outputs(${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME}
         pico_stdlib
         hardware_pwm
+        FatFs_SPI
         # pagers-common   # common code
         )
 
