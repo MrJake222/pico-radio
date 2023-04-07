@@ -6,7 +6,7 @@ include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 # libraries
 # add_subdirectory(../pagers-common pagers-common)
-add_subdirectory(sd_lib/FatFs_SPI)
+add_subdirectory(libs/sd_lib/FatFs_SPI)
 
 # project setup
 project(pico-radio C CXX ASM)
@@ -21,7 +21,7 @@ pico_sdk_init()
 add_executable(${PROJECT_NAME}
         main.cpp
         sd_hw_config.c
-        )
+        libs/waveheader.cpp)
 
 pico_add_extra_outputs(${PROJECT_NAME})
 
