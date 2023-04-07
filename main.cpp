@@ -283,7 +283,8 @@ int main() {
 //    const char* path = "silence.wav";
 //    const char* path = "Ed44.wav";
 //    const char* path = "The Memory Remains.wav";
-    const char* path = "Rock or Bust/01. Rock Or Bust.wav";
+//    const char* path = "Rock or Bust/01. Rock Or Bust.wav";
+    const char* path = "Rock or Bust/08. Baptism By Fire.wav";
 //    const char* path = "4mmc.wav";
 //    const char* path = "too_much_short.wav";
 
