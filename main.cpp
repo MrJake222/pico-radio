@@ -26,10 +26,16 @@ const uint I2C_DATA = 20;
 volatile bool a_done_irq = false;
 volatile bool b_done_irq = false;
 
-#define BUF_SIZE_BYTES      20000    // 1/8 seconds
-#define BUF_HALF_BYTES     (BUF_SIZE_BYTES / 2)
-#define BUF_SIZE_SAMPLES   (BUF_SIZE_BYTES / 4)
-#define BUF_HALF_SAMPLES   (BUF_SIZE_SAMPLES / 2)
+#define OVERSAMPLE 4
+
+#define BUF_SIZE_BYTES        20000    // 1/8 seconds of 44100Hz 2-channel audio
+#define BUF_HALF_BYTES       (BUF_SIZE_BYTES / 2)
+// FS
+#define BUF_PRELOAD_BYTES    (BUF_SIZE_BYTES / OVERSAMPLE)
+#define BUF_LOAD_HALF_BYTES  (BUF_HALF_BYTES / OVERSAMPLE)
+// DMA
+#define BUF_SIZE_SAMPLES     (BUF_SIZE_BYTES / 4)
+#define BUF_HALF_SAMPLES     (BUF_SIZE_SAMPLES / 2)
 
 /*
  * PIO handles endianness for us, sees data as:
@@ -112,32 +118,28 @@ void dma_chain_enable(int dma_chan, int chain_to) {
 
 void reinterpret_buffer(uint8_t* data, uint data_len) {
 
-    int16_t* chan = (int16_t*)data;
+    /*int16_t* chan = (int16_t*)data;
     uint channel_len = data_len / 2;
 
-    // swap channels (1% cost)
-    /*for (int i=0; i<channel_len; i+=2) {
-        uint16_t tmp = chan[i];
-        chan[i] = chan[i+1];
-        chan[i+1] = tmp;
-    }*/
-
-    // mute left (almost free)
-    /*for (int i=0; i<channel_len; i+=2) {
+    for (int i=0; i<channel_len; i+=2) {
         chan[i] = 0;
     }*/
 
-    // int division (free)
-    /*for (int i=0; i<channel_len; i+=2) {
-        chan[i] /= 2;
-        chan[i+1] /= 2;
-    }*/
+#if OVERSAMPLE > 1
+    uint32_t* sampl = (uint32_t*)data;
+    uint sampl_len = data_len / 4;
 
-    // float division (10%)
-    /*for (int i=0; i<channel_len; i+=2) {
-        chan[i] /= 1.5f;
-        chan[i+1] /= 1.5f;
-    }*/
+    int src = (int)sampl_len - 1;
+    int dst = (int)sampl_len*OVERSAMPLE - 1;
+
+    while (src >= 0) {
+        for (int ov=0; ov<OVERSAMPLE; ov++) {
+            sampl[dst--] = sampl[src];
+        }
+
+        src--;
+    }
+#endif
 }
 
 void play(const char* path) {
@@ -166,10 +168,11 @@ void play(const char* path) {
     }
 
     hdr.print();
-    i2s_program_set_bit_freq(pio, sm, hdr.get_bit_freq());
+    i2s_program_set_bit_freq(pio, sm, hdr.get_bit_freq() * OVERSAMPLE);
 
     // preload buffer
-    fr = f_read(&fp, audio_bytes, BUF_SIZE_BYTES, &read);
+    fr = f_read(&fp, audio_bytes, BUF_PRELOAD_BYTES, &read);
+    reinterpret_buffer(audio_bytes, BUF_PRELOAD_BYTES);
     if (fr != FR_OK) {
         fs_err(fr, "f_read preload");
     }
@@ -195,8 +198,8 @@ void play(const char* path) {
             // channel A done (first one)
             // reload first half of the buffer
             DBG_ON();
-            f_read(&fp, audio_bytes, BUF_HALF_BYTES, &read);
-            reinterpret_buffer(audio_bytes, BUF_HALF_BYTES);
+            f_read(&fp, audio_bytes, BUF_LOAD_HALF_BYTES, &read);
+            reinterpret_buffer(audio_bytes, BUF_LOAD_HALF_BYTES);
             DBG_OFF();
         }
 
@@ -206,15 +209,15 @@ void play(const char* path) {
             // channel B done (second one)
             // reload second half of the buffer
             DBG_ON();
-            f_read(&fp, audio_bytes + BUF_HALF_BYTES, BUF_HALF_BYTES, &read);
-            reinterpret_buffer(audio_bytes + BUF_HALF_BYTES, BUF_HALF_BYTES);
+            f_read(&fp, audio_bytes + BUF_HALF_BYTES, BUF_LOAD_HALF_BYTES, &read);
+            reinterpret_buffer(audio_bytes + BUF_HALF_BYTES, BUF_LOAD_HALF_BYTES);
             DBG_OFF();
         }
 
         if (a_done_prv || b_done_prv) {
             sum_bytes_read += read;
 
-            if (read < BUF_HALF_BYTES) {
+            if (read < BUF_LOAD_HALF_BYTES) {
                 eof = true;
             }
             else {
@@ -267,6 +270,8 @@ void play(const char* path) {
     }
 
     puts("dma channels stopped.");
+
+    pio_sm_put(pio, sm, 0);
 }
 
 FRESULT scan_files(char* path, std::vector<std::string>& files) {
