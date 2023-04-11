@@ -1,0 +1,28 @@
+; I2S driver
+.program i2s
+.side_set 2
+
+; adjusting for PIO automatic endianness conversion
+; (it has a side effect of swapping channels)
+;     WAVE: llo lhi rlo rhi (l=left, r=right, lo=low byte, hi=high byte)
+; PIO sees: rhi rlo lhi llo (good endianness, but first channel is right, channel=1)
+
+left:
+    out pins, 1     side 0b10
+    jmp x-- left    side 0b11
+
+    out pins, 1     side 0b00
+    set X, 14       side 0b01
+
+right:
+    out pins, 1     side 0b00
+    jmp x-- right   side 0b01
+
+    out pins, 1     side 0b10
+public entry:
+    set X, 14       side 0b11
+
+% c-sdk {
+void i2s_program_init(PIO pio, uint sm, uint offset, uint pin_clk_channel_base, uint pin_data);
+void i2s_program_set_bit_freq(PIO pio, uint sm, uint bit_freq_hz);
+%}

@@ -32,6 +32,7 @@ public:
 
     uint get_data_size() { return hdr.data_size; }
     uint get_duration() { return duration_sec; }
+    uint get_bit_freq() { return hdr.sample_rate * hdr.bits_per_sample * hdr.channels; }
     uint byte_to_sec(uint byte) { return byte / hdr.bytes_per_second; }
 
     int check();

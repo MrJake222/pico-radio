@@ -16,7 +16,7 @@ int WaveHeader::check() {
 }
 
 void WaveHeader::print() {
-    printf("file size:   %u\n", hdr.file_size);
+    printf("file size:   %u (%u MB)\n", hdr.file_size, hdr.file_size / (1024*1024));
     printf("channels:    %u\n", hdr.channels);
     printf("sample rate: %u\n", hdr.sample_rate);
     printf("bitrate:     %u\n", hdr.bytes_per_second * 8);

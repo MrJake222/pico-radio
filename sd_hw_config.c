@@ -61,8 +61,8 @@ static spi_t spis[] = {  // One for each SPI.
         .sck_gpio = 2,
 
         // .baud_rate = 1000 * 1000
-//        .baud_rate = 12500 * 1000
-         .baud_rate = 25 * 1000 * 1000 // Actual frequency: 20833333.
+        .baud_rate = 12500 * 1000
+//         .baud_rate = 25 * 1000 * 1000 // Actual frequency: 20833333.
     }};
 
 // Hardware Configuration of the SD Card "objects"

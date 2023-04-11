@@ -21,13 +21,18 @@ pico_sdk_init()
 add_executable(${PROJECT_NAME}
         main.cpp
         sd_hw_config.c
+        i2s.pio.cpp
         libs/waveheader.cpp)
+
+# pio
+pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
 
 pico_add_extra_outputs(${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME}
         pico_stdlib
-        hardware_pwm
+        hardware_dma
+        hardware_pio
         FatFs_SPI
         # pagers-common   # common code
         )
