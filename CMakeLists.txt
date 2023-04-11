@@ -22,7 +22,12 @@ add_executable(${PROJECT_NAME}
         main.cpp
         sd_hw_config.c
         i2s.pio.cpp
-        libs/waveheader.cpp)
+        libs/waveheader.cpp
+        libs/pwm.cpp
+        libs/waves.cpp)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE PARAM_ASSERTIONS_ENABLE_ALL=1)
+target_compile_definitions(${PROJECT_NAME} PRIVATE PARAM_ASSERTIONS_ENABLED_IRQ=1)
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
@@ -33,6 +38,7 @@ target_link_libraries(${PROJECT_NAME}
         pico_stdlib
         hardware_dma
         hardware_pio
+        hardware_pwm
         FatFs_SPI
         # pagers-common   # common code
         )

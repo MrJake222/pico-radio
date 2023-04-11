@@ -15,6 +15,7 @@
 #include "hw_config.h"
 
 #include "libs/waveheader.hpp"
+#include "libs/pwm.hpp"
 
 const uint PIN_DBG = 13;
 #define DBG_ON() gpio_put(PIN_DBG, true);
@@ -57,20 +58,20 @@ PIO pio;
 uint sm;
 
 // DMA
-int dma_channel_a;
-int dma_channel_b;
+static int dma_channel_a;
+static int dma_channel_b;
 
-void dma_channelA() {
+static void dma_channelA() {
     a_done_irq = true;
     dma_channel_set_read_addr(dma_channel_a, audio, false);
 }
 
-void dma_channelB() {
+static void dma_channelB() {
     b_done_irq = true;
     dma_channel_set_read_addr(dma_channel_b, audio + BUF_HALF_SAMPLES, false);
 }
 
-void dma_irq0() {
+static void dma_irq0() {
     if (dma_channel_get_irq0_status(dma_channel_a)) {
         dma_channel_acknowledge_irq0(dma_channel_a);
         dma_channelA();
@@ -344,6 +345,10 @@ int main() {
     configure_pio_tx_dma(dma_channel_b, audio + BUF_HALF_SAMPLES, BUF_HALF_SAMPLES, dma_channel_a);
     puts("DMA configuration done");
 
+
+    // PWM configuration
+    my_pwm_init(7);
+    puts("PWM configuration done");
     
     // FS configuration
     FRESULT fr;
