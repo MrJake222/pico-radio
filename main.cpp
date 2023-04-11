@@ -15,6 +15,7 @@
 #include "hw_config.h"
 
 #include "libs/waveheader.hpp"
+#include "waves.hpp"
 
 const uint PIN_DBG = 13;
 #define DBG_ON() gpio_put(PIN_DBG, true);
@@ -118,13 +119,6 @@ void dma_chain_enable(int dma_chan, int chain_to) {
 
 void reinterpret_buffer(uint8_t* data, uint data_len) {
 
-    /*int16_t* chan = (int16_t*)data;
-    uint channel_len = data_len / 2;
-
-    for (int i=0; i<channel_len; i+=2) {
-        chan[i] = 0;
-    }*/
-
 #if OVERSAMPLE > 1
     uint32_t* sampl = (uint32_t*)data;
     uint sampl_len = data_len / 4;
@@ -140,6 +134,31 @@ void reinterpret_buffer(uint8_t* data, uint data_len) {
         src--;
     }
 #endif
+
+    // after oversample
+    data_len *= OVERSAMPLE;
+
+
+    int16_t* chan = (int16_t*)data;
+    uint channel_len = data_len / 2;
+
+    static uint w38idx = 0;
+    static uint w19idx = 0;
+
+    for (int i=0; i<channel_len; i+=2) {
+        int l = chan[i];
+        int r = chan[i+1];
+
+        int sum = (l + r) / 2;
+        int dif = (l - r + 65536) * wave_38kHz[w38idx] / 131072;
+
+        int out = (wave_19kHz[w19idx] + (sum + dif) / 2) / 2;
+
+        chan[i] = (int16_t)out;
+
+        w38idx++; if (w38idx == WAVE_38KHZ_LEN) w38idx = 0;
+        w19idx++; if (w19idx == WAVE_19KHZ_LEN) w19idx = 0;
+    }
 }
 
 void play(const char* path) {
