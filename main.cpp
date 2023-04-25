@@ -26,14 +26,14 @@ const uint I2C_DATA = 20;
 volatile bool a_done_irq = false;
 volatile bool b_done_irq = false;
 
-#define BUF_SIZE_BYTES      20000    // 1/8 seconds
-#define BUF_HALF_BYTES     (BUF_SIZE_BYTES / 2)
-#define BUF_SIZE_SAMPLES   (BUF_SIZE_BYTES / 4)
-#define BUF_HALF_SAMPLES   (BUF_SIZE_SAMPLES / 2)
+#define BUF_PCM_SIZE_BYTES      20000    // 1/8 seconds
+#define BUF_PCM_HALF_BYTES     (BUF_PCM_SIZE_BYTES / 2)
+#define BUF_PCM_SIZE_SAMPLES   (BUF_PCM_SIZE_BYTES / 4)
+#define BUF_PCM_HALF_SAMPLES   (BUF_PCM_SIZE_SAMPLES / 2)
 
 /*
  * PIO handles endianness for us, sees data as:
- * audio_bytes index offset 3 2 1 0
+ * audio_pcm_bytes index offset 3 2 1 0
  * This swaps channels so PIO expects to get data:
  *  byte: llo lhi rlo rhi (as read from WAV)
  *   int: rhi rlo lhi llo (as interpreted by uint32_t)
@@ -43,8 +43,8 @@ volatile bool b_done_irq = false;
  *  offset 0 is left channel
  *  offset 1 is right channel
  */
-uint32_t audio[BUF_SIZE_SAMPLES];
-uint8_t* audio_bytes = (uint8_t*)&audio;
+uint32_t audio_pcm[BUF_PCM_SIZE_SAMPLES];
+uint8_t* audio_pcm_bytes = (uint8_t*)&audio_pcm;
 
 // PIO
 PIO pio;
@@ -56,12 +56,12 @@ int dma_channel_b;
 
 void dma_channelA() {
     a_done_irq = true;
-    dma_channel_set_read_addr(dma_channel_a, audio, false);
+    dma_channel_set_read_addr(dma_channel_a, audio_pcm, false);
 }
 
 void dma_channelB() {
     b_done_irq = true;
-    dma_channel_set_read_addr(dma_channel_b, audio + BUF_HALF_SAMPLES, false);
+    dma_channel_set_read_addr(dma_channel_b, audio_pcm + BUF_PCM_HALF_SAMPLES, false);
 }
 
 void dma_irq0() {
@@ -112,8 +112,8 @@ void dma_chain_enable(int dma_chan, int chain_to) {
 
 void reinterpret_buffer(uint8_t* data, uint data_len) {
 
-    int16_t* chan = (int16_t*)data;
-    uint channel_len = data_len / 2;
+    /*int16_t* chan = (int16_t*)data;
+    uint channel_len = data_len / 2;*/
 
     // swap channels (1% cost)
     /*for (int i=0; i<channel_len; i+=2) {
@@ -140,7 +140,7 @@ void reinterpret_buffer(uint8_t* data, uint data_len) {
     }*/
 }
 
-void play(const char* path) {
+void play_wav(const char* path) {
     printf("playing: %s\n\n", path);
 
     FRESULT fr;
@@ -169,7 +169,7 @@ void play(const char* path) {
     i2s_program_set_bit_freq(pio, sm, hdr.get_bit_freq());
 
     // preload buffer
-    fr = f_read(&fp, audio_bytes, BUF_SIZE_BYTES, &read);
+    fr = f_read(&fp, audio_pcm_bytes, BUF_PCM_SIZE_BYTES, &read);
     if (fr != FR_OK) {
         fs_err(fr, "f_read preload");
     }
@@ -195,8 +195,8 @@ void play(const char* path) {
             // channel A done (first one)
             // reload first half of the buffer
             DBG_ON();
-            f_read(&fp, audio_bytes, BUF_HALF_BYTES, &read);
-            reinterpret_buffer(audio_bytes, BUF_HALF_BYTES);
+            f_read(&fp, audio_pcm_bytes, BUF_PCM_HALF_BYTES, &read);
+            reinterpret_buffer(audio_pcm_bytes, BUF_PCM_HALF_BYTES);
             DBG_OFF();
         }
 
@@ -206,15 +206,15 @@ void play(const char* path) {
             // channel B done (second one)
             // reload second half of the buffer
             DBG_ON();
-            f_read(&fp, audio_bytes + BUF_HALF_BYTES, BUF_HALF_BYTES, &read);
-            reinterpret_buffer(audio_bytes + BUF_HALF_BYTES, BUF_HALF_BYTES);
+            f_read(&fp, audio_pcm_bytes + BUF_PCM_HALF_BYTES, BUF_PCM_HALF_BYTES, &read);
+            reinterpret_buffer(audio_pcm_bytes + BUF_PCM_HALF_BYTES, BUF_PCM_HALF_BYTES);
             DBG_OFF();
         }
 
         if (a_done_prv || b_done_prv) {
             sum_bytes_read += read;
 
-            if (read < BUF_HALF_BYTES) {
+            if (read < BUF_PCM_HALF_BYTES) {
                 eof = true;
             }
             else {
@@ -335,8 +335,8 @@ int main() {
     dma_channel_a = dma_claim_unused_channel(true);
     dma_channel_b = dma_claim_unused_channel(true);
 
-    configure_pio_tx_dma(dma_channel_a, audio, BUF_HALF_SAMPLES, dma_channel_b);
-    configure_pio_tx_dma(dma_channel_b, audio + BUF_HALF_SAMPLES, BUF_HALF_SAMPLES, dma_channel_a);
+    configure_pio_tx_dma(dma_channel_a, audio_pcm, BUF_PCM_HALF_SAMPLES, dma_channel_b);
+    configure_pio_tx_dma(dma_channel_b, audio_pcm + BUF_PCM_HALF_SAMPLES, BUF_PCM_HALF_SAMPLES, dma_channel_a);
     puts("DMA configuration done");
 
     
@@ -373,7 +373,7 @@ int main() {
         }
 
         const char *filepath = files[choice - 1].c_str();
-        play(filepath);
+        play_wav(filepath);
         printf("\033[2J"); // clear screen
     }
 }
