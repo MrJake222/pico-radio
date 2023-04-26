@@ -1,3 +1,6 @@
 [submodule "libs/sd_lib"]
 	path = libs/sd_lib
 	url = https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico.git
+[submodule "libs/minimp3"]
+	path = libs/minimp3
+	url = git@github.com:MrJake222/minimp3.git

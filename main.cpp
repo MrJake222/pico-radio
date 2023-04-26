@@ -14,22 +14,19 @@
 #include "ff.h"
 #include "hw_config.h"
 
+#include "config.hpp"
 #include "libs/waveheader.hpp"
+#include "libs/mp3.hpp"
 
 const uint PIN_DBG = 13;
-#define DBG_ON() gpio_put(PIN_DBG, true);
-#define DBG_OFF() gpio_put(PIN_DBG, false);
+#define DBG_ON() gpio_put(PIN_DBG, true)
+#define DBG_OFF() gpio_put(PIN_DBG, false)
 
 const uint I2C_CLK_CHANNEL_BASE = 18; // 18-clk 19-channel
 const uint I2C_DATA = 20;
 
 volatile bool a_done_irq = false;
 volatile bool b_done_irq = false;
-
-#define BUF_PCM_SIZE_BYTES      20000    // 1/8 seconds
-#define BUF_PCM_HALF_BYTES     (BUF_PCM_SIZE_BYTES / 2)
-#define BUF_PCM_SIZE_SAMPLES   (BUF_PCM_SIZE_BYTES / 4)
-#define BUF_PCM_HALF_SAMPLES   (BUF_PCM_SIZE_SAMPLES / 2)
 
 /*
  * PIO handles endianness for us, sees data as:
@@ -43,7 +40,8 @@ volatile bool b_done_irq = false;
  *  offset 0 is left channel
  *  offset 1 is right channel
  */
-uint32_t audio_pcm[BUF_PCM_SIZE_SAMPLES];
+uint32_t audio_pcm[BUF_PCM_SIZE_32BIT];
+int16_t* audio_pcm_channels = (int16_t*)&audio_pcm;
 uint8_t* audio_pcm_bytes = (uint8_t*)&audio_pcm;
 
 // PIO
@@ -61,7 +59,7 @@ void dma_channelA() {
 
 void dma_channelB() {
     b_done_irq = true;
-    dma_channel_set_read_addr(dma_channel_b, audio_pcm + BUF_PCM_HALF_SAMPLES, false);
+    dma_channel_set_read_addr(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, false);
 }
 
 void dma_irq0() {
@@ -140,8 +138,84 @@ void reinterpret_buffer(uint8_t* data, uint data_len) {
     }*/
 }
 
+void play_mp3(const char* path) {
+    printf("playing: %s as MP3 file\n\n", path);
+
+    MP3 mp3(path, audio_pcm_bytes);
+
+    // preload
+    // mp3.decode_n_frames(audio_pcm_channels, BUF_PCM_SIZE_SAMPLES);
+
+    // benchmark
+    while (1) {
+        ulong start = time_us_64();
+        DBG_ON();
+        mp3.decode_one_frame(audio_pcm_channels);
+        DBG_OFF();
+        ulong end = time_us_64();
+
+        printf("load took %f ms / 1 frame\n", (end - start) / 1000.0f);
+        sleep_ms(1000);
+    }
+
+    printf("dma start\n");
+
+    // setup chaining
+    dma_chain_enable(dma_channel_a, dma_channel_b);
+    dma_chain_enable(dma_channel_b, dma_channel_a);
+
+    // start playback
+    dma_channel_start(dma_channel_a);
+
+    uint sum_bytes_read = 0;
+    uint last_seconds = 0;
+    bool eof = false;
+    bool a_done_prv, b_done_prv;
+
+    while (!eof) {
+        if (a_done_irq) {
+            a_done_irq = false;
+            a_done_prv = true;
+            // channel A done (first one)
+            // reload first half of the buffer
+            DBG_ON();
+            mp3.decode_n_frames(audio_pcm_channels, BUF_PCM_SIZE_SAMPLES / 2);
+            DBG_OFF();
+        }
+
+        if (b_done_irq) {
+            b_done_irq = false;
+            b_done_prv = true;
+            // channel B done (second one)
+            // reload second half of the buffer
+            DBG_ON();
+            mp3.decode_n_frames(audio_pcm_channels + BUF_PCM_HALF_16BIT, BUF_PCM_SIZE_SAMPLES / 2);
+            DBG_OFF();
+        }
+
+        int chr = getchar_timeout_us(0);
+        if (chr > 0) {
+            break;
+        }
+    }
+
+    printf("\nfinished file reading.\n");
+
+    // user abort
+    dma_chain_disable(dma_channel_a);
+    dma_chain_disable(dma_channel_b);
+    dma_channel_abort(dma_channel_a);
+    dma_channel_abort(dma_channel_b);
+    a_done_irq = false;
+    b_done_irq = false;
+
+    puts("dma channels stopped.");
+
+    sleep_ms(2000);
+}
+
 void play_wav(const char* path) {
-    printf("playing: %s\n\n", path);
+    printf("playing: %s as WAV file\n\n", path);
 
     FRESULT fr;
     FIL fp;
@@ -299,10 +373,31 @@ FRESULT scan_files(char* path, std::vector<std::string>& files) {
     return res;
 }
 
+enum FileType {
+    WAV,
+    MP3,
+    UNSUPPORTED
+};
+
+FileType get_file_type(const char* filepath) {
+    const char *extension = filepath + strlen(filepath) - 4;
+
+    if (strcmp(extension, ".mp3") == 0)
+        return MP3;
+
+    else if ((strcmp(extension, ".wav") == 0) || (strcmp(extension, "wave") == 0))
+        return WAV;
+
+    else
+        return UNSUPPORTED;
+}
+
 int main() {
 
     // UART on USB
     stdio_usb_init();
+
+    // set_sys_clock_khz(250000, true);
 
     sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
@@ -335,8 +430,8 @@ int main() {
     dma_channel_a = dma_claim_unused_channel(true);
     dma_channel_b = dma_claim_unused_channel(true);
 
-    configure_pio_tx_dma(dma_channel_a, audio_pcm, BUF_PCM_HALF_SAMPLES, dma_channel_b);
-    configure_pio_tx_dma(dma_channel_b, audio_pcm + BUF_PCM_HALF_SAMPLES, BUF_PCM_HALF_SAMPLES, dma_channel_a);
+    configure_pio_tx_dma(dma_channel_a, audio_pcm, BUF_PCM_HALF_32BIT, dma_channel_b);
+    configure_pio_tx_dma(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, BUF_PCM_HALF_32BIT, dma_channel_a);
     puts("DMA configuration done");
 
     
@@ -367,13 +462,29 @@ int main() {
             if ((choice < 1) || (choice > files.size())) {
                 puts("invalid number");
             }
+            else if (get_file_type(files[choice - 1].c_str()) == UNSUPPORTED) {
+                puts("unsupported format. Supported: wav, wave, mp3");
+            }
             else {
                 break;
             }
         }
 
         const char *filepath = files[choice - 1].c_str();
-        play_wav(filepath);
+
+        switch (get_file_type(filepath)) {
+            case WAV:
+                play_wav(filepath);
+                break;
+
+            case MP3:
+                play_mp3(filepath);
+                break;
+
+            case UNSUPPORTED:
+                break;
+        }
+
         printf("\033[2J"); // clear screen
     }
 }

@@ -13,7 +13,7 @@ project(pico-radio C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
-# add_compile_options(-O2)
+add_compile_options(-O2)
 
 pico_sdk_init()
 
@@ -22,10 +22,13 @@ add_executable(${PROJECT_NAME}
         main.cpp
         sd_hw_config.c
         i2s.pio.cpp
-        libs/waveheader.cpp)
+        libs/waveheader.cpp libs/mp3.cpp libs/mp3.hpp)
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
+
+pico_set_float_implementation(${PROJECT_NAME} pico)
+#pico_set_binary_type(${PROJECT_NAME} no_flash)
 
 pico_add_extra_outputs(${PROJECT_NAME})
 
