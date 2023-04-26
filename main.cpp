@@ -41,7 +41,7 @@ volatile bool b_done_irq = false;
  *  offset 1 is right channel
  */
 uint32_t audio_pcm[BUF_PCM_SIZE_32BIT];
-int16_t* audio_pcm_channels = (int16_t*)&audio_pcm;
+// int16_t* audio_pcm_channels = (int16_t*)&audio_pcm;
 uint8_t* audio_pcm_bytes = (uint8_t*)&audio_pcm;
 
 // PIO
@@ -141,22 +141,28 @@ void reinterpret_buffer(uint8_t* data, uint data_len) {
 void play_mp3(const char* path) {
     printf("playing: %s as MP3 file\n\n", path);
 
-    MP3 mp3(path, audio_pcm_bytes);
+    MP3 mp3(path);
 
     // preload
-    // mp3.decode_n_frames(audio_pcm_channels, BUF_PCM_SIZE_SAMPLES);
+    mp3.decode_n_frames((int16_t*)audio_pcm, BUF_PCM_SIZE_FRAMES);
 
-    // benchmark
-    while (1) {
-        ulong start = time_us_64();
-        DBG_ON();
-        mp3.decode_one_frame(audio_pcm_channels);
-        DBG_OFF();
-        ulong end = time_us_64();
+    i2s_program_set_bit_freq(pio, sm, 44100*2*16);
 
-        printf("load took %f ms / 1 frame\n", (end - start) / 1000.0f);
-        sleep_ms(1000);
-    }
+    // benchmark 22ms
+    /*ulong start = time_us_64();
+    DBG_ON();
+    mp3.decode_n_frames(audio_pcm_channels, BUF_PCM_SIZE_SAMPLES);
+    mp3.decode_n_frames(audio_pcm_channels, BUF_PCM_SIZE_SAMPLES);
+    DBG_OFF();
+    ulong end = time_us_64();
+
+    printf("load took %f ms / 1 frame\n", (end - start) / 1000.0f / (BUF_PCM_SIZE_SAMPLES*2));
+    while(1) {
+        int chr = getchar_timeout_us(0);
+        if (chr > 0) {
+            return;
+        }
+    }*/
 
     printf("dma start\n");
 
@@ -179,7 +185,7 @@ void play_mp3(const char* path) {
             // channel A done (first one)
             // reload first half of the buffer
             DBG_ON();
-            mp3.decode_n_frames(audio_pcm_channels, BUF_PCM_SIZE_SAMPLES / 2);
+            mp3.decode_n_frames((int16_t*)audio_pcm, BUF_PCM_SIZE_FRAMES / 2);
             DBG_OFF();
         }
 
@@ -189,7 +195,7 @@ void play_mp3(const char* path) {
             // channel B done (second one)
             // reload second half of the buffer
             DBG_ON();
-            mp3.decode_n_frames(audio_pcm_channels + BUF_PCM_HALF_16BIT, BUF_PCM_SIZE_SAMPLES / 2);
+            mp3.decode_n_frames((int16_t*)(audio_pcm + BUF_PCM_HALF_32BIT), BUF_PCM_SIZE_FRAMES / 2);
             DBG_OFF();
         }
 

@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.13)
 include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 # libraries
-# add_subdirectory(../pagers-common pagers-common)
 add_subdirectory(libs/sd_lib/FatFs_SPI)
+add_subdirectory(libs/helixmp3)
 
 # project setup
 project(pico-radio C CXX ASM)
@@ -22,13 +22,10 @@ add_executable(${PROJECT_NAME}
         main.cpp
         sd_hw_config.c
         i2s.pio.cpp
-        libs/waveheader.cpp libs/mp3.cpp libs/mp3.hpp)
+        libs/waveheader.cpp libs/mp3.cpp ${HelixMP3_src})
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
-
-pico_set_float_implementation(${PROJECT_NAME} pico)
-#pico_set_binary_type(${PROJECT_NAME} no_flash)
 
 pico_add_extra_outputs(${PROJECT_NAME})
 
@@ -37,6 +34,7 @@ target_link_libraries(${PROJECT_NAME}
         hardware_dma
         hardware_pio
         FatFs_SPI
+        helixmp3
         # pagers-common   # common code
         )
 

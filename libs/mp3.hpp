@@ -3,17 +3,7 @@
 #include "ff.h"
 #include "../config.hpp"
 
-#include "pico/float.h"
-
-#define MINIMP3_ONLY_MP3
-//#define MINIMP3_ONLY_SIMD
-//#define MINIMP3_NO_SIMD
-#define MINIMP3_NONSTANDARD_BUT_LOGICAL
-//#define MINIMP3_FLOAT_OUTPUT
-//#define MINIMP3_IMPLEMENTATION
-#include "minimp3/minimp3.h"
-
-#define BUF
+#include "helixmp3/pub/mp3dec.h"
 
 class MP3 {
 
@@ -22,7 +12,7 @@ class MP3 {
     FIL fp;
 
     // MP3
-    mp3dec_t mp3dec;
+    HMP3Decoder hMP3Decoder;
     // one extra wrapped frame
     uint8_t mp3_buf_hidden[BUF_MP3_SIZE_BYTES + BUF_MP3_SIZE_BYTES_PER_FRAME];
     uint8_t* const mp3_buf = mp3_buf_hidden + BUF_MP3_SIZE_BYTES_PER_FRAME; // pointer is const, not data
@@ -31,11 +21,14 @@ class MP3 {
     long load_at;
     bool end;
 
-    // find first frame
+    long buffer_left();
+    long buffer_left_continuous();
+
     void prepare();
+    void wrap_buffer();
 
 public:
-    MP3(const char *filepath_, uint8_t* audio_pcm_bytes_)
+    MP3(const char *filepath_)
         : filepath(filepath_)
             { prepare(); }
 
