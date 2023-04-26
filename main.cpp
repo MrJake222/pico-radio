@@ -41,8 +41,7 @@ volatile bool b_done_irq = false;
  *  offset 1 is right channel
  */
 uint32_t audio_pcm[BUF_PCM_SIZE_32BIT];
-// int16_t* audio_pcm_channels = (int16_t*)&audio_pcm;
-uint8_t* audio_pcm_bytes = (uint8_t*)&audio_pcm;
+uint32_t* const audio_pcm_half = audio_pcm + BUF_PCM_HALF_32BIT;
 
 // PIO
 PIO pio;
@@ -249,7 +248,7 @@ void play_wav(const char* path) {
     i2s_program_set_bit_freq(pio, sm, hdr.get_bit_freq());
 
     // preload buffer
-    fr = f_read(&fp, audio_pcm_bytes, BUF_PCM_SIZE_BYTES, &read);
+    fr = f_read(&fp, (uint8_t*)audio_pcm, BUF_PCM_SIZE_BYTES, &read);
     if (fr != FR_OK) {
         fs_err(fr, "f_read preload");
     }
@@ -275,8 +274,8 @@ void play_wav(const char* path) {
             // channel A done (first one)
             // reload first half of the buffer
             DBG_ON();
-            f_read(&fp, audio_pcm_bytes, BUF_PCM_HALF_BYTES, &read);
-            reinterpret_buffer(audio_pcm_bytes, BUF_PCM_HALF_BYTES);
+            f_read(&fp, (uint8_t*)audio_pcm, BUF_PCM_HALF_BYTES, &read);
+            reinterpret_buffer((uint8_t*)audio_pcm, BUF_PCM_HALF_BYTES);
             DBG_OFF();
         }
 
@@ -286,8 +285,8 @@ void play_wav(const char* path) {
             // channel B done (second one)
             // reload second half of the buffer
             DBG_ON();
-            f_read(&fp, audio_pcm_bytes + BUF_PCM_HALF_BYTES, BUF_PCM_HALF_BYTES, &read);
-            reinterpret_buffer(audio_pcm_bytes + BUF_PCM_HALF_BYTES, BUF_PCM_HALF_BYTES);
+            f_read(&fp, (uint8_t*)audio_pcm_half, BUF_PCM_HALF_BYTES, &read);
+            reinterpret_buffer((uint8_t*)audio_pcm_half, BUF_PCM_HALF_BYTES);
             DBG_OFF();
         }
 
@@ -408,6 +407,9 @@ int main() {
     sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys)/1000000);
+    printf("MP3 buffer size: %d bytes\n", BUF_MP3_SIZE_BYTES);
+    printf("PCM buffer size: %d bytes\n", BUF_PCM_SIZE_BYTES);
+    puts("");
 
     // IO
     gpio_init(PIN_DBG);

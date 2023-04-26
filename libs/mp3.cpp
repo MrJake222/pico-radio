@@ -113,6 +113,8 @@ void MP3::decode_one_frame(int16_t* audio_pcm_buf) {
                 printf("wrong sync-word\n");
                 offset += 1;
                 offset += MP3FindSyncWord(mp3_buf + offset, BUF_MP3_SIZE_BYTES);
+                // TODO this breaks probably when buffer wraps
+                // breaks on [23] //Shrek l/11 The Proclaimers - I'm On My Way.mp3
                 break;
 
             default:
