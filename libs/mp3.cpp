@@ -25,10 +25,63 @@ long MP3::buffer_left_continuous() {
             : (load_at - offset);
 }
 
+void MP3::wrap_buffer() {
+    long buf_left = buffer_left_continuous();
+
+    memcpy(mp3_buf - buf_left, mp3_buf + offset, buf_left);
+    offset = -buf_left;
+}
+
+void MP3::load_buffer() {
+    // printf("loading, offset %ld  load_at %ld\n", offset, load_at);
+
+    uint read;
+    fr = f_read(&fp, mp3_buf + load_at, BUF_MP3_SIZE_BYTES/2, &read);
+    if (fr != FR_OK) {
+        fs_err(fr, "f_read preload");
+    }
+
+    if (read < BUF_MP3_SIZE_BYTES/2) {
+        printf("EOF\n");
+        eof = true;
+    }
+
+    load_at += read;
+    load_at %= BUF_MP3_SIZE_BYTES;
+
+    // printf("loaded,  offset %ld  load_at %ld\n", offset, load_at);
+}
+
+void MP3::align_buffer() {
+    int matched;
+    do {
+        int sync_word_offset = MP3FindSyncWord(mp3_buf + offset, BUF_MP3_SIZE_BYTES - offset);
+        if (sync_word_offset < 0) {
+            // failed
+
+            offset = BUF_MP3_SIZE_BYTES - MP3_HEADER_SIZE;
+            wrap_buffer();
+            load_buffer();
+            load_buffer();
+        }
+        else {
+            offset += sync_word_offset;
+
+            printf("offset %ld  ", offset);
+            matched = MP3CheckSyncWordRepeated(hMP3Decoder, mp3_buf + offset, BUF_MP3_SIZE_BYTES - offset);
+            if (matched == 0) {
+                // failed
+                offset += 1;
+            }
+
+            printf("matched: %d\n", matched);
+        }
+    } while (matched < 1);
+
+    printf("align buffer offset: %ld\n", offset);
+}
+
 void MP3::prepare() {
-    gpio_init(PIN_DBG_MP3);
-    gpio_set_dir(PIN_DBG_MP3, GPIO_OUT);
-    DBG_MP3_OFF();
 
     hMP3Decoder = MP3InitDecoder();
 
@@ -37,62 +90,63 @@ void MP3::prepare() {
         fs_err(fr, "f_open");
     }
 
+    eof = false;
+    eop = false;
+
     // preload
-    uint read;
-    fr = f_read(&fp, mp3_buf, BUF_MP3_SIZE_BYTES, &read);
-    if (fr != FR_OK) {
-        fs_err(fr, "f_read preload");
-    }
-
-    // find offset
-    offset = MP3FindSyncWord(mp3_buf, BUF_MP3_SIZE_BYTES);
-    printf("offset: %ld\n", offset);
-
     load_at = 0;
-    end = false;
+    load_buffer();
+    load_buffer();
+
+    offset = 0;
+    align_buffer();
+
+    int ret = MP3GetNextFrameInfo(hMP3Decoder, &frame_info, mp3_buf + offset);
+    if (ret) {
+        printf("failed to decode frame information\n");
+    } else {
+        calculate_stats();
+    }
 }
 
-void MP3::wrap_buffer() {
-    long buf_left = buffer_left_continuous();
+void MP3::calculate_stats() {
+    sec_per_frame = (float)frame_info.outputSamps / frame_info.nChans / frame_info.samprate;
+    duration = ((int)f_size(&fp) - offset) * 8 / frame_info.bitrate;
 
-    memcpy(mp3_buf - buf_left, mp3_buf + offset, buf_left);
-    offset = -buf_left;
+    printf("output samples: %d, samplerate: %d, bitrate: %d\n",
+           frame_info.outputSamps,
+           frame_info.samprate,
+           frame_info.bitrate);
+
+    printf("ms_per_frame: %f\n",
+           sec_per_frame * 1000);
 }
 
-void MP3::decode_one_frame(int16_t* audio_pcm_buf) {
-    if (buffer_left() < BUF_MP3_SIZE_BYTES / 2 && !end) {
-        // printf("loading, offset %ld  load_at %ld\n", offset, load_at);
+int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
+    if (buffer_left() < BUF_MP3_SIZE_BYTES / 2) {
+        // low on data
 
-        uint read;
-        fr = f_read(&fp, mp3_buf + load_at, BUF_MP3_SIZE_BYTES/2, &read);
-        if (fr != FR_OK) {
-            fs_err(fr, "f_read preload");
-        }
+        if (eof)
+            // eof, after wrap, set end-of-playback
+            eop = true;
 
-        if (read == 0) {
-            printf("EOF\n");
-            end = true;
-        }
-
-        load_at += read;
-        load_at %= BUF_MP3_SIZE_BYTES;
-
-        // printf("loaded,  offset %ld  load_at %ld\n", offset, load_at);
+        else
+            // no eof -> just load more
+            load_buffer();
     }
 
-    DBG_MP3_ON();
-
-    uint8_t* dptr_orig;
-    uint8_t* dptr;
-    int b_orig;
-    int b;
+    long bytes_consumed;
 
     int res;
     do {
-        dptr_orig = mp3_buf + offset;
-        dptr = dptr_orig;
-        b_orig = BUF_MP3_SIZE_BYTES - offset;
-        b = b_orig;
+        if ((BUF_MP3_SIZE_BYTES - offset) < MP3_HEADER_SIZE) {
+            // even the header won't fit in continuous buffer
+            wrap_buffer();
+        }
+
+        uint8_t* dptr_orig = mp3_buf + offset;
+        uint8_t* dptr = dptr_orig;
+        int b = BUF_MP3_SIZE_BYTES - offset;
 
         res = MP3Decode(
                 hMP3Decoder,
@@ -101,31 +155,34 @@ void MP3::decode_one_frame(int16_t* audio_pcm_buf) {
                 audio_pcm_buf,
                 0);
 
+        bytes_consumed = dptr - dptr_orig;
+
         switch (res) {
             case ERR_MP3_NONE:
                 break;
 
             case ERR_MP3_INDATA_UNDERFLOW:
+                if (eop)
+                    return 0;
                 wrap_buffer();
                 break;
 
             case ERR_MP3_INVALID_FRAMEHEADER:
-                printf("wrong sync-word\n");
-                offset += 1;
-                offset += MP3FindSyncWord(mp3_buf + offset, BUF_MP3_SIZE_BYTES);
-                // TODO this breaks probably when buffer wraps
-                // breaks on [23] //Shrek l/11 The Proclaimers - I'm On My Way.mp3
+                printf("o %ld  wrong sync-word\n", offset);
+                align_buffer();
                 break;
 
             default:
-                printf("\nunknown error code=%d\n", res);
+                printf("unknown error code=%d\n", res);
         }
 
-    } while (res == ERR_MP3_INDATA_UNDERFLOW);
+    } while (res == ERR_MP3_INDATA_UNDERFLOW || res == ERR_MP3_INVALID_FRAMEHEADER);
 
-    DBG_MP3_OFF();
+    offset += bytes_consumed;
 
-    offset += dptr - dptr_orig;
+    /*if (eop) {
+        printf("buf left: %ld\n", buffer_left());
+    }*/
 
     // printf("  ")
     //
@@ -137,14 +194,21 @@ void MP3::decode_one_frame(int16_t* audio_pcm_buf) {
     // printf("off %5ld  ", offset);
     // puts("");
 
+    return 1;
 }
 
+int MP3::decode_up_to_n_frames(int16_t* audio_pcm_buf, int n) {
+    long frame_offset = 0;
+    int frames_read;
 
-void MP3::decode_n_frames(int16_t* audio_pcm_buf, int n) {
-    long offset = 0;
-    for (int i=0; i<n; i++) {
+    for (frames_read=0; frames_read < n; frames_read++) {
         // printf("%2d loading data at %5ld  ", i+1, offset);
-        decode_one_frame(audio_pcm_buf + offset);
-        offset += MP3_SAMPLES_PER_FRAME * 2;
+        int decoded = decode_up_to_one_frame(audio_pcm_buf + frame_offset);
+        if (decoded == 0)
+            break;
+
+        frame_offset += MP3_SAMPLES_PER_FRAME * 2;
     }
+
+    return frames_read;
 }

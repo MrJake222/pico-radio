@@ -143,7 +143,7 @@ void play_mp3(const char* path) {
     MP3 mp3(path);
 
     // preload
-    mp3.decode_n_frames((int16_t*)audio_pcm, BUF_PCM_SIZE_FRAMES);
+    mp3.decode_up_to_n_frames((int16_t *) audio_pcm, BUF_PCM_SIZE_FRAMES);
 
     i2s_program_set_bit_freq(pio, sm, 44100*2*16);
 
@@ -172,30 +172,73 @@ void play_mp3(const char* path) {
     // start playback
     dma_channel_start(dma_channel_a);
 
-    uint sum_bytes_read = 0;
-    uint last_seconds = 0;
+    int decoded;
+    int sum_frames_decoded = 0;
+    int last_seconds = -1;
+
     bool eof = false;
     bool a_done_prv, b_done_prv;
+    uint64_t start=0, end=0;
+
+    const int LOAD_FRAMES = BUF_PCM_SIZE_FRAMES / 2;
 
     while (!eof) {
         if (a_done_irq) {
             a_done_irq = false;
             a_done_prv = true;
+
             // channel A done (first one)
             // reload first half of the buffer
             DBG_ON();
-            mp3.decode_n_frames((int16_t*)audio_pcm, BUF_PCM_SIZE_FRAMES / 2);
+            start = time_us_64();
+
+            decoded = mp3.decode_up_to_n_frames((int16_t *) audio_pcm, LOAD_FRAMES);
+
+            end = time_us_64();
             DBG_OFF();
         }
 
         if (b_done_irq) {
             b_done_irq = false;
             b_done_prv = true;
+
             // channel B done (second one)
             // reload second half of the buffer
             DBG_ON();
-            mp3.decode_n_frames((int16_t*)(audio_pcm + BUF_PCM_HALF_32BIT), BUF_PCM_SIZE_FRAMES / 2);
+            start = time_us_64();
+
+            decoded = mp3.decode_up_to_n_frames((int16_t *) (audio_pcm + BUF_PCM_HALF_32BIT), LOAD_FRAMES);
+
+            end = time_us_64();
             DBG_OFF();
+        }
+
+       if (a_done_prv || b_done_prv) {
+            sum_frames_decoded += decoded;
+
+            if (decoded < LOAD_FRAMES) {
+                eof = true;
+            }
+            else {
+                // only clear on non-EOF
+                // these are later used for dma channel abortion
+                a_done_prv = false;
+                b_done_prv = false;
+            }
+        }
+
+        int seconds = mp3.frames_to_sec(sum_frames_decoded);
+
+        if (seconds != last_seconds) {
+            float tookms = (end - start) / 1000.f / (float)LOAD_FRAMES;
+
+            printf("%02d:%02d / %02d:%02d   buf load %5.2fms %2d%%\r",
+                   seconds/60, seconds%60,
+                   mp3.get_duration()/60, mp3.get_duration()%60,
+                   tookms,
+                   int(tookms * 100 / mp3.get_ms_per_frame()));
+
+            last_seconds = seconds;
         }
 
         int chr = getchar_timeout_us(0);
@@ -206,17 +249,30 @@ void play_mp3(const char* path) {
 
     printf("\nfinished file reading.\n");
 
-    // user abort
-    dma_chain_disable(dma_channel_a);
-    dma_chain_disable(dma_channel_b);
-    dma_channel_abort(dma_channel_a);
-    dma_channel_abort(dma_channel_b);
-    a_done_irq = false;
-    b_done_irq = false;
+    if (a_done_prv) {
+        // a channel finished, and it's data reload triggerred EOF
+        // wait for another a channel finish, disable b channed firing
+        dma_chain_disable(dma_channel_a);
+        while (!a_done_irq);
+        a_done_irq = false;
+    }
+    else if (b_done_prv) {
+        // b finished, disable it's chaining to a, wait for finish
+        dma_chain_disable(dma_channel_b);
+        while (!b_done_irq);
+        b_done_irq = false;
+    }
+    else {
+        // user abort
+        dma_chain_disable(dma_channel_a);
+        dma_chain_disable(dma_channel_b);
+        dma_channel_abort(dma_channel_a);
+        dma_channel_abort(dma_channel_b);
+        a_done_irq = false;
+        b_done_irq = false;
+    }
 
     puts("dma channels stopped.");
-
-    sleep_ms(2000);
 }
 
 void play_wav(const char* path) {
@@ -402,7 +458,7 @@ int main() {
     // UART on USB
     stdio_usb_init();
 
-    // set_sys_clock_khz(250000, true);
+    // set_sys_clock_khz(150000, true);
 
     sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
