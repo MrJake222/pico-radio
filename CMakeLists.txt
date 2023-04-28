@@ -33,6 +33,7 @@ target_link_libraries(${PROJECT_NAME}
         pico_stdlib
         hardware_dma
         hardware_pio
+        pico_multicore
         FatFs_SPI
         helixmp3
         # pagers-common   # common code

@@ -4,6 +4,7 @@
 #include <hardware/dma.h>
 #include <hardware/pio.h>
 #include <hardware/clocks.h>
+#include <pico/multicore.h>
 #include <cstring>
 #include <vector>
 #include <string>
@@ -137,31 +138,63 @@ void reinterpret_buffer(uint8_t* data, uint data_len) {
     }*/
 }
 
-void play_mp3(const char* path) {
-    printf("playing: %s as MP3 file\n\n", path);
-
+/*void mp3_benchmark(const char* path) {
     MP3 mp3(path);
 
-    // preload
-    mp3.decode_up_to_n_frames((int16_t *) audio_pcm, BUF_PCM_SIZE_FRAMES);
-
-    i2s_program_set_bit_freq(pio, sm, 44100*2*16);
-
     // benchmark 22ms
-    /*ulong start = time_us_64();
+    ulong start = time_us_64();
     DBG_ON();
-    mp3.decode_n_frames(audio_pcm_channels, BUF_PCM_SIZE_SAMPLES);
-    mp3.decode_n_frames(audio_pcm_channels, BUF_PCM_SIZE_SAMPLES);
+    mp3->decode_up_to_n_frames((int16_t *) audio_pcm, BUF_PCM_SIZE_FRAMES);
+    mp3->decode_up_to_n_frames((int16_t *) audio_pcm, BUF_PCM_SIZE_FRAMES);
     DBG_OFF();
     ulong end = time_us_64();
 
-    printf("load took %f ms / 1 frame\n", (end - start) / 1000.0f / (BUF_PCM_SIZE_SAMPLES*2));
+    printf("load took %f ms / 1 frame\n", (end - start) / 1000.0f / (BUF_PCM_SIZE_FRAMES*2));
     while(1) {
         int chr = getchar_timeout_us(0);
         if (chr > 0) {
             return;
         }
-    }*/
+    }
+}*/
+
+MP3* mp3;
+
+void core1_entry() {
+    while (!mp3->get_decode_finished())
+        mp3->watch_decode(a_done_irq, b_done_irq);
+}
+
+void play_mp3(const char* path) {
+    printf("playing: %s as MP3 file\n\n", path);
+
+    // MP3 mp3(path, audio_pcm);
+
+    memset(audio_pcm, 0, 4 * BUF_PCM_SIZE_32BIT);
+
+    mp3 = new MP3(path, audio_pcm);
+
+    printf("dma buf %p -> %p\n", audio_pcm, audio_pcm + BUF_PCM_SIZE_32BIT);
+
+    for (int i=0; i<1152; i++) {
+        if (i % 16 == 0)
+            printf("\n%p:  ", audio_pcm + i);
+        printf("%08lx", audio_pcm[i]);
+    }
+
+    // memset(audio_pcm, 0, 4 * BUF_PCM_SIZE_32BIT);
+
+    i2s_program_set_bit_freq(pio, sm, mp3->get_bit_freq());
+
+    if (mp3->needs_core1()) {
+        multicore_reset_core1();
+        multicore_launch_core1(core1_entry);
+    }
+
+    dma_channel_set_read_addr(dma_channel_a, audio_pcm, false);
+    dma_channel_set_read_addr(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, false);
+
+
 
     printf("dma start\n");
 
@@ -172,91 +205,31 @@ void play_mp3(const char* path) {
     // start playback
     dma_channel_start(dma_channel_a);
 
-    int decoded;
-    int sum_frames_decoded = 0;
-    int last_seconds = -1;
+    while (!mp3->get_eof()) {
 
-    bool eof = false;
-    bool a_done_prv, b_done_prv;
-    uint64_t start=0, end=0;
-
-    const int LOAD_FRAMES = BUF_PCM_SIZE_FRAMES / 2;
-
-    while (!eof) {
-        if (a_done_irq) {
-            a_done_irq = false;
-            a_done_prv = true;
-
-            // channel A done (first one)
-            // reload first half of the buffer
-            DBG_ON();
-            start = time_us_64();
-
-            decoded = mp3.decode_up_to_n_frames((int16_t *) audio_pcm, LOAD_FRAMES);
-
-            end = time_us_64();
-            DBG_OFF();
-        }
-
-        if (b_done_irq) {
-            b_done_irq = false;
-            b_done_prv = true;
-
-            // channel B done (second one)
-            // reload second half of the buffer
-            DBG_ON();
-            start = time_us_64();
-
-            decoded = mp3.decode_up_to_n_frames((int16_t *) (audio_pcm + BUF_PCM_HALF_32BIT), LOAD_FRAMES);
-
-            end = time_us_64();
-            DBG_OFF();
-        }
-
-       if (a_done_prv || b_done_prv) {
-            sum_frames_decoded += decoded;
-
-            if (decoded < LOAD_FRAMES) {
-                eof = true;
-            }
-            else {
-                // only clear on non-EOF
-                // these are later used for dma channel abortion
-                a_done_prv = false;
-                b_done_prv = false;
-            }
-        }
-
-        int seconds = mp3.frames_to_sec(sum_frames_decoded);
-
-        if (seconds != last_seconds) {
-            float tookms = (end - start) / 1000.f / (float)LOAD_FRAMES;
-
-            printf("%02d:%02d / %02d:%02d   buf load %5.2fms %2d%%\r",
-                   seconds/60, seconds%60,
-                   mp3.get_duration()/60, mp3.get_duration()%60,
-                   tookms,
-                   int(tookms * 100 / mp3.get_ms_per_frame()));
-
-            last_seconds = seconds;
-        }
+        mp3->watch_file_buffer();
 
         int chr = getchar_timeout_us(0);
         if (chr > 0) {
+            mp3->user_abort();
             break;
         }
     }
 
     printf("\nfinished file reading.\n");
 
-    if (a_done_prv) {
+    while (!mp3->get_decode_finished());
+
+    printf("\nfinished decode.\n");
+
+    if (mp3->decode_finished_by_A()) {
         // a channel finished, and it's data reload triggerred EOF
-        // wait for another a channel finish, disable b channed firing
+        // wait for another a channel finish, disable b channel firing
         dma_chain_disable(dma_channel_a);
         while (!a_done_irq);
         a_done_irq = false;
     }
-    else if (b_done_prv) {
+    else if (mp3->decode_finished_by_B()) {
         // b finished, disable it's chaining to a, wait for finish
         dma_chain_disable(dma_channel_b);
         while (!b_done_irq);
@@ -271,6 +244,10 @@ void play_mp3(const char* path) {
         a_done_irq = false;
         b_done_irq = false;
     }
+
+    delete mp3;
+
+    pio_sm_put_blocking(pio, sm, 0);
 
     puts("dma channels stopped.");
 }
@@ -458,7 +435,7 @@ int main() {
     // UART on USB
     stdio_usb_init();
 
-    // set_sys_clock_khz(150000, true);
+    set_sys_clock_khz(140000, true);
 
     sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");

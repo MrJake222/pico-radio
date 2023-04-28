@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include "f_util.h"
+#include "helixmp3/pub/mp3common.h"
 
 const uint PIN_DBG_MP3 = 12;
 #define DBG_MP3_ON() gpio_put(PIN_DBG_MP3, true)
@@ -33,7 +34,7 @@ void MP3::wrap_buffer() {
 }
 
 void MP3::load_buffer() {
-    // printf("loading, offset %ld  load_at %ld\n", offset, load_at);
+    printf("loading, offset %ld  load_at %ld\n", offset, load_at);
 
     uint read;
     fr = f_read(&fp, mp3_buf + load_at, BUF_MP3_SIZE_BYTES/2, &read);
@@ -82,8 +83,8 @@ void MP3::align_buffer() {
 }
 
 void MP3::prepare() {
-
-    hMP3Decoder = MP3InitDecoder();
+    if (!hMP3Decoder)
+        hMP3Decoder = MP3InitDecoder();
 
     fr = f_open(&fp, filepath, FA_READ);
     if (fr != FR_OK) {
@@ -93,7 +94,7 @@ void MP3::prepare() {
     eof = false;
     eop = false;
 
-    // preload
+    // preload file buffer
     load_at = 0;
     load_buffer();
     load_buffer();
@@ -101,30 +102,62 @@ void MP3::prepare() {
     offset = 0;
     align_buffer();
 
-    int ret = MP3GetNextFrameInfo(hMP3Decoder, &frame_info, mp3_buf + offset);
+    /*int ret = MP3GetNextFrameInfo(hMP3Decoder, &frame_info, mp3_buf + offset);
     if (ret) {
         printf("failed to decode frame information\n");
     } else {
         calculate_stats();
+    }*/
+
+    for (int i=0; i<1152; i++) {
+        if (i % 16 == 0)
+            printf("\n%p:  ", audio_pcm + i);
+        printf("%08lx", audio_pcm[i]);
     }
+
+    MP3ClearBuffers(hMP3Decoder);
+
+    // preload pcm buffer
+    for (int i=0; i<BUF_PCM_SIZE_FRAMES; i++) {
+        printf("preload o %ld -> %p to %p  ", offset, (audio_pcm + i * MP3_SAMPLES_PER_FRAME), (audio_pcm + (i+1) * MP3_SAMPLES_PER_FRAME - 1));
+        int dec = decode_up_to_one_frame((int16_t *)(audio_pcm + i * MP3_SAMPLES_PER_FRAME));
+        printf("  dec %d\n", dec);
+        watch_file_buffer();
+    }
+
+    for (int i=0; i<1152; i++) {
+        if (i % 16 == 0)
+            printf("\n%p:  ", audio_pcm + i);
+        printf("%08lx", audio_pcm[i]);
+    }
+}
+
+void MP3::init_dbg() {
+    gpio_init(PIN_DBG_MP3);
+    gpio_set_dir(PIN_DBG_MP3, GPIO_OUT);
+    DBG_MP3_OFF();
 }
 
 void MP3::calculate_stats() {
     sec_per_frame = (float)frame_info.outputSamps / frame_info.nChans / frame_info.samprate;
     duration = ((int)f_size(&fp) - offset) * 8 / frame_info.bitrate;
+    bit_freq = frame_info.bitsPerSample * frame_info.nChans * frame_info.samprate;
 
     printf("output samples: %d, samplerate: %d, bitrate: %d\n",
            frame_info.outputSamps,
            frame_info.samprate,
            frame_info.bitrate);
 
-    printf("ms_per_frame: %f\n",
-           sec_per_frame * 1000);
+    printf("ms_per_frame: %f, bit freq: %ld\n",
+           sec_per_frame * 1000,
+           bit_freq);
 }
 
-int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
+void MP3::watch_file_buffer() {
     if (buffer_left() < BUF_MP3_SIZE_BYTES / 2) {
         // low on data
+
+        printf("data low\n");
 
         if (eof)
             // eof, after wrap, set end-of-playback
@@ -134,6 +167,66 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
             // no eof -> just load more
             load_buffer();
     }
+
+    if (seconds != last_seconds) {
+        printf("%02d:%02d / %02d:%02d   buf load %5.2fms %3d%%\r",
+               seconds/60, seconds%60,
+               get_duration()/60, get_duration()%60,
+               took_ms,
+               int(took_ms * 100 / get_ms_per_frame()));
+
+        last_seconds = seconds;
+    }
+}
+
+const static int LOAD_FRAMES = BUF_PCM_SIZE_FRAMES / 2;
+
+void MP3::decode_done(int decoded_frames, uint64_t took_us, DMAChannel channel) {
+    sum_frames_decoded += decoded_frames;
+    seconds = frames_to_sec(sum_frames_decoded);
+    took_ms = (float)took_us / 1000.f / (float)LOAD_FRAMES;
+
+    if (decoded_frames < LOAD_FRAMES) {
+        // dma channel wasn't supplied with enough data -> EOF
+        decode_finished = true;
+        decode_finished_by = channel;
+    }
+}
+
+void MP3::watch_decode(volatile bool& a_done_irq, volatile bool& b_done_irq) {
+
+    int decoded;
+    uint64_t start, end;
+
+    if (a_done_irq) {
+        a_done_irq = false;
+
+        // channel A done (first one)
+        // reload first half of the buffer
+        start = time_us_64();
+        DBG_MP3_ON();
+        decoded = decode_up_to_n_frames((int16_t *) audio_pcm, LOAD_FRAMES);
+        DBG_MP3_OFF();
+        end = time_us_64();
+        decode_done(decoded, end - start, ChanA);
+    }
+
+    if (b_done_irq) {
+        b_done_irq = false;
+
+        // channel B done (second one)
+        // reload second half of the buffer
+        start = time_us_64();
+        DBG_MP3_ON();
+        decoded = decode_up_to_n_frames((int16_t *) (audio_pcm + BUF_PCM_HALF_32BIT), LOAD_FRAMES);
+        DBG_MP3_OFF();
+        end = time_us_64();
+        decode_done(decoded, end - start, ChanB);
+    }
+}
+
+int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
+    // watch_file_buffer();
 
     long bytes_consumed;
 
