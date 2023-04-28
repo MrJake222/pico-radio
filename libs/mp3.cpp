@@ -39,7 +39,7 @@ void MP3::load_buffer() {
     uint read;
     fr = f_read(&fp, mp3_buf + load_at, BUF_MP3_SIZE_BYTES/2, &read);
     if (fr != FR_OK) {
-        fs_err(fr, "f_read preload");
+        fs_err(fr, "f_read");
     }
 
     if (read < BUF_MP3_SIZE_BYTES/2) {
@@ -223,6 +223,7 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
 
     int res;
     do {
+        // printf("o %ld\n", offset);
         if ((BUF_MP3_SIZE_BYTES - offset) < MP3_HEADER_SIZE) {
             // even the header won't fit in continuous buffer
             wrap_buffer();
@@ -240,6 +241,10 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
                 0);
 
         bytes_consumed = dptr - dptr_orig;
+
+        /*if (res != ERR_MP3_NONE) {
+            printf("err %d\n", res);
+        }*/
 
         switch (res) {
             case ERR_MP3_NONE:

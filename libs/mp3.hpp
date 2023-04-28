@@ -14,8 +14,8 @@ enum FinishReason {
 
 static HMP3Decoder hMP3Decoder = nullptr;
 // one extra wrapped frame
-static uint8_t mp3_buf_hidden[BUF_MP3_SIZE_BYTES + BUF_MP3_SIZE_BYTES_PER_FRAME];
-static uint8_t* const mp3_buf = mp3_buf_hidden + BUF_MP3_SIZE_BYTES_PER_FRAME; // pointer is const, not data
+static uint8_t mp3_buf_hidden[BUF_MP3_SIZE_BYTES + BUF_HIDDEN_MP3_SIZE_BYTES];
+static uint8_t* const mp3_buf = mp3_buf_hidden + BUF_HIDDEN_MP3_SIZE_BYTES; // pointer is const, not data
 
 class MP3 {
 
