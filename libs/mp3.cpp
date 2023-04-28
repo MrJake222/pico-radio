@@ -34,7 +34,7 @@ void MP3::wrap_buffer() {
 }
 
 void MP3::load_buffer() {
-    printf("loading, offset %ld  load_at %ld\n", offset, load_at);
+    // printf("loading, offset %ld  load_at %ld\n", offset, load_at);
 
     uint read;
     fr = f_read(&fp, mp3_buf + load_at, BUF_MP3_SIZE_BYTES/2, &read);
@@ -85,6 +85,8 @@ void MP3::align_buffer() {
 void MP3::prepare() {
     if (!hMP3Decoder)
         hMP3Decoder = MP3InitDecoder();
+    else
+        MP3ClearBuffers(hMP3Decoder);
 
     fr = f_open(&fp, filepath, FA_READ);
     if (fr != FR_OK) {
@@ -102,33 +104,17 @@ void MP3::prepare() {
     offset = 0;
     align_buffer();
 
-    /*int ret = MP3GetNextFrameInfo(hMP3Decoder, &frame_info, mp3_buf + offset);
+    int ret = MP3GetNextFrameInfo(hMP3Decoder, &frame_info, mp3_buf + offset);
     if (ret) {
         printf("failed to decode frame information\n");
     } else {
         calculate_stats();
-    }*/
-
-    for (int i=0; i<1152; i++) {
-        if (i % 16 == 0)
-            printf("\n%p:  ", audio_pcm + i);
-        printf("%08lx", audio_pcm[i]);
     }
-
-    MP3ClearBuffers(hMP3Decoder);
 
     // preload pcm buffer
     for (int i=0; i<BUF_PCM_SIZE_FRAMES; i++) {
-        printf("preload o %ld -> %p to %p  ", offset, (audio_pcm + i * MP3_SAMPLES_PER_FRAME), (audio_pcm + (i+1) * MP3_SAMPLES_PER_FRAME - 1));
-        int dec = decode_up_to_one_frame((int16_t *)(audio_pcm + i * MP3_SAMPLES_PER_FRAME));
-        printf("  dec %d\n", dec);
+        decode_up_to_one_frame((int16_t *)(audio_pcm + i * MP3_SAMPLES_PER_FRAME));
         watch_file_buffer();
-    }
-
-    for (int i=0; i<1152; i++) {
-        if (i % 16 == 0)
-            printf("\n%p:  ", audio_pcm + i);
-        printf("%08lx", audio_pcm[i]);
     }
 }
 
@@ -156,8 +142,6 @@ void MP3::calculate_stats() {
 void MP3::watch_file_buffer() {
     if (buffer_left() < BUF_MP3_SIZE_BYTES / 2) {
         // low on data
-
-        printf("data low\n");
 
         if (eof)
             // eof, after wrap, set end-of-playback
@@ -273,20 +257,6 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
 
     offset += bytes_consumed;
 
-    /*if (eop) {
-        printf("buf left: %ld\n", buffer_left());
-    }*/
-
-    // printf("  ")
-    //
-    // printf("res %d  ", res);
-    // printf("ddiff %d  ", dptr - dptr_orig);
-    // printf("bdiff %d  ", b - b_orig);
-    // printf("used up %4d  ", info.frame_bytes);
-    // printf("frame off %5d  ", info.frame_offset);
-    // printf("off %5ld  ", offset);
-    // puts("");
-
     return 1;
 }
 
@@ -295,7 +265,6 @@ int MP3::decode_up_to_n_frames(int16_t* audio_pcm_buf, int n) {
     int frames_read;
 
     for (frames_read=0; frames_read < n; frames_read++) {
-        // printf("%2d loading data at %5ld  ", i+1, offset);
         int decoded = decode_up_to_one_frame(audio_pcm_buf + frame_offset);
         if (decoded == 0)
             break;

@@ -68,7 +68,6 @@ public:
             { prepare(); init_dbg(); }
 
     ~MP3() {
-        //MP3FreeDecoder(hMP3Decoder);
         f_close(&fp);
     }
 

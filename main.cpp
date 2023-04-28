@@ -166,23 +166,9 @@ void core1_entry() {
 }
 
 void play_mp3(const char* path) {
-    printf("playing: %s as MP3 file\n\n", path);
-
-    // MP3 mp3(path, audio_pcm);
-
-    memset(audio_pcm, 0, 4 * BUF_PCM_SIZE_32BIT);
+    printf("\nplaying: %s as MP3 file\n", path);
 
     mp3 = new MP3(path, audio_pcm);
-
-    printf("dma buf %p -> %p\n", audio_pcm, audio_pcm + BUF_PCM_SIZE_32BIT);
-
-    for (int i=0; i<1152; i++) {
-        if (i % 16 == 0)
-            printf("\n%p:  ", audio_pcm + i);
-        printf("%08lx", audio_pcm[i]);
-    }
-
-    // memset(audio_pcm, 0, 4 * BUF_PCM_SIZE_32BIT);
 
     i2s_program_set_bit_freq(pio, sm, mp3->get_bit_freq());
 
@@ -190,11 +176,6 @@ void play_mp3(const char* path) {
         multicore_reset_core1();
         multicore_launch_core1(core1_entry);
     }
-
-    dma_channel_set_read_addr(dma_channel_a, audio_pcm, false);
-    dma_channel_set_read_addr(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, false);
-
-
 
     printf("dma start\n");
 
