@@ -7,7 +7,7 @@
 
 // for MP3 playing
 #define MP3_SAMPLES_PER_FRAME       1152 // sample = 2 channels * 16 bit = 32bit word
-#define BUF_PCM_SIZE_FRAMES         24
+#define BUF_PCM_SIZE_FRAMES         8
 #define BUF_PCM_SIZE_32BIT          (MP3_SAMPLES_PER_FRAME * BUF_PCM_SIZE_FRAMES)
 #define BUF_PCM_HALF_32BIT          (BUF_PCM_SIZE_32BIT / 2)
 

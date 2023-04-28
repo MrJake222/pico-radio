@@ -422,7 +422,7 @@ int main() {
     sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys)/1000000);
-    printf("MP3 buffer size: %d bytes\n", BUF_MP3_SIZE_BYTES);
+    printf("MP3 buffer size: %d bytes + %d bytes hidden\n", BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
     printf("PCM buffer size: %d bytes\n", BUF_PCM_SIZE_BYTES);
     puts("");
 
