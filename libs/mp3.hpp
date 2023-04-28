@@ -5,9 +5,11 @@
 
 #include "helixmp3/pub/mp3dec.h"
 
-enum DMAChannel {
-    ChanA,
-    ChanB
+enum FinishReason {
+    NoAbort,
+    UnderflowChanA,
+    UnderflowChanB,
+    User
 };
 
 static HMP3Decoder hMP3Decoder = nullptr;
@@ -35,6 +37,8 @@ class MP3 {
     bool eof;
     // end of playback
     bool eop;
+    // finish reason
+    FinishReason decode_finished_by;
 
     long buffer_left();
     long buffer_left_continuous();
@@ -46,20 +50,24 @@ class MP3 {
     void init_dbg();
     void prepare();
 
-    // stats
+    // stats (constant after prepare() calls calculate_stats())
     float sec_per_frame;
     int duration;
     long bit_freq;
     void calculate_stats();
 
-    int sum_frames_decoded = 0;
-    float took_ms = 0;
-    int seconds = 0;
-    int last_seconds = -1;
+    // stats updated on decoding finished (on request by DMA)
+    // used by watch_timer()
+    int sum_frames_decoded;
+    float took_ms;
+    int seconds;
+    int last_seconds;
+    void decode_done(int decoded_frames, uint64_t took_us, FinishReason channel);
 
-    bool decode_finished = false;
-    bool decode_finished_by_user = false;
-    DMAChannel decode_finished_by;
+    // these return number of frames actually decoded
+    int decode_up_to_one_frame(int16_t* audio_pcm_buf);
+    int decode_up_to_n_frames(int16_t* audio_pcm_buf, int n);
+
 
 public:
     MP3(const char *filepath_, uint32_t* const audio_pcm_)
@@ -71,36 +79,36 @@ public:
         f_close(&fp);
     }
 
-    bool get_eof() { return eof; }
-
-    // these return number of frames actually decoded
-    int decode_up_to_one_frame(int16_t* audio_pcm_buf);
-    int decode_up_to_n_frames(int16_t* audio_pcm_buf, int n);
-
-    // control
-    long get_bit_freq() { return bit_freq; }
-
     // statistics
     int frames_to_sec(int frames) { return sec_per_frame * (float)frames; }
     int get_duration() { return duration; }
     float get_ms_per_frame() { return sec_per_frame * 1000; }
+    long get_bit_freq() { return bit_freq; }
 
-
-    // called from core0
+    // called in loop on core0
     void watch_file_buffer();
+    void watch_timer();
+
+    // sustains the loop on core0
+    bool get_eof() { return eof; }
+
+    // called to gracefully finish core0 thread
+    // gates core0 not to exit before decoding thread is done
+    // (and aborting DMA channels)
+    // sustains core1 loop
+    bool get_decode_finished()  { return decode_finished_by != NoAbort; }
+    bool decode_finished_by_A() { return decode_finished_by == UnderflowChanA; }
+    bool decode_finished_by_B() { return decode_finished_by == UnderflowChanB; }
+
+    // called from core0 to start core1
+    bool needs_core1() { return true; }
 
     // called from core1
-    bool needs_core1() { return true; }
-    void decode_done(int decoded_frames, uint64_t took_us, DMAChannel channel);
     void watch_decode(volatile bool& a_done_irq, volatile bool& b_done_irq);
 
-    bool get_decode_finished() { return decode_finished; }
-    bool decode_finished_by_A() { return decode_finished_by == ChanA && !decode_finished_by_user; }
-    bool decode_finished_by_B() { return decode_finished_by == ChanB && !decode_finished_by_user; }
-
+    // called when user aborts playback
     void user_abort() {
         eof = true;
-        decode_finished_by_user = true;
-        decode_finished = true;
+        decode_finished_by = User;
     }
 };

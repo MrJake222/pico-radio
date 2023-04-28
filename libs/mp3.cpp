@@ -116,6 +116,12 @@ void MP3::prepare() {
         decode_up_to_one_frame((int16_t *)(audio_pcm + i * MP3_SAMPLES_PER_FRAME));
         watch_file_buffer();
     }
+
+    decode_finished_by = NoAbort;
+    sum_frames_decoded = 0;
+    took_ms = 0;
+    seconds = 0;
+    last_seconds = -1;
 }
 
 void MP3::init_dbg() {
@@ -151,7 +157,9 @@ void MP3::watch_file_buffer() {
             // no eof -> just load more
             load_buffer();
     }
+}
 
+void MP3::watch_timer() {
     if (seconds != last_seconds) {
         printf("%02d:%02d / %02d:%02d   buf load %5.2fms %3d%%\r",
                seconds/60, seconds%60,
@@ -165,14 +173,13 @@ void MP3::watch_file_buffer() {
 
 const static int LOAD_FRAMES = BUF_PCM_SIZE_FRAMES / 2;
 
-void MP3::decode_done(int decoded_frames, uint64_t took_us, DMAChannel channel) {
+void MP3::decode_done(int decoded_frames, uint64_t took_us, FinishReason channel) {
     sum_frames_decoded += decoded_frames;
     seconds = frames_to_sec(sum_frames_decoded);
     took_ms = (float)took_us / 1000.f / (float)LOAD_FRAMES;
 
     if (decoded_frames < LOAD_FRAMES) {
         // dma channel wasn't supplied with enough data -> EOF
-        decode_finished = true;
         decode_finished_by = channel;
     }
 }
@@ -192,7 +199,7 @@ void MP3::watch_decode(volatile bool& a_done_irq, volatile bool& b_done_irq) {
         decoded = decode_up_to_n_frames((int16_t *) audio_pcm, LOAD_FRAMES);
         DBG_MP3_OFF();
         end = time_us_64();
-        decode_done(decoded, end - start, ChanA);
+        decode_done(decoded, end - start, UnderflowChanA);
     }
 
     if (b_done_irq) {
@@ -205,7 +212,7 @@ void MP3::watch_decode(volatile bool& a_done_irq, volatile bool& b_done_irq) {
         decoded = decode_up_to_n_frames((int16_t *) (audio_pcm + BUF_PCM_HALF_32BIT), LOAD_FRAMES);
         DBG_MP3_OFF();
         end = time_us_64();
-        decode_done(decoded, end - start, ChanB);
+        decode_done(decoded, end - start, UnderflowChanB);
     }
 }
 

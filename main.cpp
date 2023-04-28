@@ -189,6 +189,7 @@ void play_mp3(const char* path) {
     while (!mp3->get_eof()) {
 
         mp3->watch_file_buffer();
+        mp3->watch_timer();
 
         int chr = getchar_timeout_us(0);
         if (chr > 0) {
