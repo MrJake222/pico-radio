@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
+# pico w project
+set(PICO_BOARD pico_w)
 
 # pico sdk
 include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
@@ -7,6 +9,7 @@ include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 # libraries
 add_subdirectory(libs/sd_lib/FatFs_SPI)
 add_subdirectory(libs/helixmp3)
+add_subdirectory(libs/httpc)
 
 # project setup
 project(pico-radio C CXX ASM)
@@ -22,7 +25,9 @@ add_executable(${PROJECT_NAME}
         main.cpp
         sd_hw_config.c
         i2s.pio.cpp
-        libs/waveheader.cpp libs/mp3.cpp ${HelixMP3_src})
+        libs/waveheader.cpp
+        libs/mp3.cpp
+        libs/mp3radio.cpp libs/httpclientpico.cpp libs/httpclientpico.hpp)
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
@@ -34,10 +39,16 @@ target_link_libraries(${PROJECT_NAME}
         hardware_dma
         hardware_pio
         pico_multicore
+        pico_cyw43_arch_lwip_threadsafe_background
         FatFs_SPI
         helixmp3
+        httpc
         # pagers-common   # common code
         )
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}
+)
 
 # enable only usb stdio functions
 pico_enable_stdio_usb(${PROJECT_NAME} 1)

@@ -18,6 +18,11 @@
 #include "config.hpp"
 #include "libs/waveheader.hpp"
 #include "libs/mp3.hpp"
+#include "libs/mp3radio.hpp"
+#include "libs/httpclientpico.hpp"
+
+// wifi
+#include <pico/cyw43_arch.h>
 
 const uint PIN_DBG = 13;
 #define DBG_ON() gpio_put(PIN_DBG, true)
@@ -158,6 +163,13 @@ void reinterpret_buffer(uint8_t* data, uint data_len) {
     }
 }*/
 
+enum class FileType {
+    WAV,
+    MP3,
+    RADIO,
+    UNSUPPORTED
+};
+
 MP3* mp3;
 
 void core1_entry() {
@@ -165,10 +177,17 @@ void core1_entry() {
         mp3->watch_decode(a_done_irq, b_done_irq);
 }
 
-void play_mp3(const char* path) {
+void play_mp3(const char* path, FileType type) {
     printf("\nplaying: %s as MP3 file\n", path);
 
-    mp3 = new MP3(path, audio_pcm);
+    switch (type) {
+        case FileType::MP3:
+            mp3 = new MP3(path, audio_pcm);
+            break;
+
+        case FileType::RADIO:
+            mp3 = new MP3Radio(path, audio_pcm);
+    }
 
     i2s_program_set_bit_freq(pio, sm, mp3->get_bit_freq());
 
@@ -393,23 +412,17 @@ FRESULT scan_files(char* path, std::vector<std::string>& files) {
     return res;
 }
 
-enum FileType {
-    WAV,
-    MP3,
-    UNSUPPORTED
-};
-
 FileType get_file_type(const char* filepath) {
     const char *extension = filepath + strlen(filepath) - 4;
 
     if (strcmp(extension, ".mp3") == 0)
-        return MP3;
+        return FileType::MP3;
 
     else if ((strcmp(extension, ".wav") == 0) || (strcmp(extension, "wave") == 0))
-        return WAV;
+        return FileType::WAV;
 
     else
-        return UNSUPPORTED;
+        return FileType::UNSUPPORTED;
 }
 
 int main() {
@@ -463,13 +476,49 @@ int main() {
 
     sd_card_t *pSD = sd_get_by_num(0);
 
-    fr = f_mount(&pSD->fatfs, pSD->pcName, 1);
+    /*fr = f_mount(&pSD->fatfs, pSD->pcName, 1);
     if (fr != FR_OK) {
         fs_err(fr, "f_mount");
     }
 
-    puts("mount ok\n");
+    puts("mount ok\n");*/
 
+    // WiFi configuration
+    int err;
+    err = cyw43_arch_init();
+    if (err) {
+        panic("wifi arch init error");
+    }
+
+    cyw43_arch_enable_sta_mode();
+    // const char* WIFI_SSID = "Bapplejems";
+    // const char* WIFI_PASSWORD = "ForThosE4bOut";
+    const char* WIFI_SSID = "NLP";
+    const char* WIFI_PASSWORD = "bequick77";
+
+    printf("Connecting to Wi-Fi...\n");
+    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
+        panic("failed to connect.\n");
+    } else {
+        printf("Connected.\n");
+    }
+
+    cyw43_arch_lwip_begin();
+    const ip4_addr_t* addr;
+    do {
+        addr = netif_ip4_addr(netif_list);
+    } while (ip4_addr_isany_val(*addr));
+
+    printf("got ip: %s\n", ip4addr_ntoa(addr));
+    cyw43_arch_lwip_end();
+
+    HttpClientPico client;
+
+    client.get("http://stream.rcs.revma.com/an1ugyygzk8uv");
+
+    while(1);
+
+/*
     char path[1024] = "/";
     std::vector<std::string> files;
     scan_files(path, files);
@@ -496,18 +545,21 @@ int main() {
         const char *filepath = files[choice - 1].c_str();
 
         switch (get_file_type(filepath)) {
-            case WAV:
+            case FileType::WAV:
                 play_wav(filepath);
                 break;
 
-            case MP3:
+            case FileType::MP3:
                 play_mp3(filepath);
                 break;
 
-            case UNSUPPORTED:
+            case FileType::UNSUPPORTED:
                 break;
         }
 
         printf("\033[2J"); // clear screen
     }
+*/
+
+    // play_mp3("http://stream.rcs.revma.com/an1ugyygzk8uv", FileType::RADIO);
 }

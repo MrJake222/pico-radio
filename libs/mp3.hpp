@@ -3,7 +3,7 @@
 #include "ff.h"
 #include "../config.hpp"
 
-#include "helixmp3/pub/mp3dec.h"
+#include <mp3dec.h>
 
 enum FinishReason {
     NoAbort,
@@ -19,6 +19,7 @@ static uint8_t* const mp3_buf = mp3_buf_hidden + BUF_HIDDEN_MP3_SIZE_BYTES; // p
 
 class MP3 {
 
+protected:
     static const int MP3_HEADER_SIZE = 4;
 
     const char* filepath;
@@ -42,9 +43,16 @@ class MP3 {
 
     long buffer_left();
     long buffer_left_continuous();
+    long buffer_consumed_since_load();
+
+    // governs when and how the data is fetched
+    // to the MP3 data buffer
+    virtual void open();
+    virtual void close();
+    virtual bool low_on_data();
+    virtual void load_buffer(int bytes);
 
     void wrap_buffer();
-    void load_buffer();
     void align_buffer();
 
     void init_dbg();
@@ -76,7 +84,7 @@ public:
             { prepare(); init_dbg(); }
 
     ~MP3() {
-        f_close(&fp);
+        close();
     }
 
     // statistics

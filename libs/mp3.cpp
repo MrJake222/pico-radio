@@ -26,23 +26,37 @@ long MP3::buffer_left_continuous() {
             : (load_at - offset);
 }
 
-void MP3::wrap_buffer() {
-    long buf_left = buffer_left_continuous();
-
-    memcpy(mp3_buf - buf_left, mp3_buf + offset, buf_left);
-    offset = -buf_left;
+long MP3::buffer_consumed_since_load() {
+    return load_at <= offset
+           ? (offset - load_at)
+           : (BUF_MP3_SIZE_BYTES - load_at + offset);
 }
 
-void MP3::load_buffer() {
+void MP3::open() {
+    fr = f_open(&fp, filepath, FA_READ);
+    if (fr != FR_OK) {
+        fs_err(fr, "f_open");
+    }
+}
+
+void MP3::close() {
+    f_close(&fp);
+}
+
+bool MP3::low_on_data() {
+    return buffer_left() < BUF_MP3_SIZE_BYTES / 2;
+}
+
+void MP3::load_buffer(int bytes) {
     // printf("loading, offset %ld  load_at %ld\n", offset, load_at);
 
     uint read;
-    fr = f_read(&fp, mp3_buf + load_at, BUF_MP3_SIZE_BYTES/2, &read);
+    fr = f_read(&fp, mp3_buf + load_at, bytes, &read);
     if (fr != FR_OK) {
         fs_err(fr, "f_read");
     }
 
-    if (read < BUF_MP3_SIZE_BYTES/2) {
+    if (read < bytes) {
         printf("EOF\n");
         eof = true;
     }
@@ -51,6 +65,13 @@ void MP3::load_buffer() {
     load_at %= BUF_MP3_SIZE_BYTES;
 
     // printf("loaded,  offset %ld  load_at %ld\n", offset, load_at);
+}
+
+void MP3::wrap_buffer() {
+    long buf_left = buffer_left_continuous();
+
+    memcpy(mp3_buf - buf_left, mp3_buf + offset, buf_left);
+    offset = -buf_left;
 }
 
 void MP3::align_buffer() {
@@ -62,8 +83,7 @@ void MP3::align_buffer() {
 
             offset = BUF_MP3_SIZE_BYTES - MP3_HEADER_SIZE;
             wrap_buffer();
-            load_buffer();
-            load_buffer();
+            load_buffer(BUF_MP3_SIZE_BYTES);
         }
         else {
             offset += sync_word_offset;
@@ -83,23 +103,19 @@ void MP3::align_buffer() {
 }
 
 void MP3::prepare() {
+    open();
+
     if (!hMP3Decoder)
         hMP3Decoder = MP3InitDecoder();
     else
         MP3ClearBuffers(hMP3Decoder);
-
-    fr = f_open(&fp, filepath, FA_READ);
-    if (fr != FR_OK) {
-        fs_err(fr, "f_open");
-    }
 
     eof = false;
     eop = false;
 
     // preload file buffer
     load_at = 0;
-    load_buffer();
-    load_buffer();
+    load_buffer(BUF_MP3_SIZE_BYTES);
 
     offset = 0;
     align_buffer();
@@ -146,7 +162,7 @@ void MP3::calculate_stats() {
 }
 
 void MP3::watch_file_buffer() {
-    if (buffer_left() < BUF_MP3_SIZE_BYTES / 2) {
+    if (low_on_data()) {
         // low on data
 
         if (eof)
@@ -155,7 +171,7 @@ void MP3::watch_file_buffer() {
 
         else
             // no eof -> just load more
-            load_buffer();
+            load_buffer(BUF_MP3_SIZE_BYTES/2);
     }
 }
 
