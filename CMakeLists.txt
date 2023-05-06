@@ -27,7 +27,9 @@ add_executable(${PROJECT_NAME}
         i2s.pio.cpp
         libs/waveheader.cpp
         libs/mp3.cpp
-        libs/mp3radio.cpp libs/httpclientpico.cpp libs/httpclientpico.hpp)
+        libs/mp3radio.cpp
+        libs/httpclientpico.cpp
+        libs/circularbuffer.cpp)
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
@@ -46,8 +48,9 @@ target_link_libraries(${PROJECT_NAME}
         # pagers-common   # common code
         )
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}
+include_directories(
+        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/libs
 )
 
 # enable only usb stdio functions

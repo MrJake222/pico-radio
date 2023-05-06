@@ -4,6 +4,7 @@
 #include "../config.hpp"
 
 #include <mp3dec.h>
+#include "circularbuffer.hpp"
 
 enum FinishReason {
     NoAbort,
@@ -14,13 +15,16 @@ enum FinishReason {
 
 static HMP3Decoder hMP3Decoder = nullptr;
 // one extra wrapped frame
-static uint8_t mp3_buf_hidden[BUF_MP3_SIZE_BYTES + BUF_HIDDEN_MP3_SIZE_BYTES];
-static uint8_t* const mp3_buf = mp3_buf_hidden + BUF_HIDDEN_MP3_SIZE_BYTES; // pointer is const, not data
+//static uint8_t mp3_buf_hidden[BUF_MP3_SIZE_BYTES + BUF_HIDDEN_MP3_SIZE_BYTES];
+//static uint8_t* const mp3_buf = mp3_buf_hidden + BUF_HIDDEN_MP3_SIZE_BYTES; // pointer is const, not data
+// static CircularBuffer mp3_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
 
 class MP3 {
 
 protected:
     static const int MP3_HEADER_SIZE = 4;
+
+    volatile CircularBuffer mp3_buf;
 
     const char* filepath;
     FRESULT fr;
@@ -31,19 +35,12 @@ protected:
     // MP3
     MP3FrameInfo frame_info;
 
-    long offset;
-    long load_at;
-
     // end of input file
     bool eof;
     // end of playback
     bool eop;
     // finish reason
     FinishReason decode_finished_by;
-
-    long buffer_left();
-    long buffer_left_continuous();
-    long buffer_consumed_since_load();
 
     // governs when and how the data is fetched
     // to the MP3 data buffer
@@ -52,11 +49,9 @@ protected:
     virtual bool low_on_data();
     virtual void load_buffer(int bytes);
 
-    void wrap_buffer();
     void align_buffer();
 
     void init_dbg();
-    void prepare();
 
     // stats (constant after prepare() calls calculate_stats())
     float sec_per_frame;
@@ -75,15 +70,21 @@ protected:
     // these return number of frames actually decoded
     int decode_up_to_one_frame(int16_t* audio_pcm_buf);
     int decode_up_to_n_frames(int16_t* audio_pcm_buf, int n);
+    // won't return before decoding <n> frames exactly
+    void decode_exactly_n_frames(int16_t* audio_pcm_buf, int n);
 
 
 public:
     MP3(const char *filepath_, uint32_t* const audio_pcm_)
         : filepath(filepath_)
         , audio_pcm(audio_pcm_)
-            { prepare(); init_dbg(); }
+        , mp3_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES)
+            { }
 
-    ~MP3() {
+    virtual ~MP3() { }
+
+    void prepare();
+    void stop() {
         close();
     }
 
@@ -119,4 +120,6 @@ public:
         eof = true;
         decode_finished_by = User;
     }
+
+    void preload_pcm_buffer();
 };

@@ -1,4 +1,5 @@
 #include "httpclientpico.hpp"
+#include "circularbuffer.hpp"
 
 #include <lwip/tcp.h>
 #include <lwip/dns.h>
@@ -52,50 +53,75 @@ static err_t gethostbyname(const char* host, ip_addr_t* result) {
     return 0;
 }
 
-
-
-
-#define STREAM_BUFFER_SIZE (1024 * 4)
-static uint8_t stream_buffer[STREAM_BUFFER_SIZE];
-static volatile int stream_offset;
-static int stream_offset_read;
+static CircularBuffer http_buf(HTTP_DATA_BUF_SIZE_BYTES, 0);
 
 void error_callback(void *arg, err_t err) {
     printf("error callback code %d\n", err);
-    ((state_ptr)arg)->err = true;
+    ((argptr)arg)->err = true;
 }
 
 err_t connected_callback(void* arg, struct tcp_pcb* tpcb, err_t err) {
     puts("connected callback");
-    ((state_ptr) arg)->connected = true;
+    ((argptr)arg)->connected = true;
 
     return err;
 }
 
 err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) {
 
+    auto httpc = ((argptr)arg);
+
     if (!p || err != ERR_OK) {
         // some error occurred
         printf("recv callback error code %d\n", err);
+        httpc->err = true;
         return err;
     }
 
-    printf("recv callback, received %d bytes (o %d)\n", p->len, stream_offset);
+    // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, http_buf.space_left(), httpc->content_buffer.space_left());
 
-    if (STREAM_BUFFER_SIZE - stream_offset < p->len) {
-        puts("end of buffer");
-        return ERR_MEM;
+
+    if (httpc->is_content()) {
+        if (http_buf.data_left() > 0) {
+            printf("moving buffer: data %ld to -> free %ld\n", http_buf.data_left(), httpc->content_buffer.space_left());
+            http_buf.move_to(httpc->content_buffer);
+        }
+
+        if (httpc->content_buffer.space_left() < p->len) {
+            puts("end of mp3 buffer");
+            httpc->err = true;
+            return ERR_MEM;
+        }
+
+        httpc->content_buffer.write((uint8_t*)p->payload, p->len);
     }
     else {
-        memcpy(stream_buffer + stream_offset, p->payload, p->len);
-        stream_offset += p->len;
-        tcp_recved(tpcb, p->len);
 
-        // printf("recv done o %d\n", stream_offset);
+        if (http_buf.space_left() < p->len) {
+            puts("end of http buffer");
+            httpc->err = true;
+            return ERR_MEM;
+        }
+
+        http_buf.write((uint8_t*)p->payload, p->len);
     }
+
+    // tcp_recved(tpcb, p->len);
+    // printf("recv done o %d\n", stream_offset);
 
     pbuf_free(p);
     return ERR_OK;
+}
+
+void recv_ack(void* arg, unsigned int bytes) {
+    auto httpc = ((argptr)arg);
+
+    const int target = 80;
+
+    int d = target - httpc->content_buffer.health();
+    int b_new = ((100 + d) * (int)bytes) / 100;
+
+    tcp_recved(httpc->pcb, (uint16_t)b_new);
 }
 
 
@@ -119,21 +145,20 @@ int HttpClientPico::send(const char *buf, int buflen) {
 int HttpClientPico::recv(char* buf, int buflen) {
     // printf("recv o %d read %d\n", stream_offset, stream_offset_read);
 
-    volatile int len;
-    do {
-        len = stream_offset - stream_offset_read;
-    } while (len == 0);
+    while (http_buf.data_left() == 0);
 
-    len = MIN(len, buflen);
+    long len = MIN(http_buf.data_left(), buflen);
 
-    printf("reading %d bytes from o_read %d\n", len, stream_offset_read);
+    // printf("reading %d bytes from o_read %d\n", len, stream_offset_read);
 
-    memcpy(buf, stream_buffer + stream_offset_read, len);
-    stream_offset_read += len;
+    memcpy(buf, http_buf.read_ptr(), len);
+    http_buf.read_ack(len);
+    tcp_recved(pcb, len);
+
     return len;
 }
 
-int HttpClientPico::connect_to(const char *host) {
+int HttpClientPico::connect_to(const char *host, unsigned short port) {
     ip_addr_t addr;
     err_t ret;
     ret = gethostbyname(host, &addr);
@@ -151,31 +176,38 @@ int HttpClientPico::connect_to(const char *host) {
         return -1;
     }
 
-    tcp_arg(pcb, (void *) &state);
+    tcp_arg(pcb, this);
     tcp_err(pcb, error_callback);
     tcp_recv(pcb, recv_callback);
+    content_buffer.set_read_ack_callback(this,recv_ack);
 
-    state.err = false;
-    state.connected = false;
-    ret = tcp_connect(pcb, &addr, 80, connected_callback);
+    err = false;
+    connected = false;
+    ret = tcp_connect(pcb, &addr, port, connected_callback);
     if (ret != ERR_OK) {
         printf("connect failed code %d\n", ret);
         return -1;
     }
 
-    while (!state.err && !state.connected);
-    if (state.err) {
+    while (!err && !connected);
+    if (err) {
         puts("connect failed");
         return -1;
     }
 
     puts("connected");
-    stream_offset = 0;
-    stream_offset_read = 0;
+    http_buf.reset();
 
     return 0;
 }
 
 int HttpClientPico::disconnect() {
-    return tcp_close(pcb);
+    err_t ret = tcp_close(pcb);
+
+    if (ret != ERR_OK) {
+        printf("tcp_close failed code %d\n", ret);
+        return -1;
+    }
+
+    return 0;
 }

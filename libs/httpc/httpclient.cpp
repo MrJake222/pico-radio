@@ -65,7 +65,7 @@ int HttpClient::recv_line(char *buf, int maxlen) {
     return line_length;
 }
 
-int HttpClient::split_host_path(const char *url, char *host, int host_maxlen, char *path, int path_maxlen) {
+int HttpClient::split_host_path_port(const char *url, char *host, int host_maxlen, char *path, int path_maxlen, unsigned short* port) {
 
     if (strncmp(url, "http://", 7) == 0) {
         url += 7;
@@ -75,7 +75,7 @@ int HttpClient::split_host_path(const char *url, char *host, int host_maxlen, ch
         url += 8;
     }
 
-    const char* sep = strchr(url, '/');
+    char* sep = strchr(url, '/');
     if (sep) {
         // separator found
         size_t host_len = sep - url;
@@ -106,7 +106,26 @@ int HttpClient::split_host_path(const char *url, char *host, int host_maxlen, ch
         strcpy(path, "/");
     }
 
+    // separate port
+    sep = strchr(host, ':');
+    if (sep) {
+        *sep = 0;
+        // host is now null-terminated on separator
+
+        sep += 1;
+        // sep points to port
+        char* end;
+        *port = strtol(sep, &end, 10);
+        if (*end) {
+            return -1;
+        }
+    }
+    else {
+        *port = 80;
+    }
+
     printf("host: '%s'\n", host);
+    printf("port: '%d'\n", *port);
     printf("path: '%s'\n", path);
 
     return 0;
@@ -127,7 +146,7 @@ int HttpClient::parse_headers() {
     headers.clear();
 
     while (1) {
-        int len = recv_line(buf, HTTP_BUFSIZE);
+        int len = recv_line(buf, HTTP_TMP_BUF_SIZE_BYTES);
         if (len == 0)
             break;
 
@@ -149,7 +168,7 @@ int HttpClient::parse_headers() {
 int HttpClient::parse_http() {
     memcpy(buf, buf_http, 4);
 
-    int len = recv_line(buf+4, HTTP_BUFSIZE - 4);
+    int len = recv_line(buf+4, HTTP_TMP_BUF_SIZE_BYTES - 4);
     buf[4+len] = 0;
     puts(buf);
 
@@ -182,6 +201,9 @@ int HttpClient::parse_http() {
         case 200:
             // ok
             puts("ok");
+            // http stream ended
+            // time to receive content
+            content = true;
             return 0;
 
         case 301:
@@ -206,26 +228,28 @@ int HttpClient::parse_http() {
 
 int HttpClient::get(const char* url) {
 
-    char host[100];
-    char path[100];
+    char host[HTTP_HOST_MAX_LEN];
+    char path[HTTP_PATH_MAX_LEN];
+    unsigned short port;
 
-    int res = split_host_path(
+    int res = split_host_path_port(
             url,
-            host, 100,
-            path, 100);
+            host, HTTP_HOST_MAX_LEN,
+            path, HTTP_PATH_MAX_LEN,
+            &port);
 
     if (res) {
-        puts("split_host_path failed");
+        puts("split_host_path_port failed");
         return -1;
     }
 
-    res = connect_to(host);
+    res = connect_to(host, port);
     if (res < 0) {
         puts("connect_to failed");
         return -1;
     }
 
-    char buf[200];
+    content = false;
 
     sprintf(buf, "GET %s HTTP/1.0\r\n", path);
     send_string(buf);
@@ -243,10 +267,6 @@ int HttpClient::get(const char* url) {
     }
 
     return 0;
-}
-
-int HttpClient::more_data(char *buf, int buflen) {
-    return recv_all(buf, buflen);
 }
 
 int HttpClient::close() {

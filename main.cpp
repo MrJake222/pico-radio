@@ -172,7 +172,23 @@ enum class FileType {
 
 MP3* mp3;
 
+void dma_start() {
+    printf("dma start\n");
+
+    // setup chaining
+    dma_chain_enable(dma_channel_a, dma_channel_b);
+    dma_chain_enable(dma_channel_b, dma_channel_a);
+
+    // start playback
+    dma_channel_start(dma_channel_a);
+}
+
 void core1_entry() {
+    mp3->preload_pcm_buffer();
+
+    i2s_program_set_bit_freq(pio, sm, mp3->get_bit_freq());
+    dma_start();
+
     while (!mp3->get_decode_finished())
         mp3->watch_decode(a_done_irq, b_done_irq);
 }
@@ -182,28 +198,22 @@ void play_mp3(const char* path, FileType type) {
 
     switch (type) {
         case FileType::MP3:
+            puts("mp3");
             mp3 = new MP3(path, audio_pcm);
             break;
 
         case FileType::RADIO:
+            puts("radio");
             mp3 = new MP3Radio(path, audio_pcm);
+            break;
     }
 
-    i2s_program_set_bit_freq(pio, sm, mp3->get_bit_freq());
+    mp3->prepare();
 
     if (mp3->needs_core1()) {
         multicore_reset_core1();
         multicore_launch_core1(core1_entry);
     }
-
-    printf("dma start\n");
-
-    // setup chaining
-    dma_chain_enable(dma_channel_a, dma_channel_b);
-    dma_chain_enable(dma_channel_b, dma_channel_a);
-
-    // start playback
-    dma_channel_start(dma_channel_a);
 
     while (!mp3->get_eof()) {
 
@@ -220,6 +230,7 @@ void play_mp3(const char* path, FileType type) {
     printf("\nfinished file reading.\n");
 
     while (!mp3->get_decode_finished());
+    multicore_reset_core1();
 
     printf("\nfinished decode.\n");
 
@@ -246,11 +257,15 @@ void play_mp3(const char* path, FileType type) {
         b_done_irq = false;
     }
 
+    puts("dma channels stopped.");
+
+    mp3->stop();
+    puts("mp3 stop done");
+
     delete mp3;
+    puts("mp3 deleted");
 
     pio_sm_put_blocking(pio, sm, 0);
-
-    puts("dma channels stopped.");
 }
 
 void play_wav(const char* path) {
@@ -281,10 +296,10 @@ void play_wav(const char* path) {
     hdr.print();
     i2s_program_set_bit_freq(pio, sm, hdr.get_bit_freq());
 
-    // preload buffer
+    // preload_pcm_buffer buffer
     fr = f_read(&fp, (uint8_t*)audio_pcm, BUF_PCM_SIZE_BYTES, &read);
     if (fr != FR_OK) {
-        fs_err(fr, "f_read preload");
+        fs_err(fr, "f_read preload_pcm_buffer");
     }
 
     printf("dma start\n");
@@ -413,6 +428,11 @@ FRESULT scan_files(char* path, std::vector<std::string>& files) {
 }
 
 FileType get_file_type(const char* filepath) {
+
+    if (strncmp(filepath, "http", 4) == 0) {
+        return FileType::RADIO;
+    }
+
     const char *extension = filepath + strlen(filepath) - 4;
 
     if (strcmp(extension, ".mp3") == 0)
@@ -476,12 +496,12 @@ int main() {
 
     sd_card_t *pSD = sd_get_by_num(0);
 
-    /*fr = f_mount(&pSD->fatfs, pSD->pcName, 1);
+    fr = f_mount(&pSD->fatfs, pSD->pcName, 1);
     if (fr != FR_OK) {
         fs_err(fr, "f_mount");
     }
 
-    puts("mount ok\n");*/
+    puts("mount ok\n");
 
     // WiFi configuration
     int err;
@@ -493,8 +513,13 @@ int main() {
     cyw43_arch_enable_sta_mode();
     // const char* WIFI_SSID = "Bapplejems";
     // const char* WIFI_PASSWORD = "ForThosE4bOut";
-    const char* WIFI_SSID = "NLP";
+    // const char* WIFI_SSID = "NLP";
+    // const char* WIFI_SSID = "NPC";
+    // const char* WIFI_SSID = "MyNet";
+    const char* WIFI_SSID = "BPi";
     const char* WIFI_PASSWORD = "bequick77";
+    // const char* WIFI_SSID = "NorbertAP";
+    // const char* WIFI_PASSWORD = "fearofthedark";
 
     printf("Connecting to Wi-Fi...\n");
     if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
@@ -512,45 +537,52 @@ int main() {
     printf("got ip: %s\n", ip4addr_ntoa(addr));
     cyw43_arch_lwip_end();
 
-    HttpClientPico client;
-
-    client.get("http://stream.rcs.revma.com/an1ugyygzk8uv");
-
-    while(1);
-
-/*
     char path[1024] = "/";
     std::vector<std::string> files;
     scan_files(path, files);
+
+    // radio
+    files.emplace_back("http://stream.rcs.revma.com/an1ugyygzk8uv"); // Radio 357
+    files.emplace_back("http://rmfstream1.interia.pl:8000/rmf_fm");  // RMF FM
+    files.emplace_back("http://zt03.cdn.eurozet.pl/zet-tun.mp3");   // Radio Zet
+    files.emplace_back("http://stream.streambase.ch/radio32/mp3-192/direct");   // Radio 32 Switzerland
 
     while (1) {
         for (uint i=0; i<files.size(); i++) {
             printf("[%02d] %s\n", i+1, files[i].c_str());
         }
 
-        uint choice;
+        const char* filepath;
+        FileType type;
+
         while (1) {
+            uint choice;
             scanf("%d", &choice);
             if ((choice < 1) || (choice > files.size())) {
                 puts("invalid number");
             }
-            else if (get_file_type(files[choice - 1].c_str()) == UNSUPPORTED) {
-                puts("unsupported format. Supported: wav, wave, mp3");
-            }
             else {
-                break;
+                filepath = files[choice - 1].c_str();
+                type = get_file_type(filepath);
+
+                if (type == FileType::UNSUPPORTED) {
+                    puts("unsupported format. Supported: wav, wave, mp3, http(s)");
+                }
+                else {
+                    // valid & supported
+                    break;
+                }
             }
         }
 
-        const char *filepath = files[choice - 1].c_str();
-
-        switch (get_file_type(filepath)) {
+        switch (type) {
             case FileType::WAV:
                 play_wav(filepath);
                 break;
 
             case FileType::MP3:
-                play_mp3(filepath);
+            case FileType::RADIO:
+                play_mp3(filepath, type);
                 break;
 
             case FileType::UNSUPPORTED:
@@ -559,7 +591,4 @@ int main() {
 
         printf("\033[2J"); // clear screen
     }
-*/
-
-    // play_mp3("http://stream.rcs.revma.com/an1ugyygzk8uv", FileType::RADIO);
 }

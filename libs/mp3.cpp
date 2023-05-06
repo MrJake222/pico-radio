@@ -14,25 +14,8 @@ static void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
 }
 
-long MP3::buffer_left() {
-    return load_at <= offset
-            ? (BUF_MP3_SIZE_BYTES - offset + load_at)
-            : (load_at - offset);
-}
-
-long MP3::buffer_left_continuous() {
-    return load_at <= offset
-            ? (BUF_MP3_SIZE_BYTES - offset)   // no + load_at (because it is beyond wrapping)
-            : (load_at - offset);
-}
-
-long MP3::buffer_consumed_since_load() {
-    return load_at <= offset
-           ? (offset - load_at)
-           : (BUF_MP3_SIZE_BYTES - load_at + offset);
-}
-
 void MP3::open() {
+    puts("open base");
     fr = f_open(&fp, filepath, FA_READ);
     if (fr != FR_OK) {
         fs_err(fr, "f_open");
@@ -44,14 +27,14 @@ void MP3::close() {
 }
 
 bool MP3::low_on_data() {
-    return buffer_left() < BUF_MP3_SIZE_BYTES / 2;
+    return mp3_buf.data_left() < BUF_MP3_SIZE_BYTES / 2;
 }
 
 void MP3::load_buffer(int bytes) {
-    // printf("loading, offset %ld  load_at %ld\n", offset, load_at);
+    // printf("loading, offset %ld  load_at %ld  ", mp3_buf.get_read_offset(), mp3_buf.get_write_offset());
 
     uint read;
-    fr = f_read(&fp, mp3_buf + load_at, bytes, &read);
+    fr = f_read(&fp, mp3_buf.write_ptr(), bytes, &read);
     if (fr != FR_OK) {
         fs_err(fr, "f_read");
     }
@@ -61,48 +44,61 @@ void MP3::load_buffer(int bytes) {
         eof = true;
     }
 
-    load_at += read;
-    load_at %= BUF_MP3_SIZE_BYTES;
+    // printf("loaded %d bytes\n", read);
 
-    // printf("loaded,  offset %ld  load_at %ld\n", offset, load_at);
+    mp3_buf.write_ack(read);
+
+    // printf("loaded,  offset %ld  load_at %ld\n", mp3_buf.get_read_offset(), mp3_buf.get_write_offset());
 }
 
-void MP3::wrap_buffer() {
-    long buf_left = buffer_left_continuous();
-
-    memcpy(mp3_buf - buf_left, mp3_buf + offset, buf_left);
-    offset = -buf_left;
+void MP3::preload_pcm_buffer() {
+    decode_exactly_n_frames((int16_t*) audio_pcm, BUF_PCM_SIZE_FRAMES);
 }
 
 void MP3::align_buffer() {
+    uint8_t* orig_read_ptr = mp3_buf.read_ptr();
+
     int matched;
     do {
-        int sync_word_offset = MP3FindSyncWord(mp3_buf + offset, BUF_MP3_SIZE_BYTES - offset);
+        if (mp3_buf.data_left() < MP3_HEADER_SIZE)
+            continue;
+
+        // printf("read at %ld  avail %ld  ", mp3_buf.get_read_offset(), mp3_buf.data_left());
+        int sync_word_offset = MP3FindSyncWord(mp3_buf.read_ptr(), mp3_buf.data_left_continuous());
+        // printf("sync_word_offset: %d   read %ld   len %ld\n", sync_word_offset, mp3_buf.get_read_offset(), mp3_buf.data_left_continuous());
         if (sync_word_offset < 0) {
             // failed
 
-            offset = BUF_MP3_SIZE_BYTES - MP3_HEADER_SIZE;
-            wrap_buffer();
-            load_buffer(BUF_MP3_SIZE_BYTES);
+            // save potential last header & wrap
+            mp3_buf.set_read_ptr_end(MP3_HEADER_SIZE);
+            if (mp3_buf.can_wrap_buffer())
+                mp3_buf.wrap_buffer();
+            //load_buffer(BUF_MP3_SIZE_BYTES);
         }
         else {
-            offset += sync_word_offset;
+            printf("offset %ld  avail %ld  ", mp3_buf.get_read_offset(), mp3_buf.data_left());
 
-            printf("offset %ld  ", offset);
-            matched = MP3CheckSyncWordRepeated(hMP3Decoder, mp3_buf + offset, BUF_MP3_SIZE_BYTES - offset);
+            mp3_buf.read_ack(sync_word_offset);
+
+            matched = MP3CheckSyncWordRepeated(hMP3Decoder, mp3_buf.read_ptr(), mp3_buf.data_left_continuous());
             if (matched == 0) {
                 // failed
-                offset += 1;
+                mp3_buf.read_ack(1);
             }
 
             printf("matched: %d\n", matched);
         }
     } while (matched < 1);
 
-    printf("align buffer offset: %ld\n", offset);
+
+
+    calculate_stats();
 }
 
 void MP3::prepare() {
+    mp3_buf.reset();
+
+    init_dbg();
     open();
 
     if (!hMP3Decoder)
@@ -113,25 +109,18 @@ void MP3::prepare() {
     eof = false;
     eop = false;
 
-    // preload file buffer
-    load_at = 0;
+    // preload_pcm_buffer file buffer
+    /*puts("preload_pcm_buffer");
     load_buffer(BUF_MP3_SIZE_BYTES);
-
-    offset = 0;
+    puts("align");
     align_buffer();
+    puts("align done");*/
 
-    int ret = MP3GetNextFrameInfo(hMP3Decoder, &frame_info, mp3_buf + offset);
-    if (ret) {
-        printf("failed to decode frame information\n");
-    } else {
-        calculate_stats();
-    }
-
-    // preload pcm buffer
-    for (int i=0; i<BUF_PCM_SIZE_FRAMES; i++) {
+    // preload_pcm_buffer pcm buffer
+    /*for (int i=0; i<BUF_PCM_SIZE_FRAMES; i++) {
         decode_up_to_one_frame((int16_t *)(audio_pcm + i * MP3_SAMPLES_PER_FRAME));
         watch_file_buffer();
-    }
+    }*/
 
     decode_finished_by = NoAbort;
     sum_frames_decoded = 0;
@@ -147,16 +136,22 @@ void MP3::init_dbg() {
 }
 
 void MP3::calculate_stats() {
+    int ret = MP3GetNextFrameInfo(hMP3Decoder, &frame_info, mp3_buf.read_ptr());
+    if (ret) {
+        printf("failed to decode frame information\n");
+        return;
+    }
+
     sec_per_frame = (float)frame_info.outputSamps / frame_info.nChans / frame_info.samprate;
-    duration = ((int)f_size(&fp) - offset) * 8 / frame_info.bitrate;
+    duration = ((int)f_size(&fp) - mp3_buf.get_read_offset()) * 8 / frame_info.bitrate;
     bit_freq = frame_info.bitsPerSample * frame_info.nChans * frame_info.samprate;
 
-    printf("output samples: %d, samplerate: %d, bitrate: %d\n",
+    printf("\toutput samples: %d, samplerate: %d, bitrate: %d\n",
            frame_info.outputSamps,
            frame_info.samprate,
            frame_info.bitrate);
 
-    printf("ms_per_frame: %f, bit freq: %ld\n",
+    printf("\tms_per_frame: %f, bit freq: %ld\n",
            sec_per_frame * 1000,
            bit_freq);
 }
@@ -177,11 +172,13 @@ void MP3::watch_file_buffer() {
 
 void MP3::watch_timer() {
     if (seconds != last_seconds) {
-        printf("%02d:%02d / %02d:%02d   buf load %5.2fms %3d%%\r",
+        printf("%02d:%02d / %02d:%02d   decode %5.2fms %2d%%   health %2d%%\n",
                seconds/60, seconds%60,
                get_duration()/60, get_duration()%60,
                took_ms,
-               int(took_ms * 100 / get_ms_per_frame()));
+               int(took_ms * 100 / get_ms_per_frame()),
+               mp3_buf.health()
+        );
 
         last_seconds = seconds;
     }
@@ -237,19 +234,19 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
 
     long bytes_consumed;
 
-    int res;
+    bool again;
     do {
         // printf("o %ld\n", offset);
-        if ((BUF_MP3_SIZE_BYTES - offset) < MP3_HEADER_SIZE) {
+        if (mp3_buf.data_left_continuous() < MP3_HEADER_SIZE) {
             // even the header won't fit in continuous buffer
-            wrap_buffer();
+            mp3_buf.wrap_buffer();
         }
 
-        uint8_t* dptr_orig = mp3_buf + offset;
+        uint8_t* dptr_orig = mp3_buf.read_ptr();
         uint8_t* dptr = dptr_orig;
-        int b = BUF_MP3_SIZE_BYTES - offset;
+        int b = mp3_buf.data_left_continuous();
 
-        res = MP3Decode(
+        int res = MP3Decode(
                 hMP3Decoder,
                 &dptr,
                 &b,
@@ -262,6 +259,7 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
             printf("err %d\n", res);
         }*/
 
+        again = false;
         switch (res) {
             case ERR_MP3_NONE:
                 break;
@@ -269,21 +267,29 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
             case ERR_MP3_INDATA_UNDERFLOW:
                 if (eop)
                     return 0;
-                wrap_buffer();
+                if (mp3_buf.can_wrap_buffer())
+                    mp3_buf.wrap_buffer();
+                again = true;
                 break;
 
             case ERR_MP3_INVALID_FRAMEHEADER:
-                printf("o %ld  wrong sync-word\n", offset);
+                printf("o %ld  wrong sync-word\n", mp3_buf.get_read_offset());
                 align_buffer();
+                again = true;
+                break;
+
+            case ERR_MP3_MAINDATA_UNDERFLOW:
+                puts("maindata underflow (middle of stream)");
+                again = true;
                 break;
 
             default:
                 printf("unknown error code=%d\n", res);
         }
 
-    } while (res == ERR_MP3_INDATA_UNDERFLOW || res == ERR_MP3_INVALID_FRAMEHEADER);
+    } while (again);
 
-    offset += bytes_consumed;
+    mp3_buf.read_ack(bytes_consumed);
 
     return 1;
 }
@@ -301,4 +307,14 @@ int MP3::decode_up_to_n_frames(int16_t* audio_pcm_buf, int n) {
     }
 
     return frames_read;
+}
+
+void MP3::decode_exactly_n_frames(int16_t* audio_pcm_buf, int n) {
+    long frame_offset = 0;
+    int frames_read;
+
+    for (frames_read=0; frames_read < n;) {
+        frames_read += decode_up_to_one_frame(audio_pcm_buf + frame_offset);
+        frame_offset += MP3_SAMPLES_PER_FRAME * 2;
+    }
 }
