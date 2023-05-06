@@ -55,8 +55,7 @@ void MP3::preload_pcm_buffer() {
     decode_exactly_n_frames((int16_t*) audio_pcm, BUF_PCM_SIZE_FRAMES);
 }
 
-void MP3::align_buffer() {
-    uint8_t* orig_read_ptr = mp3_buf.read_ptr();
+void MP3::align_buffer(uint8_t* orig_read_ptr) {
 
     int matched;
     do {
@@ -76,9 +75,9 @@ void MP3::align_buffer() {
             //load_buffer(BUF_MP3_SIZE_BYTES);
         }
         else {
-            printf("offset %ld  avail %ld  ", mp3_buf.get_read_offset(), mp3_buf.data_left());
-
             mp3_buf.read_ack(sync_word_offset);
+
+            printf("offset %5ld (%4d)  avail %ld  ", mp3_buf.get_read_offset(), mp3_buf.read_ptr() - orig_read_ptr, mp3_buf.data_left());
 
             matched = MP3CheckSyncWordRepeated(hMP3Decoder, mp3_buf.read_ptr(), mp3_buf.data_left_continuous());
             if (matched == 0) {
@@ -89,8 +88,6 @@ void MP3::align_buffer() {
             printf("matched: %d\n", matched);
         }
     } while (matched < 1);
-
-
 
     calculate_stats();
 }
@@ -123,8 +120,11 @@ void MP3::prepare() {
     }*/
 
     decode_finished_by = NoAbort;
+    bytes_consumed_last = 0;
+
     sum_frames_decoded = 0;
     took_ms = 0;
+    took_ms_max = 0;
     seconds = 0;
     last_seconds = -1;
 }
@@ -172,11 +172,12 @@ void MP3::watch_file_buffer() {
 
 void MP3::watch_timer() {
     if (seconds != last_seconds) {
-        printf("%02d:%02d / %02d:%02d   decode %5.2fms %2d%%   health %2d%%\n",
+        printf("%02d:%02d / %02d:%02d   decode %5.2fms %2d%% max %5.2fms   health %2d%%\n",
                seconds/60, seconds%60,
                get_duration()/60, get_duration()%60,
                took_ms,
                int(took_ms * 100 / get_ms_per_frame()),
+               took_ms_max,
                mp3_buf.health()
         );
 
@@ -190,10 +191,15 @@ void MP3::decode_done(int decoded_frames, uint64_t took_us, FinishReason channel
     sum_frames_decoded += decoded_frames;
     seconds = frames_to_sec(sum_frames_decoded);
     took_ms = (float)took_us / 1000.f / (float)LOAD_FRAMES;
+    took_ms_max = MAX(took_ms, took_ms_max);
 
     if (decoded_frames < LOAD_FRAMES) {
         // dma channel wasn't supplied with enough data -> EOF
         decode_finished_by = channel;
+    }
+
+    if (took_ms > 26) {
+        printf("load took %5.2fms\n", took_ms);
     }
 }
 
@@ -234,9 +240,12 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
 
     long bytes_consumed;
 
-    bool again;
+    bool again = false;
     do {
-        // printf("o %ld\n", offset);
+        if (again && mp3_buf.get_read_offset() > 0) {
+            printf("decode o %ld\n", mp3_buf.get_read_offset());
+        }
+
         if (mp3_buf.data_left_continuous() < MP3_HEADER_SIZE) {
             // even the header won't fit in continuous buffer
             mp3_buf.wrap_buffer();
@@ -259,6 +268,10 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
             printf("err %d\n", res);
         }*/
 
+
+        int rev;
+        uint8_t* orig_read;
+
         again = false;
         switch (res) {
             case ERR_MP3_NONE:
@@ -274,7 +287,14 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
 
             case ERR_MP3_INVALID_FRAMEHEADER:
                 printf("o %ld  wrong sync-word\n", mp3_buf.get_read_offset());
-                align_buffer();
+
+                orig_read = mp3_buf.read_ptr();
+                rev = MAX(0, bytes_consumed_last - MP3_HEADER_SIZE);
+                // mp3_buf.debug_read(256, rev);
+                printf("reversing buffer by %d: %ld -> %ld\n", rev, mp3_buf.get_read_offset(), mp3_buf.get_read_offset() - rev);
+
+                mp3_buf.read_reverse(rev);
+                align_buffer(orig_read);
                 again = true;
                 break;
 
@@ -284,12 +304,13 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
                 break;
 
             default:
-                printf("unknown error code=%d\n", res);
+                printf("unknown error code=%d (again %d)\n", res, again);
         }
 
     } while (again);
 
     mp3_buf.read_ack(bytes_consumed);
+    bytes_consumed_last = bytes_consumed;
 
     return 1;
 }

@@ -64,6 +64,8 @@ public:
     void read_ack(unsigned int bytes)  volatile;
     void write_ack(unsigned int bytes) volatile;
 
+    void read_reverse(unsigned int bytes) volatile { read_at -= (long)bytes; }
+
 
     // wrapping
     bool can_wrap_buffer()  volatile const;
@@ -87,4 +89,8 @@ public:
     // (more free space available)
     // only one callback supported
     void set_read_ack_callback(void* arg, read_callback_fn callback) volatile;
+
+
+    // print read debug info
+    void debug_read(int bytes, int prepend) volatile;
 };

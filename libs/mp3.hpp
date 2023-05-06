@@ -42,6 +42,8 @@ protected:
     // finish reason
     FinishReason decode_finished_by;
 
+    int bytes_consumed_last;
+
     // governs when and how the data is fetched
     // to the MP3 data buffer
     virtual void open();
@@ -49,7 +51,7 @@ protected:
     virtual bool low_on_data();
     virtual void load_buffer(int bytes);
 
-    void align_buffer();
+    void align_buffer(uint8_t* orig_read_ptr);
 
     void init_dbg();
 
@@ -63,6 +65,7 @@ protected:
     // used by watch_timer()
     int sum_frames_decoded;
     float took_ms;
+    float took_ms_max;
     int seconds;
     int last_seconds;
     void decode_done(int decoded_frames, uint64_t took_us, FinishReason channel);

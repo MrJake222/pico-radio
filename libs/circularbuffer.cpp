@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <pico/platform.h>
+#include <cstdio>
 
 long CircularBuffer::data_left() volatile const {
     return write_at < read_at
@@ -82,6 +83,22 @@ void CircularBuffer::write(const uint8_t* data, long data_len) volatile {
 void CircularBuffer::set_read_ack_callback(void* arg, CircularBuffer::read_callback_fn callback) volatile {
     read_ack_arg = arg;
     read_ack_callback = callback;
+}
+
+void CircularBuffer::debug_read(int bytes, int prepend) volatile {
+
+    for (int i=0; i<MIN(bytes+prepend, data_left_continuous()); i++) {
+        if ((i % 32) == 0) {
+            if (i > 0)
+                puts("");
+
+            printf("%5ld: ", read_at - prepend + i);
+        }
+
+        printf("%02x ", buffer[read_at - prepend + i]);
+    }
+
+    printf("\n");
 }
 
 

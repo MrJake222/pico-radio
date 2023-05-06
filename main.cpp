@@ -450,7 +450,8 @@ int main() {
     // UART on USB
     stdio_usb_init();
 
-    set_sys_clock_khz(140000, true);
+    // set_sys_clock_khz(140000, true);
+    set_sys_clock_khz(180000, true);
 
     sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
@@ -522,8 +523,10 @@ int main() {
     // const char* WIFI_PASSWORD = "fearofthedark";
 
     printf("Connecting to Wi-Fi...\n");
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
-        panic("failed to connect.\n");
+    int con_res = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);
+    if (con_res) {
+        printf("connection failed code %d\n", con_res);
+        while(1);
     } else {
         printf("Connected.\n");
     }
