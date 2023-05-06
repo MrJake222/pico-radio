@@ -303,6 +303,18 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
                 again = true;
                 break;
 
+            case ERR_MP3_INVALID_SIDEINFO:
+            case ERR_MP3_INVALID_SCALEFACT:
+            case ERR_MP3_INVALID_HUFFCODES:
+            case ERR_MP3_INVALID_DEQUANTIZE:
+            case ERR_MP3_INVALID_IMDCT:
+            case ERR_MP3_INVALID_SUBBAND:
+                printf("o %ld  frame didn't decode properly (code=%d), trying again\n", mp3_buf.get_read_offset(), res);
+                mp3_buf.read_ack(bytes_consumed);
+                bytes_consumed_last = bytes_consumed;
+                again = true;
+                break;
+
             default:
                 printf("unknown error code=%d (again %d)\n", res, again);
         }
