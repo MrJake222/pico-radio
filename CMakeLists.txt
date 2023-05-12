@@ -53,6 +53,8 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/libs
 )
 
+add_compile_definitions(PICO_MAX_SHARED_IRQ_HANDLERS=8u)
+
 # enable only usb stdio functions
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
-pico_enable_stdio_uart(${PROJECT_NAME} 0)
+pico_enable_stdio_uart(${PROJECT_NAME} 1)

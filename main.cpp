@@ -447,11 +447,13 @@ FileType get_file_type(const char* filepath) {
 
 int main() {
 
-    // UART on USB
-    stdio_usb_init();
-
     // set_sys_clock_khz(140000, true);
     set_sys_clock_khz(180000, true);
+
+    // UART on USB
+    // stdio_usb_init();
+    // UART on 0/1 and USB
+    stdio_init_all();
 
     sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
@@ -508,7 +510,8 @@ int main() {
     int err;
     err = cyw43_arch_init();
     if (err) {
-        panic("wifi arch init error");
+        printf("wifi arch init error code %d\n", err);
+        while(1);
     }
 
     cyw43_arch_enable_sta_mode();
@@ -517,10 +520,10 @@ int main() {
     // const char* WIFI_SSID = "NLP";
     // const char* WIFI_SSID = "NPC";
     // const char* WIFI_SSID = "MyNet";
-    const char* WIFI_SSID = "BPi";
-    const char* WIFI_PASSWORD = "bequick77";
-    // const char* WIFI_SSID = "NorbertAP";
-    // const char* WIFI_PASSWORD = "fearofthedark";
+    // const char* WIFI_SSID = "BPi";
+    // const char* WIFI_PASSWORD = "bequick77";
+    const char* WIFI_SSID = "NorbertAP";
+    const char* WIFI_PASSWORD = "fearofthedark";
 
     printf("Connecting to Wi-Fi...\n");
     int con_res = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);
