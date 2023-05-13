@@ -3,6 +3,7 @@
 
 #include <lwip/tcp.h>
 #include <lwip/dns.h>
+#include <pico/cyw43_arch.h>
 
 struct dns_query {
     bool found = false;
@@ -11,16 +12,20 @@ struct dns_query {
 };
 
 void gethost_callback(const char* name, const ip_addr_t* ipaddr, void* callback_arg) {
+    cyw43_arch_lwip_check();
+
     auto query = (struct dns_query*) callback_arg;
     if (ipaddr) {
         printf("resolved callback %s (hex %08x)\n", ipaddr_ntoa(ipaddr), *ipaddr);
         memcpy(query->addr, ipaddr, sizeof(ip_addr_t));
         query->found = true;
     } else {
+        puts("resolve failed");
         query->failed = true;
     }
 }
 
+// this is private, only called from connect_to
 static err_t gethostbyname(const char* host, ip_addr_t* result) {
 
     volatile struct dns_query query;
@@ -34,7 +39,11 @@ static err_t gethostbyname(const char* host, ip_addr_t* result) {
 
         case ERR_INPROGRESS:
             puts("in progress");
+
+            cyw43_arch_lwip_end();
             while (!query.found && !query.failed);
+            cyw43_arch_lwip_begin();
+
             puts("done");
             if (query.failed) {
                 puts("dns query failed");
@@ -56,11 +65,15 @@ static err_t gethostbyname(const char* host, ip_addr_t* result) {
 static CircularBuffer http_buf(HTTP_DATA_BUF_SIZE_BYTES, 0);
 
 void error_callback(void *arg, err_t err) {
+    cyw43_arch_lwip_check();
+
     printf("error callback code %d\n", err);
     ((argptr)arg)->err = true;
 }
 
 err_t connected_callback(void* arg, struct tcp_pcb* tpcb, err_t err) {
+    cyw43_arch_lwip_check();
+
     puts("connected callback");
     ((argptr)arg)->connected = true;
 
@@ -68,6 +81,8 @@ err_t connected_callback(void* arg, struct tcp_pcb* tpcb, err_t err) {
 }
 
 err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) {
+
+    cyw43_arch_lwip_check();
 
     auto httpc = ((argptr)arg);
 
@@ -113,33 +128,43 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) 
     return ERR_OK;
 }
 
+// called from core1 to ack decoded bytes
 void recv_ack(void* arg, unsigned int bytes) {
     auto httpc = ((argptr)arg);
 
-    const int target = 80;
+    const int target = 60;
 
     int d = target - httpc->content_buffer.health();
     int b_new = ((100 + d) * (int)bytes) / 100;
 
+    cyw43_arch_lwip_begin();
     tcp_recved(httpc->pcb, (uint16_t)b_new);
+    cyw43_arch_lwip_end();
 }
 
 
 int HttpClientPico::send(const char *buf, int buflen) {
+    cyw43_arch_lwip_begin();
+
     err_t ret;
     ret = tcp_write(pcb, buf, buflen, 0);
     if (ret != ERR_OK) {
         printf("tcp_write failed code %d\n", ret);
-        return 0;
+        goto clean_up_failed;
     }
 
     ret = tcp_output(pcb);
     if (ret != ERR_OK) {
         printf("tcp_output failed code %d\n", ret);
-        return 0;
+        goto clean_up_failed;
     }
 
+    cyw43_arch_lwip_end();
     return buflen;
+
+clean_up_failed:
+    cyw43_arch_lwip_end();
+    return 0;
 }
 
 int HttpClientPico::recv(char* buf, int buflen) {
@@ -153,18 +178,23 @@ int HttpClientPico::recv(char* buf, int buflen) {
 
     memcpy(buf, http_buf.read_ptr(), len);
     http_buf.read_ack(len);
+
+    cyw43_arch_lwip_begin();
     tcp_recved(pcb, len);
+    cyw43_arch_lwip_end();
 
     return len;
 }
 
 int HttpClientPico::connect_to(const char *host, unsigned short port) {
+    cyw43_arch_lwip_begin();
+
     ip_addr_t addr;
     err_t ret;
     ret = gethostbyname(host, &addr);
     if (ret) {
         puts("gethostbyname failed");
-        return -1;
+        goto clean_up_failed;
     }
 
     printf("connecting to: %s (hex %08x)\n", ipaddr_ntoa(&addr), addr);
@@ -173,41 +203,53 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
 
     if (!pcb) {
         puts("tcp_new failed");
-        return -1;
+        goto clean_up_failed;
     }
 
     tcp_arg(pcb, this);
     tcp_err(pcb, error_callback);
     tcp_recv(pcb, recv_callback);
-    content_buffer.set_read_ack_callback(this,recv_ack);
+    content_buffer.set_read_ack_callback(this, recv_ack);
 
     err = false;
     connected = false;
     ret = tcp_connect(pcb, &addr, port, connected_callback);
     if (ret != ERR_OK) {
         printf("connect failed code %d\n", ret);
-        return -1;
+        goto clean_up_failed;
     }
 
+    cyw43_arch_lwip_end();
     while (!err && !connected);
+    cyw43_arch_lwip_begin();
+
     if (err) {
         puts("connect failed");
-        return -1;
+        goto clean_up_failed;
     }
 
     puts("connected");
     http_buf.reset();
 
+    cyw43_arch_lwip_end();
     return 0;
+
+clean_up_failed:
+    cyw43_arch_lwip_end();
+    return -1;
 }
 
 int HttpClientPico::disconnect() {
+    cyw43_arch_lwip_begin();
+
     err_t ret = tcp_close(pcb);
 
     if (ret != ERR_OK) {
         printf("tcp_close failed code %d\n", ret);
+        cyw43_arch_lwip_end();
         return -1;
     }
 
+    cyw43_arch_lwip_end();
     return 0;
 }

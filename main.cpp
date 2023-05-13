@@ -515,15 +515,15 @@ int main() {
     }
 
     cyw43_arch_enable_sta_mode();
-    // const char* WIFI_SSID = "Bapplejems";
-    // const char* WIFI_PASSWORD = "ForThosE4bOut";
+    const char* WIFI_SSID = "Bapplejems";
+    const char* WIFI_PASSWORD = "ForThosE4bOut";
     // const char* WIFI_SSID = "NLP";
     // const char* WIFI_SSID = "NPC";
     // const char* WIFI_SSID = "MyNet";
     // const char* WIFI_SSID = "BPi";
     // const char* WIFI_PASSWORD = "bequick77";
-    const char* WIFI_SSID = "NorbertAP";
-    const char* WIFI_PASSWORD = "fearofthedark";
+    // const char* WIFI_SSID = "NorbertAP";
+    // const char* WIFI_PASSWORD = "fearofthedark";
 
     printf("Connecting to Wi-Fi...\n");
     int con_res = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);

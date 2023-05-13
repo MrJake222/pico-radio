@@ -1,6 +1,8 @@
+#include "lwipopts.h"
+
 // MP3 compressed data buffer
 #define BUF_HIDDEN_MP3_SIZE_FRAMES     2
-#define BUF_MP3_SIZE_FRAMES            32
+#define BUF_MP3_SIZE_FRAMES            16
 #define BUF_MP3_SIZE_BYTES_PER_FRAME   1024
 #define BUF_HIDDEN_MP3_SIZE_BYTES      (BUF_HIDDEN_MP3_SIZE_FRAMES * BUF_MP3_SIZE_BYTES_PER_FRAME)
 #define BUF_MP3_SIZE_BYTES             (BUF_MP3_SIZE_FRAMES * BUF_MP3_SIZE_BYTES_PER_FRAME)
@@ -17,4 +19,4 @@
 
 // HTTP
 #define HTTP_TMP_BUF_SIZE_BYTES     1024
-#define HTTP_DATA_BUF_SIZE_BYTES    (16 * 1024)
+#define HTTP_DATA_BUF_SIZE_BYTES    TCP_WND
