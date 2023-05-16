@@ -66,7 +66,3 @@ bool DecodeFile::data_buffer_watch() {
     // loading not occurred
     return true;
 }
-
-void DecodeFile::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
-    DecodeBase::dma_feed_done(decoded, took_us, channel);
-}

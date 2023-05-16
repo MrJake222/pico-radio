@@ -14,8 +14,7 @@ class DecodeFile : public DecodeBase {
     void load_buffer(int bytes);
 
     bool data_buffer_watch() override;
-
-    void dma_feed_done(int decoded, int took_us, DMAChannel channel) override;
+    int source_size_bytes() override { return f_size(&fp); }
 
 public:
     void begin() override;

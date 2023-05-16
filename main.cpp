@@ -16,13 +16,14 @@
 #include "hw_config.h"
 
 #include "config.hpp"
-#include "libs/waveheader.hpp"
-// #include "libs/mp3.hpp"
-// #include "libs/mp3radio.hpp"
-#include "libs/httpclientpico.hpp"
-#include "decode/formatmp3.hpp"
-#include "decode/decodebase.hpp"
-#include "decode/decodefile.hpp"
+#include "waveheader.hpp"
+// #include "mp3.hpp"
+// #include "mp3radio.hpp"
+#include "httpclientpico.hpp"
+#include "formatmp3.hpp"
+#include "decodebase.hpp"
+#include "decodefile.hpp"
+#include "decodestream.hpp"
 
 // wifi
 #include <pico/cyw43_arch.h>
@@ -193,8 +194,7 @@ void dma_start() {
 void core1_entry() {
     dec->core1_init();
 
-    // i2s_program_set_bit_freq(pio, sm, mp3->get_bit_freq());
-    i2s_program_set_bit_freq(pio, sm, 44100*2*16);
+    i2s_program_set_bit_freq(pio, sm, dec->bit_freq());
     dma_start();
 
     while (dec->core1_loop());
@@ -203,6 +203,7 @@ void core1_entry() {
 void play_mp3(const char* path, FileType type) {
     printf("\nplaying: %s as MP3 file\n", path);
 
+    // TODO add WAV
     switch (type) {
         case FileType::MP3:
             dec = new DecodeFile(
@@ -215,8 +216,13 @@ void play_mp3(const char* path, FileType type) {
             break;
 
         case FileType::RADIO:
-            puts("radio");
-            //mp3 = new MP3Radio(path, audio_pcm);
+            dec = new DecodeStream(
+                    audio_pcm,
+                    BUF_PCM_SIZE_32BIT,
+                    a_done_irq,
+                    b_done_irq,
+                    path,
+                    format_mp3);
             break;
 
         default:
@@ -533,7 +539,7 @@ int main() {
     // const char* WIFI_SSID = "NorbertAP";
     // const char* WIFI_PASSWORD = "fearofthedark";
 
-    /*printf("Connecting to Wi-Fi...\n");
+    printf("Connecting to Wi-Fi...\n");
     int con_res = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);
     if (con_res) {
         printf("connection failed code %d\n", con_res);
@@ -549,7 +555,7 @@ int main() {
     } while (ip4_addr_isany_val(*addr));
 
     printf("got ip: %s\n", ip4addr_ntoa(addr));
-    cyw43_arch_lwip_end();*/
+    cyw43_arch_lwip_end();
 
     char path[1024] = "/";
     std::vector<std::string> files;

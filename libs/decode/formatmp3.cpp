@@ -4,10 +4,6 @@
 #include <cstdio>
 #include <pico/platform.h>
 
-void FormatMP3::calculate_stats() {
-
-}
-
 void FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
 
     int matched;
@@ -41,8 +37,6 @@ void FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
             printf("matched: %d\n", matched);
         }
     } while (matched < 1);
-
-    calculate_stats();
 }
 
 int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
@@ -82,6 +76,7 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
         again = false;
         switch (res) {
             case ERR_MP3_NONE:
+                calculate_stats();
                 break;
 
             case ERR_MP3_INDATA_UNDERFLOW:
@@ -157,4 +152,40 @@ void FormatMP3::decode_exactly_n(uint32_t* audio_pcm_buf, int n) {
         frames_read += decode_up_to_one_frame(audio_pcm_buf + frame_offset);
         frame_offset += MP3_SAMPLES_PER_FRAME;
     }
+}
+
+void FormatMP3::calculate_stats() {
+    MP3GetLastFrameInfo(hMP3Decoder, &frame_info);
+
+    bitrate_sum += frame_info.bitrate;
+    bitrate_count += 1;
+
+    if (stats_print) {
+        stats_print = false;
+
+        printf("\toutput samples: %d, samplerate: %d, bitrate: %d\n",
+               frame_info.outputSamps,
+               frame_info.samprate,
+               frame_info.bitrate);
+
+        printf("\tms_per_frame: %f, bit freq: %ld\n",
+               ms_per_unit(),
+               bit_freq());
+    }
+}
+
+long FormatMP3::bit_freq() {
+    return (long)frame_info.bitsPerSample * frame_info.nChans * frame_info.samprate;
+}
+
+float FormatMP3::ms_per_unit() {
+    return (float)frame_info.outputSamps * 1000 / frame_info.nChans / frame_info.samprate;
+}
+
+int FormatMP3::units_to_sec(int units) {
+    return units * ms_per_unit() / 1000;
+}
+
+int FormatMP3::duration_sec(int file_size_bytes) {
+    return (file_size_bytes - raw_buf.get_read_offset()) * 8 / avg_bitrate();
 }

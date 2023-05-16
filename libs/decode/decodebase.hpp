@@ -39,6 +39,10 @@ class DecodeBase {
     void dma_watch();
     void dma_preload();
 
+    // play stats
+    int sum_units_decoded;
+    int last_seconds;
+
 protected:
     // generic path to resource
     // (used by implementations to connect open file/stream)
@@ -54,6 +58,9 @@ protected:
     virtual bool data_buffer_watch() { return true; }
     // called when <dma_watch> actually loads some data
     virtual void dma_feed_done(int decoded, int took_us, DMAChannel channel);
+
+    // return source medium size in bytes
+    virtual int source_size_bytes() { return 0; }
 
 public:
     DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_, const char* path_, Format& format_)
@@ -71,6 +78,8 @@ public:
     virtual void begin() {
         format.init();
         decode_finished_by = FinishReason::NoFinish;
+        sum_units_decoded = 0;
+        last_seconds = -1;
     }
 
     virtual void end() { }
@@ -88,4 +97,6 @@ public:
     // functions called from core1
     void core1_init();
     bool core1_loop();
+
+    long bit_freq() { return format.bit_freq(); }
 };

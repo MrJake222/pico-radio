@@ -28,11 +28,13 @@ add_executable(${PROJECT_NAME}
         libs/waveheader.cpp
 #        libs/mp3.cpp
         libs/mp3radio.cpp
-        libs/httpclientpico.cpp
+        libs/httpc/httpclientpico.cpp
         libs/circularbuffer.cpp
         libs/decode/decodebase.cpp
         libs/decode/decodefile.cpp
-        libs/decode/formatmp3.cpp libs/decode/formatmp3.hpp libs/decode/format.hpp)
+        libs/decode/formatmp3.cpp
+        libs/decode/decodestream.cpp
+        )
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
@@ -54,6 +56,7 @@ target_link_libraries(${PROJECT_NAME}
 include_directories(
         ${PROJECT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/libs
+        ${PROJECT_SOURCE_DIR}/libs/decode
 )
 
 add_compile_definitions(PICO_MAX_SHARED_IRQ_HANDLERS=8u)

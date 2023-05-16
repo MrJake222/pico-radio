@@ -1,6 +1,8 @@
 #include <hardware/timer.h>
 #include "decodebase.hpp"
 
+#include <cstdio>
+
 void DecodeBase::core0_init() {
 
 }
@@ -33,6 +35,25 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
         decode_finished_by = channel == DMAChannel::ChanA
                 ? FinishReason::UnderflowChanA
                 : FinishReason::UnderflowChanB;
+    }
+
+    sum_units_decoded += decoded;
+    int seconds = format.units_to_sec(sum_units_decoded);
+
+    if (seconds != last_seconds) {
+        last_seconds = seconds;
+
+        int duration = format.duration_sec(source_size_bytes());
+        float took_ms = (float)took_us / 1000.f / (float)format.units_to_decode_half();
+
+        // TODO move this to a callback
+        printf("%02d:%02d / %02d:%02d   decode %5.2fms %2d%%   health %2d%%\n",
+               seconds/60, seconds%60,
+               duration/60, duration%60,
+               took_ms,
+               int(took_ms * 100 / format.ms_per_unit()),
+               format.raw_buf.health()
+        );
     }
 }
 
