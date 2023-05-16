@@ -4,10 +4,7 @@
 
 class CircularBuffer {
 
-    const int size_hidden;
     uint8_t* const buffer_hidden;
-
-    const int size;
     uint8_t* const buffer;
 
     // can't do read pos + avail
@@ -23,6 +20,9 @@ class CircularBuffer {
     read_callback_fn read_ack_callback;
 
 public:
+    const int size_hidden;
+    const int size;
+
     /**
      *
      * @param size size of the visible buffer
@@ -32,7 +32,7 @@ public:
         : size(size)
         , size_hidden(size_hidden_)
         , buffer_hidden(new uint8_t[size + size_hidden_])
-        , buffer(buffer_hidden + size_hidden)
+        , buffer(buffer_hidden + size_hidden_)
         {
             reset();
         }

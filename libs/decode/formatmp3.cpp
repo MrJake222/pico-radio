@@ -1,0 +1,160 @@
+#include "formatmp3.hpp"
+#include "config.hpp"
+
+#include <cstdio>
+#include <pico/platform.h>
+
+void FormatMP3::calculate_stats() {
+
+}
+
+void FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
+
+    int matched;
+    do {
+        if (raw_buf.data_left() < MP3_HEADER_SIZE)
+            continue;
+
+        // printf("read at %ld  avail %ld  ", mp3_buf.get_read_offset(), mp3_buf.data_left());
+        int sync_word_offset = MP3FindSyncWord(raw_buf.read_ptr(), raw_buf.data_left_continuous());
+        // printf("sync_word_offset: %d   read %ld   len %ld\n", sync_word_offset, mp3_buf.get_read_offset(), mp3_buf.data_left_continuous());
+        if (sync_word_offset < 0) {
+            // failed
+
+            // save potential last header & wrap
+            raw_buf.set_read_ptr_end(MP3_HEADER_SIZE);
+            if (raw_buf.can_wrap_buffer())
+                raw_buf.wrap_buffer();
+            //load_buffer(BUF_MP3_SIZE_BYTES);
+        }
+        else {
+            raw_buf.read_ack(sync_word_offset);
+
+            printf("offset %5ld (%4d)  avail %ld  ", raw_buf.get_read_offset(), raw_buf.read_ptr() - orig_read_ptr, raw_buf.data_left());
+
+            matched = MP3CheckSyncWordRepeated(hMP3Decoder, raw_buf.read_ptr(), raw_buf.data_left_continuous());
+            if (matched == 0) {
+                // failed
+                raw_buf.read_ack(1);
+            }
+
+            printf("matched: %d\n", matched);
+        }
+    } while (matched < 1);
+
+    calculate_stats();
+}
+
+int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
+    // watch_file_buffer();
+
+    // printf("decode o %ld  avail %ld\n", raw_buf.get_read_offset(), raw_buf.data_left_continuous());
+
+    long bytes_consumed;
+
+    bool again = false;
+    do {
+        if (again && raw_buf.get_read_offset() > 0) {
+            printf("decode o %ld\n", raw_buf.get_read_offset());
+        }
+
+        if (raw_buf.data_left_continuous() < MP3_HEADER_SIZE) {
+            // even the header won't fit in continuous buffer
+            raw_buf.wrap_buffer();
+        }
+
+        uint8_t* dptr_orig = raw_buf.read_ptr();
+        uint8_t* dptr = dptr_orig;
+        int b = raw_buf.data_left_continuous();
+
+        int res = MP3Decode(
+                hMP3Decoder,
+                &dptr,
+                &b,
+                (short*)audio_pcm_buf,
+                0);
+
+        bytes_consumed = dptr - dptr_orig;
+
+        int rev;
+        uint8_t* orig_read;
+
+        again = false;
+        switch (res) {
+            case ERR_MP3_NONE:
+                break;
+
+            case ERR_MP3_INDATA_UNDERFLOW:
+                if (eop)
+                    return 0;
+                if (raw_buf.can_wrap_buffer())
+                    raw_buf.wrap_buffer();
+                again = true;
+                break;
+
+            case ERR_MP3_INVALID_FRAMEHEADER:
+                printf("o %ld  wrong sync-word\n", raw_buf.get_read_offset());
+
+                orig_read = raw_buf.read_ptr();
+                rev = MAX(0, bytes_consumed_last - MP3_HEADER_SIZE);
+                // mp3_buf.debug_read(256, rev);
+                printf("reversing buffer by %d: %ld -> %ld\n", rev, raw_buf.get_read_offset(), raw_buf.get_read_offset() - rev);
+
+                raw_buf.read_reverse(rev);
+                align_buffer(orig_read);
+                again = true;
+                break;
+
+            case ERR_MP3_MAINDATA_UNDERFLOW:
+                puts("maindata underflow (middle of stream)");
+                again = true;
+                break;
+
+            case ERR_MP3_INVALID_SIDEINFO:
+            case ERR_MP3_INVALID_SCALEFACT:
+            case ERR_MP3_INVALID_HUFFCODES:
+            case ERR_MP3_INVALID_DEQUANTIZE:
+            case ERR_MP3_INVALID_IMDCT:
+            case ERR_MP3_INVALID_SUBBAND:
+                printf("o %ld  frame didn't decode properly (code=%d), trying again\n", raw_buf.get_read_offset(), res);
+                raw_buf.read_ack(bytes_consumed);
+                bytes_consumed_last = bytes_consumed;
+                again = true;
+                break;
+
+            default:
+                printf("unknown error code=%d (again %d)\n", res, again);
+        }
+
+    } while (again);
+
+    raw_buf.read_ack(bytes_consumed);
+    bytes_consumed_last = bytes_consumed;
+
+    return 1;
+}
+
+int FormatMP3::decode_up_to_n(uint32_t* audio_pcm_buf, int n) {
+    long frame_offset = 0;
+    int frames_read;
+
+    for (frames_read=0; frames_read < n; frames_read++) {
+        int decoded = decode_up_to_one_frame(audio_pcm_buf + frame_offset);
+        if (decoded == 0)
+            break;
+
+        frame_offset += MP3_SAMPLES_PER_FRAME;
+    }
+
+    return frames_read;
+}
+
+void FormatMP3::decode_exactly_n(uint32_t* audio_pcm_buf, int n) {
+    long frame_offset = 0;
+    int frames_read;
+
+    for (frames_read=0; frames_read < n;) {
+        frames_read += decode_up_to_one_frame(audio_pcm_buf + frame_offset);
+        frame_offset += MP3_SAMPLES_PER_FRAME;
+    }
+}

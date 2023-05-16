@@ -26,10 +26,13 @@ add_executable(${PROJECT_NAME}
         sd_hw_config.c
         i2s.pio.cpp
         libs/waveheader.cpp
-        libs/mp3.cpp
+#        libs/mp3.cpp
         libs/mp3radio.cpp
         libs/httpclientpico.cpp
-        libs/circularbuffer.cpp)
+        libs/circularbuffer.cpp
+        libs/decode/decodebase.cpp
+        libs/decode/decodefile.cpp
+        libs/decode/formatmp3.cpp libs/decode/formatmp3.hpp libs/decode/format.cpp libs/decode/format.hpp)
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)

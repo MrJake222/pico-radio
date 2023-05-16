@@ -1,0 +1,38 @@
+#pragma once
+
+
+#include <cstdint>
+#include "circularbuffer.hpp"
+
+class Format {
+
+protected:
+    // used to end decoding when no more continuous data is present
+    bool eop;
+
+public:
+    volatile CircularBuffer& raw_buf;
+
+    Format(volatile CircularBuffer& raw_buf_)
+        : raw_buf(raw_buf_)
+        { }
+
+    void set_eop() { eop = true; }
+
+    // call every time before decoding starts
+    virtual void init() {
+        raw_buf.reset();
+        eop = false;
+    }
+
+    // returns number of units to decode to fill whole buffer
+    // (wav bytes or mp3 frames)
+    // halved passed as n to decode_up_to_n
+    virtual int units_to_decode_whole() = 0;
+    int units_to_decode_half() { return units_to_decode_whole() / 2; }
+
+    // this return number of units actually decoded
+    virtual int decode_up_to_n(uint32_t* audio_pcm_buf, int n) = 0;
+    // won't return before decoding <n> units exactly
+    virtual void decode_exactly_n(uint32_t* audio_pcm_buf, int n) = 0;
+};

@@ -17,9 +17,12 @@
 
 #include "config.hpp"
 #include "libs/waveheader.hpp"
-#include "libs/mp3.hpp"
-#include "libs/mp3radio.hpp"
+// #include "libs/mp3.hpp"
+// #include "libs/mp3radio.hpp"
 #include "libs/httpclientpico.hpp"
+#include "decode/formatmp3.hpp"
+#include "decode/decodebase.hpp"
+#include "decode/decodefile.hpp"
 
 // wifi
 #include <pico/cyw43_arch.h>
@@ -170,7 +173,12 @@ enum class FileType {
     UNSUPPORTED
 };
 
-MP3* mp3;
+// MP3* mp3;
+volatile CircularBuffer raw_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
+
+FormatMP3 format_mp3(raw_buf);
+
+DecodeBase* dec;
 
 void dma_start() {
     printf("dma start\n");
@@ -184,19 +192,19 @@ void dma_start() {
 }
 
 void core1_entry() {
-    mp3->preload_pcm_buffer();
+    dec->core1_init();
 
-    i2s_program_set_bit_freq(pio, sm, mp3->get_bit_freq());
+    // i2s_program_set_bit_freq(pio, sm, mp3->get_bit_freq());
+    i2s_program_set_bit_freq(pio, sm, 44100*2*16);
     dma_start();
 
-    while (!mp3->get_decode_finished())
-        mp3->watch_decode(a_done_irq, b_done_irq);
+    while (dec->core1_loop());
 }
 
 void play_mp3(const char* path, FileType type) {
     printf("\nplaying: %s as MP3 file\n", path);
 
-    switch (type) {
+    /*switch (type) {
         case FileType::MP3:
             puts("mp3");
             mp3 = new MP3(path, audio_pcm);
@@ -206,42 +214,54 @@ void play_mp3(const char* path, FileType type) {
             puts("radio");
             mp3 = new MP3Radio(path, audio_pcm);
             break;
-    }
+    }*/
 
-    mp3->prepare();
+    dec = new DecodeFile(
+            audio_pcm,
+            BUF_PCM_SIZE_32BIT,
+            a_done_irq,
+            b_done_irq,
+            path,
+            format_mp3);
 
-    if (mp3->needs_core1()) {
+    // mp3->prepare();
+    dec->begin();
+
+    dec->core0_init();
+
+    //if (mp3->needs_core1()) {
         multicore_reset_core1();
         multicore_launch_core1(core1_entry);
-    }
+    //}
 
-    while (!mp3->get_eof()) {
+    while (dec->core0_loop()) {
 
-        mp3->watch_file_buffer();
-        mp3->watch_timer();
+        // mp3->watch_file_buffer();
+        // mp3->watch_timer();
 
         int chr = getchar_timeout_us(0);
         if (chr > 0) {
-            mp3->user_abort();
+            dec->user_abort();
             break;
         }
     }
 
     printf("\nfinished file reading.\n");
 
-    while (!mp3->get_decode_finished());
+    // while (!mp3->get_decode_finished());
+    dec->core0_end();
     multicore_reset_core1();
 
     printf("\nfinished decode.\n");
 
-    if (mp3->decode_finished_by_A()) {
+    if (dec->decode_finished_by_A()) {
         // a channel finished, and it's data reload triggerred EOF
         // wait for another a channel finish, disable b channel firing
         dma_chain_disable(dma_channel_a);
         while (!a_done_irq);
         a_done_irq = false;
     }
-    else if (mp3->decode_finished_by_B()) {
+    else if (dec->decode_finished_by_B()) {
         // b finished, disable it's chaining to a, wait for finish
         dma_chain_disable(dma_channel_b);
         while (!b_done_irq);
@@ -259,10 +279,10 @@ void play_mp3(const char* path, FileType type) {
 
     puts("dma channels stopped.");
 
-    mp3->stop();
+    dec->end();
     puts("mp3 stop done");
 
-    delete mp3;
+    delete dec;
     puts("mp3 deleted");
 
     pio_sm_put_blocking(pio, sm, 0);
@@ -455,7 +475,7 @@ int main() {
     // UART on 0/1 and USB
     stdio_init_all();
 
-    sleep_ms(2000);
+    //sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys)/1000000);
     printf("MP3 buffer size: %d bytes + %d bytes hidden\n", BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
@@ -525,7 +545,7 @@ int main() {
     // const char* WIFI_SSID = "NorbertAP";
     // const char* WIFI_PASSWORD = "fearofthedark";
 
-    printf("Connecting to Wi-Fi...\n");
+    /*printf("Connecting to Wi-Fi...\n");
     int con_res = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);
     if (con_res) {
         printf("connection failed code %d\n", con_res);
@@ -541,7 +561,7 @@ int main() {
     } while (ip4_addr_isany_val(*addr));
 
     printf("got ip: %s\n", ip4addr_ntoa(addr));
-    cyw43_arch_lwip_end();
+    cyw43_arch_lwip_end();*/
 
     char path[1024] = "/";
     std::vector<std::string> files;

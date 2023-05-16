@@ -98,7 +98,7 @@ public:
     long get_bit_freq() { return bit_freq; }
 
     // called in loop on core0
-    void watch_file_buffer();
+    void watch_file_buffer(); // override this in WAV (not loadbuffer etc.)
     void watch_timer();
 
     // sustains the loop on core0

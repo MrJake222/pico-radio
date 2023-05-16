@@ -264,11 +264,6 @@ int MP3::decode_up_to_one_frame(int16_t* audio_pcm_buf) {
 
         bytes_consumed = dptr - dptr_orig;
 
-        /*if (res != ERR_MP3_NONE) {
-            printf("err %d\n", res);
-        }*/
-
-
         int rev;
         uint8_t* orig_read;
 
