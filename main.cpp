@@ -173,7 +173,6 @@ enum class FileType {
     UNSUPPORTED
 };
 
-// MP3* mp3;
 volatile CircularBuffer raw_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
 
 FormatMP3 format_mp3(raw_buf);
@@ -204,41 +203,34 @@ void core1_entry() {
 void play_mp3(const char* path, FileType type) {
     printf("\nplaying: %s as MP3 file\n", path);
 
-    /*switch (type) {
+    switch (type) {
         case FileType::MP3:
-            puts("mp3");
-            mp3 = new MP3(path, audio_pcm);
+            dec = new DecodeFile(
+                    audio_pcm,
+                    BUF_PCM_SIZE_32BIT,
+                    a_done_irq,
+                    b_done_irq,
+                    path,
+                    format_mp3);
             break;
 
         case FileType::RADIO:
             puts("radio");
-            mp3 = new MP3Radio(path, audio_pcm);
+            //mp3 = new MP3Radio(path, audio_pcm);
             break;
-    }*/
 
-    dec = new DecodeFile(
-            audio_pcm,
-            BUF_PCM_SIZE_32BIT,
-            a_done_irq,
-            b_done_irq,
-            path,
-            format_mp3);
+        default:
+            puts("format unsupported");
+            return;
+    }
 
-    // mp3->prepare();
     dec->begin();
-
     dec->core0_init();
 
-    //if (mp3->needs_core1()) {
-        multicore_reset_core1();
-        multicore_launch_core1(core1_entry);
-    //}
+    multicore_reset_core1();
+    multicore_launch_core1(core1_entry);
 
     while (dec->core0_loop()) {
-
-        // mp3->watch_file_buffer();
-        // mp3->watch_timer();
-
         int chr = getchar_timeout_us(0);
         if (chr > 0) {
             dec->user_abort();
@@ -248,7 +240,6 @@ void play_mp3(const char* path, FileType type) {
 
     printf("\nfinished file reading.\n");
 
-    // while (!mp3->get_decode_finished());
     dec->core0_end();
     multicore_reset_core1();
 
@@ -280,10 +271,7 @@ void play_mp3(const char* path, FileType type) {
     puts("dma channels stopped.");
 
     dec->end();
-    puts("mp3 stop done");
-
     delete dec;
-    puts("mp3 deleted");
 
     pio_sm_put_blocking(pio, sm, 0);
 }
