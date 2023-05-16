@@ -26,8 +26,6 @@ add_executable(${PROJECT_NAME}
         sd_hw_config.c
         i2s.pio.cpp
         libs/waveheader.cpp
-#        libs/mp3.cpp
-        libs/mp3radio.cpp
         libs/httpc/httpclientpico.cpp
         libs/circularbuffer.cpp
         libs/decode/decodebase.cpp
