@@ -46,11 +46,11 @@ class DecodeBase {
 protected:
     // generic path to resource
     // (used by implementations to connect open file/stream)
-    const char* const path;
+    const char* path;
 
     // format decoder
     // needs to be protected for data loading
-    Format& format;
+    Format* format;
 
     // designed to watch file buffers
     // (or do nothing in internet streams)
@@ -63,20 +63,23 @@ protected:
     virtual int source_size_bytes() { return 0; }
 
 public:
-    DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_, const char* path_, Format& format_)
+    DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_)
             : audio_pcm(audio_pcm_)
             , audio_pcm_size_words(audio_pcm_size_words_)
             , a_done_irq(a_done_irq_)
             , b_done_irq(b_done_irq_)
-            , path(path_)
-            , format(format_)
+//            , path(path_)
+//            , format(format_)
     { }
 
     virtual ~DecodeBase() = default;
 
     // called before and after decoding
-    virtual void begin() {
-        format.init();
+    virtual void begin(const char* path_, Format* format_) {
+        path = path_;
+        format = format_;
+
+        format->init();
         decode_finished_by = FinishReason::NoFinish;
         sum_units_decoded = 0;
         last_seconds = -1;
@@ -92,11 +95,11 @@ public:
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
     // called on user abort (from core0) to abort core1
-    void user_abort() { format.set_eop(); }
+    void user_abort() { format->set_eop(); }
 
     // functions called from core1
     void core1_init();
     bool core1_loop();
 
-    long bit_freq() { return format.bit_freq(); }
+    long bit_freq() { return format->bit_freq(); }
 };

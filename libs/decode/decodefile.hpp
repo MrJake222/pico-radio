@@ -17,7 +17,7 @@ class DecodeFile : public DecodeBase {
     int source_size_bytes() override { return f_size(&fp); }
 
 public:
-    void begin() override;
+    void begin(const char* path_, Format* format_) override;
     void end() override;
 
     using DecodeBase::DecodeBase;

@@ -16,11 +16,8 @@
 #include "hw_config.h"
 
 #include "config.hpp"
-#include "waveheader.hpp"
-// #include "mp3.hpp"
-// #include "mp3radio.hpp"
-#include "httpclientpico.hpp"
 #include "formatmp3.hpp"
+#include "formatwav.hpp"
 #include "decodebase.hpp"
 #include "decodefile.hpp"
 #include "decodestream.hpp"
@@ -117,56 +114,6 @@ void dma_chain_enable(int dma_chan, int chain_to) {
     dma_hw->ch[dma_chan].al1_ctrl = (dma_hw->ch[dma_chan].al1_ctrl & ~DMA_CH0_CTRL_TRIG_CHAIN_TO_BITS) | (chain_to << DMA_CH0_CTRL_TRIG_CHAIN_TO_LSB);
 }
 
-void reinterpret_buffer(uint8_t* data, uint data_len) {
-
-    /*int16_t* chan = (int16_t*)data;
-    uint channel_len = data_len / 2;*/
-
-    // swap channels (1% cost)
-    /*for (int i=0; i<channel_len; i+=2) {
-        uint16_t tmp = chan[i];
-        chan[i] = chan[i+1];
-        chan[i+1] = tmp;
-    }*/
-
-    // mute left (almost free)
-    /*for (int i=0; i<channel_len; i+=2) {
-        chan[i] = 0;
-    }*/
-
-    // int division (free)
-    /*for (int i=0; i<channel_len; i+=2) {
-        chan[i] /= 2;
-        chan[i+1] /= 2;
-    }*/
-
-    // float division (10%)
-    /*for (int i=0; i<channel_len; i+=2) {
-        chan[i] /= 1.5f;
-        chan[i+1] /= 1.5f;
-    }*/
-}
-
-/*void mp3_benchmark(const char* path) {
-    MP3 mp3(path);
-
-    // benchmark 22ms
-    ulong start = time_us_64();
-    DBG_ON();
-    mp3->decode_up_to_n_frames((int16_t *) audio_pcm, BUF_PCM_SIZE_FRAMES);
-    mp3->decode_up_to_n_frames((int16_t *) audio_pcm, BUF_PCM_SIZE_FRAMES);
-    DBG_OFF();
-    ulong end = time_us_64();
-
-    printf("load took %f ms / 1 frame\n", (end - start) / 1000.0f / (BUF_PCM_SIZE_FRAMES*2));
-    while(1) {
-        int chr = getchar_timeout_us(0);
-        if (chr > 0) {
-            return;
-        }
-    }
-}*/
-
 enum class FileType {
     WAV,
     MP3,
@@ -177,6 +124,19 @@ enum class FileType {
 volatile CircularBuffer raw_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
 
 FormatMP3 format_mp3(raw_buf);
+FormatWAV format_wav(raw_buf);
+
+DecodeFile dec_file(
+    audio_pcm,
+    BUF_PCM_SIZE_32BIT,
+    a_done_irq,
+    b_done_irq);
+
+DecodeStream dec_stream(
+    audio_pcm,
+    BUF_PCM_SIZE_32BIT,
+    a_done_irq,
+    b_done_irq);
 
 DecodeBase* dec;
 
@@ -200,29 +160,24 @@ void core1_entry() {
     while (dec->core1_loop());
 }
 
-void play_mp3(const char* path, FileType type) {
+void play(const char* path, FileType type) {
     printf("\nplaying: %s as MP3 file\n", path);
 
     // TODO add WAV
     switch (type) {
+        case FileType::WAV:
+            dec = &dec_file;
+            dec->begin(path, &format_wav);
+            break;
+
         case FileType::MP3:
-            dec = new DecodeFile(
-                    audio_pcm,
-                    BUF_PCM_SIZE_32BIT,
-                    a_done_irq,
-                    b_done_irq,
-                    path,
-                    format_mp3);
+            dec = &dec_file;
+            dec->begin(path, &format_mp3);
             break;
 
         case FileType::RADIO:
-            dec = new DecodeStream(
-                    audio_pcm,
-                    BUF_PCM_SIZE_32BIT,
-                    a_done_irq,
-                    b_done_irq,
-                    path,
-                    format_mp3);
+            dec = &dec_stream;
+            dec->begin(path, &format_mp3);
             break;
 
         default:
@@ -230,7 +185,6 @@ void play_mp3(const char* path, FileType type) {
             return;
     }
 
-    dec->begin();
     dec->core0_init();
 
     multicore_reset_core1();
@@ -277,138 +231,8 @@ void play_mp3(const char* path, FileType type) {
     puts("dma channels stopped.");
 
     dec->end();
-    delete dec;
 
     pio_sm_put_blocking(pio, sm, 0);
-}
-
-void play_wav(const char* path) {
-    printf("playing: %s as WAV file\n\n", path);
-
-    FRESULT fr;
-    FIL fp;
-
-    fr = f_open(&fp, path, FA_READ);
-    if (fr != FR_OK) {
-        fs_err(fr, "f_open");
-    }
-
-    WaveHeader hdr;
-    uint read;
-
-    fr = hdr.read(&fp, &read);
-    if (fr != FR_OK) {
-        fs_err(fr, "f_read header");
-    }
-
-    printf("header size: %u, read %u\n", WAVE_HEADER_SIZE, read);
-
-    if (hdr.check()) {
-        panic("wrong header\n");
-    }
-
-    hdr.print();
-    i2s_program_set_bit_freq(pio, sm, hdr.get_bit_freq());
-
-    // preload_pcm_buffer buffer
-    fr = f_read(&fp, (uint8_t*)audio_pcm, BUF_PCM_SIZE_BYTES, &read);
-    if (fr != FR_OK) {
-        fs_err(fr, "f_read preload_pcm_buffer");
-    }
-
-    printf("dma start\n");
-
-    // setup chaining
-    dma_chain_enable(dma_channel_a, dma_channel_b);
-    dma_chain_enable(dma_channel_b, dma_channel_a);
-
-    // start playback
-    dma_channel_start(dma_channel_a);
-
-    uint sum_bytes_read = 0;
-    uint last_seconds = 0;
-    bool eof = false;
-    bool a_done_prv, b_done_prv;
-
-    while (!eof) {
-        if (a_done_irq) {
-            a_done_irq = false;
-            a_done_prv = true;
-            // channel A done (first one)
-            // reload first half of the buffer
-            DBG_ON();
-            f_read(&fp, (uint8_t*)audio_pcm, BUF_PCM_HALF_BYTES, &read);
-            reinterpret_buffer((uint8_t*)audio_pcm, BUF_PCM_HALF_BYTES);
-            DBG_OFF();
-        }
-
-        if (b_done_irq) {
-            b_done_irq = false;
-            b_done_prv = true;
-            // channel B done (second one)
-            // reload second half of the buffer
-            DBG_ON();
-            f_read(&fp, (uint8_t*)audio_pcm_half, BUF_PCM_HALF_BYTES, &read);
-            reinterpret_buffer((uint8_t*)audio_pcm_half, BUF_PCM_HALF_BYTES);
-            DBG_OFF();
-        }
-
-        if (a_done_prv || b_done_prv) {
-            sum_bytes_read += read;
-
-            if (read < BUF_PCM_HALF_BYTES) {
-                eof = true;
-            }
-            else {
-                // only clear on non-EOF
-                // these are later used for dma channel abortion
-                a_done_prv = false;
-                b_done_prv = false;
-            }
-        }
-
-        uint seconds = hdr.byte_to_sec(sum_bytes_read);
-
-        if (seconds != last_seconds) {
-            printf("%02d:%02d / %02d:%02d\r",
-                   seconds/60, seconds%60,
-                   hdr.get_duration()/60, hdr.get_duration()%60);
-
-            last_seconds = seconds;
-        }
-
-        int chr = getchar_timeout_us(0);
-        if (chr > 0) {
-            break;
-        }
-    }
-
-    printf("\nfinished file reading.\n");
-
-    if (a_done_prv) {
-        // a channel finished, and it's data reload triggerred EOF
-        // wait for another a channel finish, disable b channed firing
-        dma_chain_disable(dma_channel_a);
-        while (!a_done_irq);
-        a_done_irq = false;
-    }
-    else if (b_done_prv) {
-        // b finished, disable it's chaining to a, wait for finish
-        dma_chain_disable(dma_channel_b);
-        while (!b_done_irq);
-        b_done_irq = false;
-    }
-    else {
-        // user abort
-        dma_chain_disable(dma_channel_a);
-        dma_chain_disable(dma_channel_b);
-        dma_channel_abort(dma_channel_a);
-        dma_channel_abort(dma_channel_b);
-        a_done_irq = false;
-        b_done_irq = false;
-    }
-
-    puts("dma channels stopped.");
 }
 
 FRESULT scan_files(char* path, std::vector<std::string>& files) {
@@ -459,6 +283,28 @@ FileType get_file_type(const char* filepath) {
         return FileType::UNSUPPORTED;
 }
 
+void print_mem_usage() {
+    int size_pcm = sizeof(audio_pcm);
+    printf("PCM buffer size:     %d\n", size_pcm);
+    int size_raw = sizeof(raw_buf) + raw_buf.size + raw_buf.size_hidden;
+    printf("RAW buffer size:     %d\n", size_raw);
+
+    int size_mp3 = sizeof(format_mp3);
+    printf("MP3 format size:     %d\n", size_mp3);
+    int size_wav = sizeof(format_wav);
+    printf("WAV format size:     %d\n", size_wav);
+
+    int size_file = sizeof(dec_file);
+    printf("File decoder size:   %d\n", size_file);
+    int size_stream = sizeof(dec_stream);
+    printf("Stream decoder size: %d\n", size_stream);
+
+    printf("Total: %d\n",
+           size_pcm + size_raw +\
+           size_mp3 + size_wav +\
+           size_file + size_stream);
+}
+
 int main() {
 
     // set_sys_clock_khz(140000, true);
@@ -472,8 +318,7 @@ int main() {
     //sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys)/1000000);
-    printf("MP3 buffer size: %d bytes + %d bytes hidden\n", BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
-    printf("PCM buffer size: %d bytes\n", BUF_PCM_SIZE_BYTES);
+    print_mem_usage();
     puts("");
 
     // IO
@@ -595,19 +440,7 @@ int main() {
             }
         }
 
-        switch (type) {
-            case FileType::WAV:
-                play_wav(filepath);
-                break;
-
-            case FileType::MP3:
-            case FileType::RADIO:
-                play_mp3(filepath, type);
-                break;
-
-            case FileType::UNSUPPORTED:
-                break;
-        }
+        play(filepath, type);
 
         printf("\033[2J"); // clear screen
     }

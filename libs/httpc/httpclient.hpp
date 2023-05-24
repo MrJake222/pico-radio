@@ -7,8 +7,6 @@
 #include <../circularbuffer.hpp>
 #include <../../config.hpp>
 
-static char buf[HTTP_TMP_BUF_SIZE_BYTES];
-
 class HttpClient {
 
     static const int HTTP_HOST_MAX_LEN = 128;
@@ -39,6 +37,10 @@ class HttpClient {
     int buf_http_content = 0;
     int test_for_http();
 
+    // Query response buffer
+    const static int qrbuf_size = 1024;
+    char qrbuf[qrbuf_size];
+
     std::map<std::string, std::string> headers;
     int parse_headers();
 
@@ -50,14 +52,15 @@ class HttpClient {
 
 public:
     // to be used by callback functions
-    volatile CircularBuffer& content_buffer;
+    // for writing content data (not headers)
+    volatile CircularBuffer* content_buffer;
     bool is_content() volatile const { return content; }
 
-    HttpClient(volatile CircularBuffer& content_buffer_)
-        : content_buffer(content_buffer_)
-        {
+    HttpClient() { }
 
-        }
+    void begin(volatile CircularBuffer* content_buffer_) {
+        content_buffer = content_buffer_;
+    }
 
     // one concurrent connection supported
     // these start a connection

@@ -62,8 +62,6 @@ static err_t gethostbyname(const char* host, ip_addr_t* result) {
     return 0;
 }
 
-static CircularBuffer http_buf(HTTP_DATA_BUF_SIZE_BYTES, 0);
-
 void error_callback(void *arg, err_t err) {
     cyw43_arch_lwip_check();
 
@@ -93,32 +91,31 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) 
         return err;
     }
 
-    // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, http_buf.space_left(), httpc->content_buffer.space_left());
-
+    // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->content_buffer->space_left());
 
     if (httpc->is_content()) {
-        if (http_buf.data_left() > 0) {
-            printf("moving buffer: data %ld to -> free %ld\n", http_buf.data_left(), httpc->content_buffer.space_left());
-            http_buf.move_to(httpc->content_buffer);
+        if (httpc->http_buf.data_left() > 0) {
+            printf("moving buffer: data %ld to -> free %ld\n", httpc->http_buf.data_left(), httpc->content_buffer->space_left());
+            httpc->http_buf.move_to(*httpc->content_buffer);
         }
 
-        if (httpc->content_buffer.space_left() < p->len) {
+        if (httpc->content_buffer->space_left() < p->len) {
             puts("end of mp3 buffer");
             httpc->err = true;
             return ERR_MEM;
         }
 
-        httpc->content_buffer.write((uint8_t*)p->payload, p->len);
+        httpc->content_buffer->write((uint8_t*)p->payload, p->len);
     }
     else {
 
-        if (http_buf.space_left() < p->len) {
+        if (httpc->http_buf.space_left() < p->len) {
             puts("end of http buffer");
             httpc->err = true;
             return ERR_MEM;
         }
 
-        http_buf.write((uint8_t*)p->payload, p->len);
+        httpc->http_buf.write((uint8_t*)p->payload, p->len);
     }
 
     // tcp_recved(tpcb, p->len);
@@ -134,7 +131,7 @@ void recv_ack(void* arg, unsigned int bytes) {
 
     const int target = 60;
 
-    int d = target - httpc->content_buffer.health();
+    int d = target - httpc->content_buffer->health();
     int b_new = ((100 + d) * (int)bytes) / 100;
 
     cyw43_arch_lwip_begin();
@@ -209,7 +206,7 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     tcp_arg(pcb, this);
     tcp_err(pcb, error_callback);
     tcp_recv(pcb, recv_callback);
-    content_buffer.set_read_ack_callback(this, recv_ack);
+    content_buffer->set_read_ack_callback(this, recv_ack);
 
     err = false;
     connected = false;

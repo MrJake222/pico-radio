@@ -146,11 +146,11 @@ int HttpClient::parse_headers() {
     headers.clear();
 
     while (1) {
-        int len = recv_line(buf, HTTP_TMP_BUF_SIZE_BYTES);
+        int len = recv_line(qrbuf, qrbuf_size);
         if (len == 0)
             break;
 
-        char* sep = strchr(buf, ':');
+        char* sep = strchr(qrbuf, ':');
         if (!sep)
             break;
 
@@ -159,21 +159,21 @@ int HttpClient::parse_headers() {
         if (*sep == ' ')
             sep += 1; // skip space
 
-        headers[buf] = sep;
+        headers[qrbuf] = sep;
     }
 
     return 0;
 }
 
 int HttpClient::parse_http() {
-    memcpy(buf, buf_http, 4);
+    memcpy(qrbuf, buf_http, 4);
 
-    int len = recv_line(buf+4, HTTP_TMP_BUF_SIZE_BYTES - 4);
-    buf[4+len] = 0;
-    puts(buf);
+    int len = recv_line(qrbuf + 4, qrbuf_size - 4);
+    qrbuf[4 + len] = 0;
+    puts(qrbuf);
 
     // http 4 + slash 1 + version 3 + space 1
-    char* codestr = buf + 9;
+    char* codestr = qrbuf + 9;
     *(codestr + 3) = 0;
 
     // code 3 + space 1
@@ -251,10 +251,10 @@ int HttpClient::get(const char* url) {
 
     content = false;
 
-    sprintf(buf, "GET %s HTTP/1.0\r\n", path);
-    send_string(buf);
-    sprintf(buf, "Host: %s\r\n", host);
-    send_string(buf);
+    sprintf(qrbuf, "GET %s HTTP/1.0\r\n", path);
+    send_string(qrbuf);
+    sprintf(qrbuf, "Host: %s\r\n", host);
+    send_string(qrbuf);
     // TODO use cookies
     send_string("\r\n");
 

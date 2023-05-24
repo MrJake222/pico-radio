@@ -25,14 +25,13 @@ add_executable(${PROJECT_NAME}
         main.cpp
         sd_hw_config.c
         i2s.pio.cpp
-        libs/waveheader.cpp
         libs/httpc/httpclientpico.cpp
         libs/circularbuffer.cpp
         libs/decode/decodebase.cpp
         libs/decode/decodefile.cpp
         libs/decode/formatmp3.cpp
         libs/decode/decodestream.cpp
-        )
+        libs/decode/formatwav.cpp)
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
@@ -48,7 +47,6 @@ target_link_libraries(${PROJECT_NAME}
         FatFs_SPI
         helixmp3
         httpc
-        # pagers-common   # common code
         )
 
 include_directories(
