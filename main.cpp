@@ -21,6 +21,7 @@
 #include "decodebase.hpp"
 #include "decodefile.hpp"
 #include "decodestream.hpp"
+#include "tft/st7735s.hpp"
 
 // wifi
 #include <pico/cyw43_arch.h>
@@ -57,6 +58,34 @@ uint sm;
 // DMA
 int dma_channel_a;
 int dma_channel_b;
+
+// Playback
+volatile CircularBuffer raw_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
+
+FormatMP3 format_mp3(raw_buf);
+FormatWAV format_wav(raw_buf);
+
+DecodeFile dec_file(
+        audio_pcm,
+        BUF_PCM_SIZE_32BIT,
+        a_done_irq,
+        b_done_irq);
+
+DecodeStream dec_stream(
+        audio_pcm,
+        BUF_PCM_SIZE_32BIT,
+        a_done_irq,
+        b_done_irq);
+
+DecodeBase* dec;
+
+
+// SPI
+ST7735S disp(
+        160, 128,
+        1, 2,
+        spi1, 10, 11, 9,
+        12, 8, 13);
 
 void dma_channelA() {
     a_done_irq = true;
@@ -114,31 +143,14 @@ void dma_chain_enable(int dma_chan, int chain_to) {
     dma_hw->ch[dma_chan].al1_ctrl = (dma_hw->ch[dma_chan].al1_ctrl & ~DMA_CH0_CTRL_TRIG_CHAIN_TO_BITS) | (chain_to << DMA_CH0_CTRL_TRIG_CHAIN_TO_LSB);
 }
 
+
+
 enum class FileType {
     WAV,
     MP3,
     RADIO,
     UNSUPPORTED
 };
-
-volatile CircularBuffer raw_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
-
-FormatMP3 format_mp3(raw_buf);
-FormatWAV format_wav(raw_buf);
-
-DecodeFile dec_file(
-    audio_pcm,
-    BUF_PCM_SIZE_32BIT,
-    a_done_irq,
-    b_done_irq);
-
-DecodeStream dec_stream(
-    audio_pcm,
-    BUF_PCM_SIZE_32BIT,
-    a_done_irq,
-    b_done_irq);
-
-DecodeBase* dec;
 
 void dma_start() {
     printf("dma start\n");
@@ -299,10 +311,14 @@ void print_mem_usage() {
     int size_stream = sizeof(dec_stream);
     printf("Stream decoder size: %d\n", size_stream);
 
+    int size_disp = disp.size();
+    printf("Display driver size: %d\n", size_disp);
+
     printf("Total: %d\n",
            size_pcm + size_raw +\
            size_mp3 + size_wav +\
-           size_file + size_stream);
+           size_file + size_stream +\
+           size_disp);
 }
 
 int main() {
@@ -315,7 +331,7 @@ int main() {
     // UART on 0/1 and USB
     stdio_init_all();
 
-    //sleep_ms(2000);
+//    sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys)/1000000);
     print_mem_usage();
@@ -352,6 +368,14 @@ int main() {
     configure_pio_tx_dma(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, BUF_PCM_HALF_32BIT, dma_channel_a);
     puts("DMA configuration done");
 
+
+    // Display config
+    disp.begin();
+    disp.fill_screen(disp.from_rgb(0xCCCCCC));
+    disp.write_text(10, 10, "morświn!", 1);
+    disp.write_text(10, 30, "MORŚWIN!", 2);
+    // disp.write_text(10, 70, "MORŚWIN!", 3);
+    puts("Display configuration & init done");
     
     // FS configuration
     FRESULT fr;
@@ -364,6 +388,7 @@ int main() {
     }
 
     puts("mount ok\n");
+
 
     // WiFi configuration
     int err;
@@ -402,6 +427,8 @@ int main() {
     printf("got ip: %s\n", ip4addr_ntoa(addr));
     cyw43_arch_lwip_end();
 
+
+    // File scan
     char path[1024] = "/";
     std::vector<std::string> files;
     scan_files(path, files);

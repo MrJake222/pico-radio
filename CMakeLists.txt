@@ -31,7 +31,7 @@ add_executable(${PROJECT_NAME}
         libs/decode/decodefile.cpp
         libs/decode/formatmp3.cpp
         libs/decode/decodestream.cpp
-        libs/decode/formatwav.cpp)
+        libs/decode/formatwav.cpp libs/tft/st7735s.cpp libs/tft/st7735s.hpp libs/tft/st7735_init.h libs/tft/ubuntu_mono.cpp libs/tft/ubuntu_mono.hpp)
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
