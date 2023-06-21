@@ -9,6 +9,12 @@
 #include <vector>
 #include <string>
 
+#include <FreeRTOS.h>
+#include <task.h>
+#include <queue.h>
+
+#include "buttons/buttons.hpp"
+
 #include "i2s.pio.h"
 
 #include "f_util.h"
@@ -246,7 +252,9 @@ void play(const char* path, FileType type) {
 }
 
 FRESULT scan_files(char* path, std::vector<std::string>& files) {
-    FRESULT res;
+    FRESULT res = FR_OK;
+
+#if SD_ENABLE
     DIR dir;
     UINT i;
     static FILINFO fno;
@@ -271,6 +279,7 @@ FRESULT scan_files(char* path, std::vector<std::string>& files) {
         }
         f_closedir(&dir);
     }
+#endif
 
     return res;
 }
@@ -319,8 +328,7 @@ void print_mem_usage() {
            size_disp);
 }
 
-int main() {
-
+void init_hardware() {
     // set_sys_clock_khz(140000, true);
     set_sys_clock_khz(180000, true);
 
@@ -394,26 +402,32 @@ int main() {
     // disp.write_text(0, 16, "Wyniki wyszukiwania", 1);
     // disp.write_text(10, 50, "MORŚWIN!", 2);
     puts("Display configuration & init done");
-    
+
     // FS configuration
+#if SD_ENABLE
     FRESULT fr;
 
-    sd_card_t *pSD = sd_get_by_num(0);
+    sd_card_t* pSD = sd_get_by_num(0);
 
     fr = f_mount(&pSD->fatfs, pSD->pcName, 1);
     if (fr != FR_OK) {
         fs_err(fr, "f_mount");
     }
 
-    puts("mount ok\n");
+    puts("mount ok");
+#endif
 
+    buttons_begin();
+    puts("buttons init ok");
+}
 
+void init_wifi() {
     // WiFi configuration
     int err;
     err = cyw43_arch_init();
     if (err) {
         printf("wifi arch init error code %d\n", err);
-        while(1);
+        while (1);
     }
 
     cyw43_arch_enable_sta_mode();
@@ -431,7 +445,7 @@ int main() {
     int con_res = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);
     if (con_res) {
         printf("connection failed code %d\n", con_res);
-        while(1);
+        while (1);
     } else {
         printf("Connected.\n");
     }
@@ -444,8 +458,9 @@ int main() {
 
     printf("got ip: %s\n", ip4addr_ntoa(addr));
     cyw43_arch_lwip_end();
+}
 
-
+void oldmain() {
     // File scan
     char path[1024] = "/";
     std::vector<std::string> files;
@@ -489,4 +504,47 @@ int main() {
 
         printf("\033[2J"); // clear screen
     }
+}
+
+extern QueueHandle_t input_queue;
+
+[[noreturn]] void task_input_handle(void* arg) {
+    ButtonEnum input;
+    int r;
+    int cnt = 0;
+
+    while (true) {
+        r = xQueueReceive(
+                input_queue,
+                &input,
+                portMAX_DELAY);
+
+        if (r != pdTRUE)
+            continue;
+
+        printf("input: %d (cnt %5d)\n", input, cnt++);
+    }
+}
+
+int main() {
+    init_hardware();
+
+    xTaskCreate(
+            task_input_handle,
+            "input handle",
+            configMINIMAL_STACK_SIZE,
+            nullptr,
+            1,
+            nullptr);
+
+    vTaskStartScheduler();
+}
+
+/*-----------------------------------------------------------*/
+void vApplicationMallocFailedHook( void ) {
+    panic("malloc failed");
+}
+
+void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName) {
+    panic("stack overflow task %s", pcTaskName);
 }

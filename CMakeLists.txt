@@ -16,7 +16,14 @@ project(pico-radio C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
-add_compile_options(-O2)
+
+# FreeRTOS
+add_library(freertos_config INTERFACE)
+target_include_directories(freertos_config SYSTEM
+        INTERFACE
+        ${CMAKE_SOURCE_DIR})
+set(FREERTOS_PORT GCC_RP2040)
+add_subdirectory(libs/FreeRTOS-Kernel)
 
 pico_sdk_init()
 
@@ -31,7 +38,10 @@ add_executable(${PROJECT_NAME}
         libs/decode/decodefile.cpp
         libs/decode/formatmp3.cpp
         libs/decode/decodestream.cpp
-        libs/decode/formatwav.cpp libs/tft/st7735s.cpp libs/tft/st7735s.hpp libs/tft/st7735_init.h libs/tft/ubuntu_mono.cpp libs/tft/ubuntu_mono.hpp)
+        libs/decode/formatwav.cpp
+        libs/tft/st7735s.cpp
+        libs/tft/ubuntu_mono.cpp
+        libs/buttons/buttons.cpp)
 
 # pio
 pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s.pio)
@@ -40,10 +50,11 @@ pico_add_extra_outputs(${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME}
         pico_stdlib
+        freertos_kernel
         hardware_dma
         hardware_pio
         pico_multicore
-        pico_cyw43_arch_lwip_threadsafe_background
+        pico_cyw43_arch_lwip_sys_freertos
         FatFs_SPI
         helixmp3
         httpc

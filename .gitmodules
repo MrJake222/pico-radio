@@ -4,3 +4,6 @@
 [submodule "libs/helixmp3"]
 	path = libs/helixmp3
 	url = git@github.com:MrJake222/libhelix-mp3.git
+[submodule "libs/FreeRTOS-Kernel"]
+	path = libs/FreeRTOS-Kernel
+	url = git@github.com:FreeRTOS/FreeRTOS-Kernel.git
