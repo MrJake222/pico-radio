@@ -40,6 +40,9 @@ class ST7735S {
     // void fillScreen(uint16_t color);
     // void fillRect(int x, int y, int w, int h, uint16_t color);
 
+    int bg;
+    int fg;
+
 public:
     const int W;
     const int H;
@@ -58,6 +61,13 @@ public:
     int size() { return sizeof(ST7735S); }
 
     void begin();
+    // normal 24-bit RGB format
+    void set_bg(int bg_) { bg = bg_; }
+    void set_fg(int fg_) { fg = fg_; }
+    void set_bg_fg(int bg_, int fg_) {
+        set_bg(bg_);
+        set_fg(fg_);
+    }
 
     static const int R_BITS = 5;
     static const int G_BITS = 6;
@@ -67,8 +77,8 @@ public:
     static const int B_MAX = (1<<B_BITS) - 1;
 
     uint16_t from_rgb(int rgb);
-    void fill_rect(int x, int y, int w, int h, uint16_t color);
-    void fill_screen(uint16_t color);
+    void fill_rect(int x, int y, int w, int h, bool fill_with_bg);
+    void clear_screen();
 
     void write_text(int text_x, int text_y, const char *str, int scale);
 };

@@ -119,15 +119,16 @@ uint16_t ST7735S::from_rgb(int rgb) {
     return (r << 11) | (g << 5) | b;
 }
 
-void ST7735S::fill_rect(int x, int y, int w, int h, uint16_t color) {
+void ST7735S::fill_rect(int x, int y, int w, int h, bool fill_with_bg) {
+    uint16_t color = fill_with_bg ? from_rgb(bg) : from_rgb(fg);
     setup_write(x, y, x+w, y+h);
     for (int i=0; i<h*w; i++) {
         spi_write16_blocking(spi, &color, 1);
     }
 }
 
-void ST7735S::fill_screen(uint16_t color) {
-    fill_rect(0, 0, W, H, color);
+void ST7735S::clear_screen() {
+    fill_rect(0, 0, W, H, true);
 }
 
 static int rgb_blend(unsigned int fg, unsigned int bg, unsigned int fg_alpha) {
@@ -155,9 +156,6 @@ void ST7735S::write_text(int text_x, int text_y, const char *str, int scale) {
             chr_ptr = get_font_data_ptr(ascii_data, index);
             str += 1;
         }
-
-        const unsigned int bg = 0xCCCCCC;
-        const unsigned int fg = 0xFF0000;
 
         setup_write(text_x, text_y,
                     text_x + FONT_W*scale,

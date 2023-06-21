@@ -30,9 +30,6 @@ const uint PIN_DBG = 13;
 #define DBG_ON() gpio_put(PIN_DBG, true)
 #define DBG_OFF() gpio_put(PIN_DBG, false)
 
-const uint I2C_CLK_CHANNEL_BASE = 18; // 18-clk 19-channel
-const uint I2C_DATA = 20;
-
 volatile bool a_done_irq = false;
 volatile bool b_done_irq = false;
 
@@ -84,8 +81,9 @@ DecodeBase* dec;
 ST7735S disp(
         160, 128,
         1, 2,
-        spi1, 10, 11, 9,
-        12, 8, 13);
+        LCD_SPI ? spi1 : spi0,
+        LCD_SCK, LCD_TX, LCD_CS,
+        LCD_RST, LCD_DC, LCD_BL);
 
 void dma_channelA() {
     a_done_irq = true;
@@ -353,7 +351,7 @@ int main() {
     sm = pio_claim_unused_sm(pio, true);
 
     // configure & start program on <sm> machine at <pio> PIO block
-    i2s_program_init(pio, sm, offset, I2C_CLK_CHANNEL_BASE, I2C_DATA);
+    i2s_program_init(pio, sm, offset, I2S_CLK_CHANNEL_BASE, I2S_DATA);
     puts("PIO I2S configuration done");
 
 
@@ -371,10 +369,30 @@ int main() {
 
     // Display config
     disp.begin();
-    disp.fill_screen(disp.from_rgb(0xCCCCCC));
-    disp.write_text(10, 10, "morświn!", 1);
-    disp.write_text(10, 30, "MORŚWIN!", 2);
-    // disp.write_text(10, 70, "MORŚWIN!", 3);
+    disp.set_bg_fg(0xCCCCCC, 0x0);
+    disp.clear_screen();
+    disp.write_text(0, 0, "Ulubione stacje", 1);
+
+    const char* tests[] = {
+            "RMF FM",
+            "Złote przeboje",
+            "Radio 357",
+            "Radio 2223",
+            "Radio Eska",
+    };
+
+    for (int i=0; i<5; i++) {
+        if (i == 2)
+            disp.set_bg(0x55AA55);
+        else
+            disp.set_bg(0xAAAAAA);
+
+        disp.fill_rect(5, 23 + 23*i, 150, 20, true);
+        disp.write_text(9, 25 + 23*i, tests[i], 1);
+    }
+
+    // disp.write_text(0, 16, "Wyniki wyszukiwania", 1);
+    // disp.write_text(10, 50, "MORŚWIN!", 2);
     puts("Display configuration & init done");
     
     // FS configuration

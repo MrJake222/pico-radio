@@ -22,3 +22,22 @@
 
 // HTTP
 #define HTTP_DATA_BUF_SIZE_BYTES    TCP_WND
+
+// Pin data
+// I2S
+#define I2S_CLK_CHANNEL_BASE 18 // 18-clk 19-channel
+#define I2S_DATA             20
+// LCD
+#define LCD_SPI     1
+#define LCD_SCK     10
+#define LCD_TX      11
+#define LCD_CS      9
+#define LCD_RST     6
+#define LCD_DC      8
+#define LCD_BL      7
+// Buttons
+#define BTN_UP      12
+#define BTN_DOWN    16
+#define BTN_LEFT    15
+#define BTN_RIGHT   13
+#define BTN_CENTER  14
