@@ -39,7 +39,6 @@ target_link_libraries(${PROJECT_NAME}
         hardware_pio
         pico_multicore
         pico_cyw43_arch_lwip_sys_freertos
-        libmy
         libs
         )
 
