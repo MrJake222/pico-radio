@@ -506,6 +506,21 @@ void oldmain() {
     }
 }
 
+void core1() {
+    int cnt = 1000;
+
+    while (1) {
+        sleep_ms(1000);
+        multicore_fifo_push_blocking(cnt++);
+    }
+}
+
+void sio0() {
+    multicore_fifo_clear_irq();
+    unsigned int v = multicore_fifo_pop_blocking();
+    printf("received: %5d\n", v);
+}
+
 extern QueueHandle_t input_queue;
 
 [[noreturn]] void task_input_handle(void* arg) {
@@ -528,6 +543,10 @@ extern QueueHandle_t input_queue;
 
 int main() {
     init_hardware();
+    multicore_launch_core1(core1);
+
+    irq_set_exclusive_handler(SIO_IRQ_PROC0, sio0);
+    irq_set_enabled(SIO_IRQ_PROC0, true);
 
     xTaskCreate(
             task_input_handle,
