@@ -1,5 +1,5 @@
-#include "formatmp3.hpp"
-#include "config.hpp"
+#include <formatmp3.hpp>
+#include <config.hpp>
 
 #include <cstdio>
 #include <pico/platform.h>

@@ -1,7 +1,7 @@
 #include <cstring>
 #include <cstdio>
 #include <pico/platform.h>
-#include "formatwav.hpp"
+#include <formatwav.hpp>
 
 void FormatWAV::decode_header() {
     Format::decode_header();

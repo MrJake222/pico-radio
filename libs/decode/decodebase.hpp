@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include "format.hpp"
+#include <format.hpp>
 
 enum class FinishReason {
     NoFinish,

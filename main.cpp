@@ -13,21 +13,21 @@
 #include <task.h>
 #include <queue.h>
 
-#include "buttons/buttons.hpp"
+#include <buttons/buttons.hpp>
 
-#include "i2s.pio.h"
+#include <i2s.pio.h>
 
-#include "f_util.h"
-#include "ff.h"
-#include "hw_config.h"
+#include <f_util.h>
+#include <ff.h>
+#include <hw_config.h>
 
-#include "config.hpp"
-#include "formatmp3.hpp"
-#include "formatwav.hpp"
-#include "decodebase.hpp"
-#include "decodefile.hpp"
-#include "decodestream.hpp"
-#include "tft/st7735s.hpp"
+#include <config.hpp>
+#include <formatmp3.hpp>
+#include <formatwav.hpp>
+#include <decodebase.hpp>
+#include <decodefile.hpp>
+#include <decodestream.hpp>
+#include <tft/st7735s.hpp>
 
 // wifi
 #include <pico/cyw43_arch.h>

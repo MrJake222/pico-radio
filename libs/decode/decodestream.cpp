@@ -1,4 +1,4 @@
-#include "decodestream.hpp"
+#include <decodestream.hpp>
 
 void DecodeStream::begin(const char* path_, Format* format_) {
     DecodeBase::begin(path_, format_);

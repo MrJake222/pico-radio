@@ -1,4 +1,4 @@
-#include "i2s.pio.h"
+#include <i2s.pio.h>
 #include <hardware/clocks.h>
 
 const uint INSTRUCTION_PER_CLOCK = 2;

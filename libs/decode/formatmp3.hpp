@@ -1,8 +1,8 @@
 #pragma once
 
-#include "format.hpp"
-#include "circularbuffer.hpp"
-#include "config.hpp"
+#include <format.hpp>
+#include <circularbuffer.hpp>
+#include <config.hpp>
 
 #include <mp3dec.h>
 

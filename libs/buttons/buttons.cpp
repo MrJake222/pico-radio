@@ -1,7 +1,7 @@
 #include <hardware/gpio.h>
 #include <cstdio>
-#include "buttons.hpp"
-#include "config.hpp"
+#include <buttons.hpp>
+#include <config.hpp>
 
 QueueHandle_t input_queue;
 

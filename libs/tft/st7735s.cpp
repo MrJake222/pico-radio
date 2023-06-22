@@ -1,7 +1,7 @@
-#include "st7735s.hpp"
-#include "st7735_init.h"
+#include <st7735s.hpp>
+#include <st7735_init.h>
 
-#include "ubuntu_mono.hpp"
+#include <ubuntu_mono.hpp>
 
 #include <hardware/gpio.h>
 #include <pico/time.h>

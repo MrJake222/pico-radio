@@ -1,4 +1,4 @@
-#include "lwipopts.h"
+#include <lwipopts.h>
 
 // RAW buffer must be at least the size of PCM buffer
 // for WAV decoding (can be fixed by modifying DMA address chain)

@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include "format.hpp"
-#include "config.hpp"
+#include <format.hpp>
+#include <config.hpp>
 
 typedef unsigned int uint;
 struct wave_header {

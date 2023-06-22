@@ -1,9 +1,9 @@
-#include "decodefile.hpp"
+#include <decodefile.hpp>
 
 #include <pico/platform.h>
 #include <cstdio>
-#include "f_util.h"
-#include "config.hpp"
+#include <f_util.h>
+#include <config.hpp>
 
 static void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);

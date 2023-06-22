@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include "decodebase.hpp"
-#include "httpclientpico.hpp"
+#include <decodebase.hpp>
+#include <httpclientpico.hpp>
 
 class DecodeStream : public DecodeBase {
 
