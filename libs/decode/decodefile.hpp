@@ -2,7 +2,7 @@
 
 #include "decodebase.hpp"
 
-#include "ff.h"
+#include <ff.h>
 #include "format.hpp"
 
 class DecodeFile : public DecodeBase {

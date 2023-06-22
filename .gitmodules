@@ -1,9 +1,9 @@
 [submodule "libs/sd_lib"]
-	path = libs/sd_lib
+	path = libs/external/sd_lib
 	url = https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico.git
 [submodule "libs/helixmp3"]
-	path = libs/helixmp3
+	path = libs/external/helixmp3
 	url = git@github.com:MrJake222/libhelix-mp3.git
 [submodule "libs/FreeRTOS-Kernel"]
-	path = libs/FreeRTOS-Kernel
+	path = libs/external/FreeRTOS-Kernel
 	url = git@github.com:FreeRTOS/FreeRTOS-Kernel.git
