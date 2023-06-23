@@ -49,6 +49,7 @@ static volatile int dma_channel_b;
 
 // Playback
 static char filepath[1024];
+static TaskHandle_t player_task_handle;
 
 static uint8_t raw_buf_arr[BUF_MP3_SIZE_BYTES + BUF_HIDDEN_MP3_SIZE_BYTES];
 volatile CircularBuffer raw_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES, raw_buf_arr);
@@ -74,6 +75,8 @@ static DecodeStream dec_stream(
 
 static DecodeBase* dec;
 
+
+/* ------------------------------- INIT FUNCTIONS -------------------------------*/
 static void dma_irq_A() {
     a_done_irq = true;
     dma_channel_set_read_addr(dma_channel_a, audio_pcm, false);
@@ -116,6 +119,38 @@ static void configure_pio_tx_dma(int dma_chan, uint32_t* data, uint count, int c
     );
 }
 
+void player_begin() {
+    // PIO I2S configuration
+    pio = pio0;
+
+    // load program to <pio> block
+    uint offset = pio_add_program(pio, &i2s_program);
+
+    // claim unused state machine
+    sm = pio_claim_unused_sm(pio, true);
+
+    // configure & start program on <sm> machine at <pio> PIO block
+    i2s_program_init(pio, sm, offset, I2S_CLK_CHANNEL_BASE, I2S_DATA);
+    puts("PIO I2S configuration done");
+
+
+    // DMA configuration
+    irq_add_shared_handler(DMA_IRQ_0, dma_irq0, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    irq_set_enabled(DMA_IRQ_0, true);
+
+    dma_channel_a = dma_claim_unused_channel(true);
+    dma_channel_b = dma_claim_unused_channel(true);
+
+    configure_pio_tx_dma(dma_channel_a, audio_pcm, BUF_PCM_HALF_32BIT, dma_channel_b);
+    configure_pio_tx_dma(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, BUF_PCM_HALF_32BIT, dma_channel_a);
+    puts("DMA configuration done");
+
+    HELIX_STATIC_INIT(mp3DecInfo, fh, si, sfi, hi, di, mi, sbi);
+    puts("Decoder init done");
+}
+
+
+/* ------------------------------- PLAYING FUNCTIONS -------------------------------*/
 static void dma_chain_disable(int dma_chan) {
     dma_hw->ch[dma_chan].al1_ctrl = (dma_hw->ch[dma_chan].al1_ctrl & ~DMA_CH0_CTRL_TRIG_CHAIN_TO_BITS) | (dma_chan << DMA_CH0_CTRL_TRIG_CHAIN_TO_LSB);
 }
@@ -143,8 +178,6 @@ static void core1_entry() {
 
     while (dec->core1_loop());
 }
-
-static TaskHandle_t player_task_handle;
 
 static void player_task(void* arg) {
 
@@ -208,6 +241,7 @@ static void player_task(void* arg) {
     puts("dma channels stopped.");
 
     dec->end();
+    dec = nullptr;
 
     pio_sm_put_blocking(pio, sm, 0);
 
@@ -215,46 +249,15 @@ clean_up:
     vTaskDelete(nullptr);
 }
 
-static void player_end(void* arg, uint32_t data) {
+static void player_end_cb(void* arg, uint32_t data) {
     xTaskNotifyGive(player_task_handle);
-}
-
-void player_begin() {
-    // PIO I2S configuration
-    pio = pio0;
-
-    // load program to <pio> block
-    uint offset = pio_add_program(pio, &i2s_program);
-
-    // claim unused state machine
-    sm = pio_claim_unused_sm(pio, true);
-
-    // configure & start program on <sm> machine at <pio> PIO block
-    i2s_program_init(pio, sm, offset, I2S_CLK_CHANNEL_BASE, I2S_DATA);
-    puts("PIO I2S configuration done");
-
-
-    // DMA configuration
-    irq_add_shared_handler(DMA_IRQ_0, dma_irq0, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
-    irq_set_enabled(DMA_IRQ_0, true);
-
-    dma_channel_a = dma_claim_unused_channel(true);
-    dma_channel_b = dma_claim_unused_channel(true);
-
-    configure_pio_tx_dma(dma_channel_a, audio_pcm, BUF_PCM_HALF_32BIT, dma_channel_b);
-    configure_pio_tx_dma(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, BUF_PCM_HALF_32BIT, dma_channel_a);
-    puts("DMA configuration done");
-
-    HELIX_STATIC_INIT(mp3DecInfo, fh, si, sfi, hi, di, mi, sbi);
-    puts("Decoder init done");
 }
 
 void player_start(const char* path) {
     printf("\nplaying: %s as %s file\n", path, filetype_from_name_string(path));
 
     strcpy(filepath, path);
-
-    fifo_register(PLAYER_WAKE_END, player_end, nullptr, false);
+    fifo_register(PLAYER_WAKE_END, player_end_cb, nullptr, false);
 
     xTaskCreate(
             player_task,
@@ -263,4 +266,12 @@ void player_start(const char* path) {
             nullptr,
             1,
             &player_task_handle);
+}
+
+void player_stop() {
+    dec->user_abort();
+}
+
+bool player_is_running() {
+    return dec;
 }

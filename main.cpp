@@ -268,21 +268,6 @@ void oldmain() {
     }
 }
 
-// void core1() {
-//     int cnt = 1000;
-//
-//     while (1) {
-//         sleep_ms(1000);
-//         multicore_fifo_push_blocking(cnt++);
-//     }
-// }
-//
-// void sio0() {
-//     multicore_fifo_clear_irq();
-//     unsigned int v = multicore_fifo_pop_blocking();
-//     printf("received: %5d\n", v);
-// }
-
 [[noreturn]] void task_input_handle(void* arg) {
     ButtonEnum input;
     int r;
@@ -298,17 +283,18 @@ void oldmain() {
             continue;
 
         printf("input: %d (cnt %5d)\n", input, cnt++);
-        // if (input == CENTER) {
-        //     player_start("/4mmc.wav");
-        // }
+        if (input == CENTER) {
+            if (player_is_running())
+                player_stop();
+            else
+                // player_start("/4mmc.wav");
+                player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
+        }
     }
 }
 
 int main() {
     init_hardware();
-    // multicore_launch_core1(core1);
-    // irq_set_exclusive_handler(SIO_IRQ_PROC0, sio0);
-    // irq_set_enabled(SIO_IRQ_PROC0, true);
 
     xTaskCreate(
             task_input_handle,
@@ -317,9 +303,6 @@ int main() {
             nullptr,
             1,
             nullptr);
-
-    // player_start("/Ed44.wav");
-    player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
 
     vTaskStartScheduler();
 }
