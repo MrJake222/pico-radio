@@ -44,3 +44,9 @@ target_link_libraries(${PROJECT_NAME}
 # enable only usb stdio functions
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
 pico_enable_stdio_uart(${PROJECT_NAME} 1)
+
+# memory stats
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/read-elf-map.py
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Analyzing RAM usage...")
