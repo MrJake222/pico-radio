@@ -22,7 +22,9 @@ void DecodeFile::begin(const char* path_, Format* format_) {
     }
 
     // preload with file data
-    load_buffer(format->raw_buf.size);
+    // this must be less than whole buffer
+    // because read == write is undefined behavior
+    load_buffer(format->raw_buf.size / 2);
 
     eof = false;
     fifo_register(RAW_BUF_TOP_UP, buf_top_up, this, true);

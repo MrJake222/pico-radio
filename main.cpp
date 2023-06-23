@@ -193,23 +193,35 @@ void init_wifi() {
     }
 
     cyw43_arch_enable_sta_mode();
-    const char* WIFI_SSID = "Bapplejems";
-    const char* WIFI_PASSWORD = "ForThosE4bOut";
+    // const char* WIFI_SSID = "Bapplejems";
+    // const char* WIFI_PASSWORD = "ForThosE4bOut";
     // const char* WIFI_SSID = "NLP";
     // const char* WIFI_SSID = "NPC";
     // const char* WIFI_SSID = "MyNet";
-    // const char* WIFI_SSID = "BPi";
-    // const char* WIFI_PASSWORD = "bequick77";
+    const char* WIFI_SSID = "BPi";
+    const char* WIFI_PASSWORD = "bequick77";
     // const char* WIFI_SSID = "NorbertAP";
     // const char* WIFI_PASSWORD = "fearofthedark";
 
     printf("Connecting to Wi-Fi...\n");
-    int con_res = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);
-    if (con_res) {
-        printf("connection failed code %d\n", con_res);
-        while (1);
-    } else {
-        printf("Connected.\n");
+    bool connected = false;
+
+    for (int i=0; i<10; i++) {
+        printf("try %d... ", i+1);
+
+        int con_res = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 5000);
+        if (con_res) {
+            printf("failed code %d\n", con_res);
+        } else {
+            printf("Connected.\n");
+            connected = true;
+            break;
+        }
+    }
+
+    if (!connected) {
+        printf("failed to connect to wifi");
+        return;
     }
 
     cyw43_arch_lwip_begin();
@@ -268,6 +280,11 @@ void oldmain() {
     }
 }
 
+void task_wifi_startup(void* arg) {
+    init_wifi();
+    vTaskDelete(nullptr);
+}
+
 [[noreturn]] void task_input_handle(void* arg) {
     ButtonEnum input;
     int r;
@@ -288,13 +305,23 @@ void oldmain() {
                 player_stop();
             else
                 // player_start("/4mmc.wav");
-                player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
+                // player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
+                player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
         }
     }
 }
 
 int main() {
     init_hardware();
+    // init_wifi();
+
+    xTaskCreate(
+            task_wifi_startup,
+            "wifi startup",
+            configMINIMAL_STACK_SIZE * 4,
+            nullptr,
+            1,
+            nullptr);
 
     xTaskCreate(
             task_input_handle,

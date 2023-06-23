@@ -85,7 +85,7 @@ void DecodeBase::dma_watch() {
 void DecodeBase::dma_preload() {
     // wait for at least some data to be available
     // can't use <data_left_*> methods because read_ptr might be equal to write_ptr (undefined behavior)
-    // while (format->raw_buf.get_write_offset() == 0);
+    while (format->raw_buf.get_write_offset() == 0);
 
     format->decode_header();
     format->decode_exactly_n(audio_pcm, format->units_to_decode_whole());

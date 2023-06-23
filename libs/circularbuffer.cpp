@@ -4,9 +4,9 @@
 #include <pico/platform.h>
 #include <cstdio>
 
-// this returns full buffer when read_at == write_at
+// this returns empty buffer when read_at == write_at
 long CircularBuffer::data_left() volatile const {
-    return write_at <= read_at
+    return write_at < read_at
            ? ((size - read_at) + write_at)  // from reading position to end + wrapped
            : (write_at - read_at);          // from reading to next write pos
 }
