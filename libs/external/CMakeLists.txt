@@ -5,7 +5,7 @@ add_subdirectory(helixmp3)
 add_library(freertos_config INTERFACE)
 target_include_directories(freertos_config SYSTEM
         INTERFACE
-        ${CMAKE_SOURCE_DIR})
+        ${CMAKE_SOURCE_DIR}/config)
 set(FREERTOS_PORT GCC_RP2040)
 add_subdirectory(FreeRTOS-Kernel)
 
