@@ -40,7 +40,8 @@ void FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
 }
 
 int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
-    // watch_file_buffer();
+    if (user_abort)
+        return 0;
 
     // printf("decode o %ld  avail %ld\n", raw_buf.get_read_offset(), raw_buf.data_left_continuous());
 

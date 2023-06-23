@@ -10,6 +10,9 @@ protected:
     // used to end decoding when no more continuous data is present
     bool eop;
 
+    // used to abort playback as fast as possible
+    bool user_abort;
+
 public:
     volatile CircularBuffer& raw_buf;
 
@@ -18,11 +21,13 @@ public:
         { }
 
     void set_eop() { eop = true; }
+    void set_user_abort() { user_abort = true; }
 
     // call every time before decoding starts
     virtual void init() {
         raw_buf.reset();
         eop = false;
+        user_abort = false;
     }
 
     // returns number of units to decode to fill whole buffer

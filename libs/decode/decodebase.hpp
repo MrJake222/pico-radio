@@ -77,7 +77,7 @@ public:
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
     // called on user abort (from core0) to abort core1
-    void user_abort() { format->set_eop(); }
+    void user_abort() { format->set_user_abort(); }
 
     // functions called from core1
     void core1_init();
