@@ -14,5 +14,5 @@ add_library(libs_external)
 target_link_libraries(libs_external
         freertos_kernel
         FatFs_SPI
-        helixmp3
+        helixmp3_static
         )

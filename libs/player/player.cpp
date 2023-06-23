@@ -9,6 +9,8 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
+#include <helix_static.h>
+
 #include <config.hpp>
 #include <i2s.pio.h>
 #include <circularbuffer.hpp>
@@ -45,9 +47,12 @@ static volatile int dma_channel_b;
 
 // Playback
 static char filepath[1024];
-volatile CircularBuffer raw_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES);
 
-static FormatMP3 format_mp3(raw_buf);
+static uint8_t raw_buf_arr[BUF_MP3_SIZE_BYTES + BUF_HIDDEN_MP3_SIZE_BYTES];
+volatile CircularBuffer raw_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES, raw_buf_arr);
+
+HELIX_STATIC_DECLARE();
+static FormatMP3 format_mp3(raw_buf, (HMP3Decoder)&mp3DecInfo);
 static FormatWAV format_wav(raw_buf);
 
 static DecodeFile dec_file(
@@ -56,11 +61,14 @@ static DecodeFile dec_file(
         a_done_irq,
         b_done_irq);
 
+static uint8_t http_buf_arr[HTTP_DATA_BUF_SIZE_BYTES];
+static CircularBuffer http_buf(HTTP_DATA_BUF_SIZE_BYTES, 0, http_buf_arr);
 static DecodeStream dec_stream(
         audio_pcm,
         BUF_PCM_SIZE_32BIT,
         a_done_irq,
-        b_done_irq);
+        b_done_irq,
+        http_buf);
 
 static DecodeBase* dec;
 
@@ -150,6 +158,8 @@ void player_begin() {
     configure_pio_tx_dma(dma_channel_a, audio_pcm, BUF_PCM_HALF_32BIT, dma_channel_b);
     configure_pio_tx_dma(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, BUF_PCM_HALF_32BIT, dma_channel_a);
     puts("DMA configuration done");
+
+    HELIX_STATIC_INIT(mp3DecInfo, fh, si, sfi, hi, di, mi, sbi);
 }
 
 static void core1_entry() {

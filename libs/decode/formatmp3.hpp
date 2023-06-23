@@ -26,11 +26,10 @@ class FormatMP3 : public Format {
     int decode_up_to_one_frame(uint32_t* audio_pcm_buf);
 
 public:
-    FormatMP3(volatile CircularBuffer& raw_buf_)
+    FormatMP3(volatile CircularBuffer& raw_buf_, HMP3Decoder hMP3Decoder_)
         : Format(raw_buf_)
-        {
-            hMP3Decoder = MP3InitDecoder();
-        }
+        , hMP3Decoder(hMP3Decoder_)
+        { }
 
     void init() override {
         Format::init();

@@ -14,11 +14,11 @@ public:
     struct tcp_pcb* pcb;
     volatile bool err;
     volatile bool connected;
-    CircularBuffer http_buf;
+    CircularBuffer& http_buf;
 
-    HttpClientPico()
+    HttpClientPico(CircularBuffer& http_buf_)
         : HttpClient()
-        , http_buf(HTTP_DATA_BUF_SIZE_BYTES, 0)
+        , http_buf(http_buf_)
         { }
 };
 
