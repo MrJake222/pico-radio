@@ -12,3 +12,8 @@ void DecodeStream::end() {
 
     client.close();
 }
+
+void DecodeStream::raw_buf_read_cb(unsigned int bytes) {
+    DecodeBase::raw_buf_read_cb(bytes);
+    client.rx_ack(bytes);
+}

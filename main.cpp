@@ -31,6 +31,7 @@
 // wifi
 #include <pico/cyw43_arch.h>
 #include <player.hpp>
+#include <mcorefifo.hpp>
 
 const uint PIN_DBG = 13;
 #define DBG_ON() gpio_put(PIN_DBG, true)
@@ -177,6 +178,9 @@ void init_hardware() {
 
     buttons_begin();
     puts("buttons init ok");
+
+    fifo_init();
+    puts("mcorefifo init ok");
 }
 
 void init_wifi() {
@@ -294,9 +298,9 @@ void oldmain() {
             continue;
 
         printf("input: %d (cnt %5d)\n", input, cnt++);
-        if (input == CENTER) {
-            player_start("/4mmc.wav");
-        }
+        // if (input == CENTER) {
+        //     player_start("/4mmc.wav");
+        // }
     }
 }
 
@@ -313,6 +317,9 @@ int main() {
             nullptr,
             1,
             nullptr);
+
+    // player_start("/Ed44.wav");
+    player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
 
     vTaskStartScheduler();
 }

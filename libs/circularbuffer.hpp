@@ -17,7 +17,7 @@ class CircularBuffer {
 
     using read_callback_fn = void(*)(void*, unsigned int);
     void* read_ack_arg;
-    read_callback_fn read_ack_callback;
+    volatile read_callback_fn read_ack_callback;
 
 public:
     const int size_hidden;

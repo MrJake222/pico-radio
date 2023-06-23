@@ -125,20 +125,6 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) 
     return ERR_OK;
 }
 
-// called from core1 to ack decoded bytes
-void recv_ack(void* arg, unsigned int bytes) {
-    auto httpc = ((argptr)arg);
-
-    const int target = 60;
-
-    int d = target - httpc->content_buffer->health();
-    int b_new = ((100 + d) * (int)bytes) / 100;
-
-    cyw43_arch_lwip_begin();
-    tcp_recved(httpc->pcb, (uint16_t)b_new);
-    cyw43_arch_lwip_end();
-}
-
 
 int HttpClientPico::send(const char *buf, int buflen) {
     cyw43_arch_lwip_begin();
@@ -206,7 +192,6 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     tcp_arg(pcb, this);
     tcp_err(pcb, error_callback);
     tcp_recv(pcb, recv_callback);
-    content_buffer->set_read_ack_callback(this, recv_ack);
 
     err = false;
     connected = false;
@@ -249,4 +234,15 @@ int HttpClientPico::disconnect() {
 
     cyw43_arch_lwip_end();
     return 0;
+}
+
+void HttpClientPico::rx_ack(unsigned int bytes) {
+    const int target = 60;
+
+    int d = target - content_buffer->health();
+    int b_new = ((100 + d) * (int)bytes) / 100;
+
+    cyw43_arch_lwip_begin();
+    tcp_recved(pcb, (uint16_t)b_new);
+    cyw43_arch_lwip_end();
 }

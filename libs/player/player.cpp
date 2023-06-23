@@ -8,6 +8,7 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
+#include <semphr.h>
 
 #include <helix_static.h>
 
@@ -19,6 +20,7 @@
 #include <decodebase.hpp>
 #include <decodefile.hpp>
 #include <decodestream.hpp>
+#include <mcorefifo.hpp>
 
 static volatile bool a_done_irq = false;
 static volatile bool b_done_irq = false;
@@ -133,35 +135,6 @@ static void dma_start() {
     dma_channel_start(dma_channel_a);
 }
 
-void player_begin() {
-    // PIO I2S configuration
-    pio = pio0;
-
-    // load program to <pio> block
-    uint offset = pio_add_program(pio, &i2s_program);
-
-    // claim unused state machine
-    sm = pio_claim_unused_sm(pio, true);
-
-    // configure & start program on <sm> machine at <pio> PIO block
-    i2s_program_init(pio, sm, offset, I2S_CLK_CHANNEL_BASE, I2S_DATA);
-    puts("PIO I2S configuration done");
-
-
-    // DMA configuration
-    irq_add_shared_handler(DMA_IRQ_0, dma_irq0, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
-    irq_set_enabled(DMA_IRQ_0, true);
-
-    dma_channel_a = dma_claim_unused_channel(true);
-    dma_channel_b = dma_claim_unused_channel(true);
-
-    configure_pio_tx_dma(dma_channel_a, audio_pcm, BUF_PCM_HALF_32BIT, dma_channel_b);
-    configure_pio_tx_dma(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, BUF_PCM_HALF_32BIT, dma_channel_a);
-    puts("DMA configuration done");
-
-    HELIX_STATIC_INIT(mp3DecInfo, fh, si, sfi, hi, di, mi, sbi);
-}
-
 static void core1_entry() {
     dec->core1_init();
 
@@ -171,12 +144,14 @@ static void core1_entry() {
     while (dec->core1_loop());
 }
 
+static TaskHandle_t player_task_handle;
+
 static void player_task(void* arg) {
 
     FileType type = filetype_from_name(filepath);
 
     // init decoder & format
-    // this may open files/establish a connection/etc.
+    // this may open files + preload data/establish a connection/etc.
     switch (type) {
         case FileType::WAV:
             dec = &dec_file;
@@ -195,23 +170,14 @@ static void player_task(void* arg) {
 
         default:
             puts("format unsupported");
-            return;
+            goto clean_up;
     }
 
-    dec->core0_init();
     multicore_launch_core1(core1_entry);
 
-    while (dec->core0_loop()) {
-        // int chr = getchar_timeout_us(0);
-        // if (chr > 0) {
-        //     dec->user_abort();
-        //     break;
-        // }
-    }
+    // wait for notification
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-    printf("\nfinished file reading.\n");
-
-    dec->core0_end();
     multicore_reset_core1();
 
     printf("\nfinished decode.\n");
@@ -244,10 +210,51 @@ static void player_task(void* arg) {
     dec->end();
 
     pio_sm_put_blocking(pio, sm, 0);
+
+clean_up:
+    vTaskDelete(nullptr);
+}
+
+static void player_end(void* arg, uint32_t data) {
+    xTaskNotifyGive(player_task_handle);
+}
+
+void player_begin() {
+    // PIO I2S configuration
+    pio = pio0;
+
+    // load program to <pio> block
+    uint offset = pio_add_program(pio, &i2s_program);
+
+    // claim unused state machine
+    sm = pio_claim_unused_sm(pio, true);
+
+    // configure & start program on <sm> machine at <pio> PIO block
+    i2s_program_init(pio, sm, offset, I2S_CLK_CHANNEL_BASE, I2S_DATA);
+    puts("PIO I2S configuration done");
+
+
+    // DMA configuration
+    irq_add_shared_handler(DMA_IRQ_0, dma_irq0, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    irq_set_enabled(DMA_IRQ_0, true);
+
+    dma_channel_a = dma_claim_unused_channel(true);
+    dma_channel_b = dma_claim_unused_channel(true);
+
+    configure_pio_tx_dma(dma_channel_a, audio_pcm, BUF_PCM_HALF_32BIT, dma_channel_b);
+    configure_pio_tx_dma(dma_channel_b, audio_pcm + BUF_PCM_HALF_32BIT, BUF_PCM_HALF_32BIT, dma_channel_a);
+    puts("DMA configuration done");
+
+    HELIX_STATIC_INIT(mp3DecInfo, fh, si, sfi, hi, di, mi, sbi);
+    puts("Decoder init done");
 }
 
 void player_start(const char* path) {
     printf("\nplaying: %s as %s file\n", path, filetype_from_name_string(path));
+
+    strcpy(filepath, path);
+
+    fifo_register(PLAYER_WAKE_END, player_end, nullptr, false);
 
     xTaskCreate(
             player_task,
@@ -255,5 +262,5 @@ void player_start(const char* path) {
             1024,
             nullptr,
             1,
-            nullptr);
+            &player_task_handle);
 }

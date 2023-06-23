@@ -12,6 +12,8 @@ add_library(libs
         httpc/httpclient.cpp
         httpc/httpclientpico.cpp
 
+        mcorefifo/mcorefifo.cpp
+
         player/i2s.pio.cpp
         player/player.cpp
         player/filetype.cpp
@@ -26,6 +28,7 @@ target_include_directories(libs PUBLIC
         buttons
         decode
         httpc
+        mcorefifo
         player
         tft
         .
@@ -37,6 +40,7 @@ target_link_libraries(libs
         pico_multicore
         hardware_timer
         hardware_gpio
+        hardware_irq
 
         pico_cyw43_arch_lwip_sys_freertos
         )

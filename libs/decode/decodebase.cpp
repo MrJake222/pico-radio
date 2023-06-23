@@ -1,23 +1,19 @@
 #include <hardware/timer.h>
 #include <decodebase.hpp>
+#include <mcorefifo.hpp>
 
 #include <cstdio>
 
-void DecodeBase::core0_init() {
+void DecodeBase::begin(const char* path_, Format* format_) {
+    path = path_;
+    format = format_;
 
-}
+    format->init();
+    format->raw_buf.set_read_ack_callback(this, [] (void* arg, unsigned int bytes) { ((ArgPtr)arg)->raw_buf_read_cb(bytes); });
 
-bool DecodeBase::core0_loop() {
-    // core0 watches unprocessed data buffers
-    bool more = data_buffer_watch();
-
-    // finish when no more data to load
-    return more;
-}
-
-void DecodeBase::core0_end() {
-    // wait for core1 to finish execution
-    while (!decode_finished());
+    decode_finished_by = FinishReason::NoFinish;
+    sum_units_decoded = 0;
+    last_seconds = -1;
 }
 
 void DecodeBase::core1_init() {
@@ -35,6 +31,8 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
         decode_finished_by = channel == DMAChannel::ChanA
                 ? FinishReason::UnderflowChanA
                 : FinishReason::UnderflowChanB;
+
+        fifo_send(PLAYER_WAKE_END);
     }
 
     sum_units_decoded += decoded;
@@ -87,7 +85,7 @@ void DecodeBase::dma_watch() {
 void DecodeBase::dma_preload() {
     // wait for at least some data to be available
     // can't use <data_left_*> methods because read_ptr might be equal to write_ptr (undefined behavior)
-    while (format->raw_buf.get_write_offset() == 0);
+    // while (format->raw_buf.get_write_offset() == 0);
 
     format->decode_header();
     format->decode_exactly_n(audio_pcm, format->units_to_decode_whole());

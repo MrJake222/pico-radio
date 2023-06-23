@@ -20,6 +20,8 @@ public:
         : HttpClient()
         , http_buf(http_buf_)
         { }
+
+    void rx_ack(unsigned int bytes);
 };
 
 using argptr = volatile HttpClientPico*;
