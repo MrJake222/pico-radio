@@ -39,7 +39,7 @@
 #define LCD_BL      7
 // Buttons
 #define BTN_UP      12
-#define BTN_DOWN    16
+#define BTN_DOWN    21
 #define BTN_LEFT    15
 #define BTN_RIGHT   13
 #define BTN_CENTER  14

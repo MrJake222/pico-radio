@@ -13,9 +13,6 @@ project(pico-radio C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-add_compile_definitions(PICO_MAX_SHARED_IRQ_HANDLERS=8u)
-add_compile_definitions(PICO_DEBUG_MALLOC=1)
-
 # project-wide includes
 include_directories(config)
 
@@ -39,6 +36,13 @@ target_link_libraries(${PROJECT_NAME}
         pico_multicore
         pico_cyw43_arch_lwip_sys_freertos
         libs
+        )
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+        PICO_MAX_SHARED_IRQ_HANDLERS=8u
+        PICO_DEBUG_MALLOC=1
+        PICO_DEFAULT_UART_TX_PIN=16
+        PICO_DEFAULT_UART_RX_PIN=17
         )
 
 # enable only usb stdio functions
