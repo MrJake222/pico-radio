@@ -9,10 +9,6 @@ static void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
 }
 
-static void buf_top_up(void* arg, uint32_t _) {
-    ((DecodeFile*) arg)->load_buffer_or_eof();
-}
-
 void DecodeFile::begin(const char* path_, Format* format_) {
     DecodeBase::begin(path_, format_);
 
@@ -27,7 +23,6 @@ void DecodeFile::begin(const char* path_, Format* format_) {
     load_buffer(format->raw_buf.size / 2);
 
     eof = false;
-    fifo_register(RAW_BUF_TOP_UP, buf_top_up, this, true);
 }
 
 void DecodeFile::end() {
@@ -55,25 +50,21 @@ void DecodeFile::load_buffer(int bytes) {
     // printf("loaded,  offset %ld  load_at %ld\n", format->raw_buf.get_read_offset(), format->raw_buf.get_write_offset());
 }
 
-void DecodeFile::load_buffer_or_eof() {
-    if (eof) {
-        // eof, after wrap, set end-of-playback
-        format->set_eop();
-    }
+void DecodeFile::check_buffer() {
+    if (format->raw_buf.data_left() < format->raw_buf.size / 2) {
+        if (eof) {
+            // eof, after wrap, set end-of-playback
+            format->set_eop();
+        }
 
-    else {
-        // no eof -> just load more
-        load_buffer(format->raw_buf.size/2);
+        else {
+            // no eof -> just load more
+            load_buffer(format->raw_buf.size/2);
+        }
     }
 }
 
-void DecodeFile::raw_buf_read_cb(unsigned int bytes) {
-    DecodeBase::raw_buf_read_cb(bytes);
-
-    // called from core1
-    // Here we need to pass a message to core0, to load file
-
-    if (format->raw_buf.data_left() < format->raw_buf.size / 2) {
-        fifo_send(RAW_BUF_TOP_UP);
-    }
+void DecodeFile::raw_buf_read_msg(unsigned int bytes) {
+    DecodeBase::raw_buf_read_msg(bytes);
+    check_buffer();
 }

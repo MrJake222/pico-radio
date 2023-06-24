@@ -89,8 +89,6 @@ public:
     // Used in callbacks
 
     // Notifies when format reads from the raw buffer
-    // Called from core1 (!)
-    virtual void raw_buf_read_cb(unsigned int bytes) { }
+    // Called from core0
+    virtual void raw_buf_read_msg(unsigned int bytes) { }
 };
-
-using ArgPtr = DecodeBase*;

@@ -12,6 +12,7 @@ class DecodeFile : public DecodeBase {
 
     bool eof;
     void load_buffer(int bytes);
+    void check_buffer();
 
     int source_size_bytes() override { return f_size(&fp); }
 
@@ -22,10 +23,8 @@ public:
     // Do not call directly
     // used by callbacks
 
-    // direct callback (on core1)
-    void raw_buf_read_cb(unsigned int bytes) override;
     // callback from fifo data (on core0)
-    void load_buffer_or_eof();
+    void raw_buf_read_msg(unsigned int bytes) override;
 
     using DecodeBase::DecodeBase;
 };

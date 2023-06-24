@@ -9,9 +9,10 @@
 #define MSG_MAKE(type, data) ((type << (32 - MSG_TYPE_BITS)) | (data & MSG_DATA_MASK))
 
 enum FifoMsgType {
-    // raw buffer needs filling
-    // see decodefile.cpp
-    RAW_BUF_TOP_UP,
+    // raw buffer just got read on core1
+    // send to core0 to confirm reception (stream) or read from file (file)
+    // data is number of bytes read
+    RAW_BUF_READ,
 
     // used to wake up the player thread
     // when ending playback

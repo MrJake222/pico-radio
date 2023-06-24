@@ -4,12 +4,25 @@
 
 #include <cstdio>
 
+static void raw_buf_read_cb_static(void* arg, unsigned int bytes) {
+    // called from core1
+    // Here we need to pass a message to core0
+
+    fifo_send_with_data(RAW_BUF_READ, bytes);
+}
+
+static void raw_buf_read_msg_static(void* arg, uint32_t data) {
+    // called from core0 task
+    ((DecodeBase*) arg)->raw_buf_read_msg(data);
+}
+
 void DecodeBase::begin(const char* path_, Format* format_) {
     path = path_;
     format = format_;
 
     format->init();
-    format->raw_buf.set_read_ack_callback(this, [] (void* arg, unsigned int bytes) { ((ArgPtr)arg)->raw_buf_read_cb(bytes); });
+    format->raw_buf.set_read_ack_callback(this, raw_buf_read_cb_static);
+    fifo_register(RAW_BUF_READ, raw_buf_read_msg_static, this, true);
 
     decode_finished_by = FinishReason::NoFinish;
     sum_units_decoded = 0;
