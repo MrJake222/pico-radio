@@ -3,6 +3,7 @@
 #include <mcorefifo.hpp>
 
 #include <cstdio>
+#include <lwip/stats.h>
 
 static void raw_buf_read_cb_static(void* arg, unsigned int bytes) {
     // called from core1
@@ -57,7 +58,8 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
         int duration = format->duration_sec(source_size_bytes());
         float took_ms = (float)took_us / 1000.f / (float)format->units_to_decode_half();
 
-        // TODO move this to a callback
+        // TODO move this to a callback/task
+        printf("\n\n\n-------------------------------------------------------------------------------------------------------- ");
         printf("%02d:%02d / %02d:%02d   decode %5.2fms %2d%%   health %2d%%\n",
                seconds/60, seconds%60,
                duration/60, duration%60,
@@ -65,6 +67,8 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
                int(took_ms * 100 / format->ms_per_unit()),
                format->raw_buf.health()
         );
+
+        stats_display();
     }
 }
 

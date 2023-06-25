@@ -28,7 +28,6 @@ int FormatWAV::decode_up_to_n(uint32_t *audio_pcm_buf, int n) {
 
     int copied = 0;
 
-    // TODO check for file end & user abort
     while (copied < n) {
         int cpy = raw_buf.data_left_continuous();
         cpy = MIN(cpy, n - copied);

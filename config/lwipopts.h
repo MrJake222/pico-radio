@@ -1,7 +1,8 @@
-#include "FreeRTOSConfig.h"
-
 #ifndef _LWIPOPTS_EXAMPLE_COMMONH_H
 #define _LWIPOPTS_EXAMPLE_COMMONH_H
+
+#include "FreeRTOSConfig.h"
+#include "config.hpp"
 
 #define NO_SYS                      0
 #define LWIP_SOCKET                 0
@@ -48,10 +49,17 @@
 #define DHCP_DOES_ARP_CHECK         0
 #define LWIP_DHCP_DOES_ACD_CHECK    0
 
-#ifndef NDEBUG
+#define DEBUG                       1
+#if DEBUG
 #define LWIP_DEBUG                  1
 #define LWIP_STATS                  1
 #define LWIP_STATS_DISPLAY          1
+#define UDP_STATS                   0
+#define ICMP_STATS                  0
+#define MEM_STATS                   1
+#define MEMP_STATS                  0
+#define LINK_STATS                  0
+#define IPFRAG_STATS                0
 #endif
 
 #define ETHARP_DEBUG                LWIP_DBG_OFF
