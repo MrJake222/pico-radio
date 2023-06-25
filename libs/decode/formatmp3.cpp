@@ -95,11 +95,12 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
                 printf("o %ld  wrong sync-word\n", raw_buf.get_read_offset());
 
                 orig_read = raw_buf.read_ptr();
+#if BUF_REVERSE
                 rev = MAX(0, bytes_consumed_last - MP3_HEADER_SIZE);
                 // mp3_buf.debug_read(256, rev);
                 printf("reversing buffer by %d: %ld -> %ld\n", rev, raw_buf.get_read_offset(), raw_buf.get_read_offset() - rev);
-
                 raw_buf.read_reverse(rev);
+#endif
                 align_buffer(orig_read);
                 again = true;
                 break;

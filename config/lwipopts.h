@@ -7,7 +7,7 @@
 #define LWIP_SOCKET                 0
 
 #define TCPIP_THREAD_NAME           "tcpip"
-#define TCPIP_THREAD_PRIO           15          // half of max priority
+#define TCPIP_THREAD_PRIO           2
 #define TCPIP_THREAD_STACKSIZE      2048
 
 #define DEFAULT_TCP_RECVMBOX_SIZE   5
@@ -24,8 +24,8 @@
 #define LWIP_ETHERNET               1
 #define LWIP_ICMP                   1
 #define LWIP_RAW                    1
-#define TCP_WND                     (8 * TCP_MSS)
 #define TCP_MSS                     1460
+#define TCP_WND                     (8 * TCP_MSS)
 #define TCP_SND_BUF                 (8 * TCP_MSS)
 #define TCP_SND_QUEUELEN            ((4 * (TCP_SND_BUF) + (TCP_MSS - 1)) / (TCP_MSS))
 #define LWIP_NETIF_STATUS_CALLBACK  1

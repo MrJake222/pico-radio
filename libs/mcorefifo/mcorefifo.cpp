@@ -59,7 +59,7 @@ void fifo_init() {
             "fifo",
             1024,
             nullptr,
-            1,
+            3,
             nullptr);
 
     irq_set_exclusive_handler(SIO_IRQ_PROC0, fifo_rx_irq);

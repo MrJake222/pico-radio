@@ -7,7 +7,7 @@
 static void raw_buf_read_cb_static(void* arg, unsigned int bytes) {
     // called from core1
     // Here we need to pass a message to core0
-
+    // printf("[%ld us] read %d bytes\n", time_us_32(), bytes);
     fifo_send_with_data(RAW_BUF_READ, bytes);
 }
 
