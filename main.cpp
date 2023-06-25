@@ -307,6 +307,7 @@ void task_wifi_startup(void* arg) {
                 // player_start("/4mmc.wav");
                 // player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
                 player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
+                // player_start("http://172.17.1.2:8000/file.mp3");
         }
     }
 }
