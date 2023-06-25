@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include "format.hpp"
+#include <format.hpp>
 
 enum class FinishReason {
     NoFinish,
@@ -35,7 +35,6 @@ class DecodeBase {
     volatile bool& a_done_irq;
     volatile bool& b_done_irq;
     // uses dma flags to load specific part of the buffer
-    // these function are run on <feed_dma_core> result
     void dma_watch();
     void dma_preload();
 
@@ -52,10 +51,6 @@ protected:
     // needs to be protected for data loading
     Format* format;
 
-    // designed to watch file buffers
-    // (or do nothing in internet streams)
-    // returns: true on success, false when there is no more data to load
-    virtual bool data_buffer_watch() { return true; }
     // called when <dma_watch> actually loads some data
     virtual void dma_feed_done(int decoded, int took_us, DMAChannel channel);
 
@@ -75,31 +70,25 @@ public:
     virtual ~DecodeBase() = default;
 
     // called before and after decoding
-    virtual void begin(const char* path_, Format* format_) {
-        path = path_;
-        format = format_;
-
-        format->init();
-        decode_finished_by = FinishReason::NoFinish;
-        sum_units_decoded = 0;
-        last_seconds = -1;
-    }
-
+    virtual void begin(const char* path_, Format* format_);
     virtual void end() { }
 
-    // functions called from core0
-    void core0_init();
-    bool core0_loop();
-    void core0_end();
     // after core0_end caller needs to wait for DMA
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
     // called on user abort (from core0) to abort core1
-    void user_abort() { format->set_eop(); }
+    void user_abort() { format->set_user_abort(); }
 
     // functions called from core1
     void core1_init();
     bool core1_loop();
 
     long bit_freq() { return format->bit_freq(); }
+
+    // DO NOT CALL MANUALLY
+    // Used in callbacks
+
+    // Notifies when format reads from the raw buffer
+    // Called from core0
+    virtual void raw_buf_read_msg(unsigned int bytes) { }
 };

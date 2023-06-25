@@ -1,23 +1,32 @@
 #include <hardware/timer.h>
-#include "decodebase.hpp"
+#include <decodebase.hpp>
+#include <mcorefifo.hpp>
 
 #include <cstdio>
 
-void DecodeBase::core0_init() {
-
+static void raw_buf_read_cb_static(void* arg, unsigned int bytes) {
+    // called from core1
+    // Here we need to pass a message to core0
+    // printf("[%ld us] read %d bytes\n", time_us_32(), bytes);
+    fifo_send_with_data(RAW_BUF_READ, bytes);
 }
 
-bool DecodeBase::core0_loop() {
-    // core0 watches unprocessed data buffers
-    bool more = data_buffer_watch();
-
-    // finish when no more data to load
-    return more;
+static void raw_buf_read_msg_static(void* arg, uint32_t data) {
+    // called from core0 task
+    ((DecodeBase*) arg)->raw_buf_read_msg(data);
 }
 
-void DecodeBase::core0_end() {
-    // wait for core1 to finish execution
-    while (!decode_finished());
+void DecodeBase::begin(const char* path_, Format* format_) {
+    path = path_;
+    format = format_;
+
+    format->init();
+    format->raw_buf.set_read_ack_callback(this, raw_buf_read_cb_static);
+    fifo_register(RAW_BUF_READ, raw_buf_read_msg_static, this, true);
+
+    decode_finished_by = FinishReason::NoFinish;
+    sum_units_decoded = 0;
+    last_seconds = -1;
 }
 
 void DecodeBase::core1_init() {
@@ -35,6 +44,8 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
         decode_finished_by = channel == DMAChannel::ChanA
                 ? FinishReason::UnderflowChanA
                 : FinishReason::UnderflowChanB;
+
+        fifo_send(PLAYER_WAKE_END);
     }
 
     sum_units_decoded += decoded;

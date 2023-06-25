@@ -1,7 +1,7 @@
 #include <cstring>
 #include <cstdio>
 #include <pico/platform.h>
-#include "formatwav.hpp"
+#include <formatwav.hpp>
 
 void FormatWAV::decode_header() {
     Format::decode_header();
@@ -23,18 +23,22 @@ void FormatWAV::decode_header() {
 }
 
 int FormatWAV::decode_up_to_n(uint32_t *audio_pcm_buf, int n) {
+    if (user_abort)
+        return 0;
 
     int copied = 0;
 
+    // TODO check for file end & user abort
     while (copied < n) {
         int cpy = raw_buf.data_left_continuous();
         cpy = MIN(cpy, n - copied);
 
+        // handles end-of-file
         if (cpy == 0)
             break;
 
         memcpy(audio_pcm_buf + copied/4, raw_buf.read_ptr(), cpy);
-        raw_buf.read_ack(cpy);
+        raw_buf.read_ack(cpy); // this does implicit wrap
         copied += cpy;
     }
 

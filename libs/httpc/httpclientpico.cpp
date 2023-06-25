@@ -1,5 +1,5 @@
-#include "httpclientpico.hpp"
-#include "circularbuffer.hpp"
+#include <httpclientpico.hpp>
+#include <circularbuffer.hpp>
 
 #include <lwip/tcp.h>
 #include <lwip/dns.h>
@@ -78,65 +78,59 @@ err_t connected_callback(void* arg, struct tcp_pcb* tpcb, err_t err) {
     return err;
 }
 
-err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) {
+err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t err) {
 
     cyw43_arch_lwip_check();
 
     auto httpc = ((argptr)arg);
 
-    if (!p || err != ERR_OK) {
+    if (!p_head || err != ERR_OK) {
         // some error occurred
-        printf("recv callback error code %d\n", err);
+        printf("recv callback error p_head %p code %d\n", p_head, err);
         httpc->err = true;
         return err;
     }
 
-    // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->content_buffer->space_left());
+    struct pbuf* p = p_head;
 
-    if (httpc->is_content()) {
-        if (httpc->http_buf.data_left() > 0) {
-            printf("moving buffer: data %ld to -> free %ld\n", httpc->http_buf.data_left(), httpc->content_buffer->space_left());
-            httpc->http_buf.move_to(*httpc->content_buffer);
+    while(true) {
+        // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->content_buffer->space_left());
+
+        if (httpc->is_content()) {
+            if (httpc->http_buf.data_left() > 0) {
+                printf("moving buffer: data %ld to -> free %ld\n", httpc->http_buf.data_left(), httpc->content_buffer->space_left());
+                httpc->http_buf.move_to(*httpc->content_buffer);
+            }
+
+            if (httpc->content_buffer->space_left() < p->len) {
+                puts("end of mp3 buffer");
+#if BUF_OVERRUN_PROTECTION
+                httpc->err = true;
+                return ERR_MEM;
+#endif
+            }
+
+            httpc->content_buffer->write((uint8_t*)p->payload, p->len);
+        }
+        else {
+
+            if (httpc->http_buf.space_left() < p->len) {
+                puts("end of http buffer");
+                httpc->err = true;
+                return ERR_MEM;
+            }
+
+            httpc->http_buf.write((uint8_t*)p->payload, p->len);
         }
 
-        if (httpc->content_buffer->space_left() < p->len) {
-            puts("end of mp3 buffer");
-            httpc->err = true;
-            return ERR_MEM;
-        }
+        if (p->len == p->tot_len)
+            break;
 
-        httpc->content_buffer->write((uint8_t*)p->payload, p->len);
+        p = p->next;
     }
-    else {
 
-        if (httpc->http_buf.space_left() < p->len) {
-            puts("end of http buffer");
-            httpc->err = true;
-            return ERR_MEM;
-        }
-
-        httpc->http_buf.write((uint8_t*)p->payload, p->len);
-    }
-
-    // tcp_recved(tpcb, p->len);
-    // printf("recv done o %d\n", stream_offset);
-
-    pbuf_free(p);
+    pbuf_free(p_head);
     return ERR_OK;
-}
-
-// called from core1 to ack decoded bytes
-void recv_ack(void* arg, unsigned int bytes) {
-    auto httpc = ((argptr)arg);
-
-    const int target = 60;
-
-    int d = target - httpc->content_buffer->health();
-    int b_new = ((100 + d) * (int)bytes) / 100;
-
-    cyw43_arch_lwip_begin();
-    tcp_recved(httpc->pcb, (uint16_t)b_new);
-    cyw43_arch_lwip_end();
 }
 
 
@@ -206,7 +200,6 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     tcp_arg(pcb, this);
     tcp_err(pcb, error_callback);
     tcp_recv(pcb, recv_callback);
-    content_buffer->set_read_ack_callback(this, recv_ack);
 
     err = false;
     connected = false;
@@ -249,4 +242,17 @@ int HttpClientPico::disconnect() {
 
     cyw43_arch_lwip_end();
     return 0;
+}
+
+void HttpClientPico::rx_ack(unsigned int bytes) {
+    int d = HTTP_CONTENT_BUFFER_TARGET - content_buffer->health();
+    int b_new = ((100 + d) * (int)bytes) / 100;
+
+    // printf("[%ld us]try ack bytes %d\n", time_us_32(), bytes);
+
+    cyw43_arch_lwip_begin();
+    tcp_recved(pcb, (uint16_t)b_new);
+    cyw43_arch_lwip_end();
+
+    // printf("[%ld us]acked b %d\n", time_us_32(), b_new);
 }

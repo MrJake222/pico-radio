@@ -4,8 +4,8 @@
 #include <cstring>
 #include <string>
 #include <map>
-#include <../circularbuffer.hpp>
-#include <../../config.hpp>
+#include <circularbuffer.hpp>
+#include <config.hpp>
 
 class HttpClient {
 

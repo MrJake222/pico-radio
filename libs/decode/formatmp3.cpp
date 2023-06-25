@@ -1,5 +1,5 @@
-#include "formatmp3.hpp"
-#include "config.hpp"
+#include <formatmp3.hpp>
+#include <config.hpp>
 
 #include <cstdio>
 #include <pico/platform.h>
@@ -8,22 +8,25 @@ void FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
 
     int matched;
     do {
-        if (raw_buf.data_left() < MP3_HEADER_SIZE)
-            continue;
-
-        // printf("read at %ld  avail %ld  ", mp3_buf.get_read_offset(), mp3_buf.data_left());
-        int sync_word_offset = MP3FindSyncWord(raw_buf.read_ptr(), raw_buf.data_left_continuous());
-        // printf("sync_word_offset: %d   read %ld   len %ld\n", sync_word_offset, mp3_buf.get_read_offset(), mp3_buf.data_left_continuous());
-        if (sync_word_offset < 0) {
-            // failed
-
-            // save potential last header & wrap
-            raw_buf.set_read_ptr_end(MP3_HEADER_SIZE);
+        if (raw_buf.data_left()<MP3_HEADER_SIZE) {
             if (raw_buf.can_wrap_buffer())
                 raw_buf.wrap_buffer();
-            //load_buffer(BUF_MP3_SIZE_BYTES);
+
+            continue;
+        }
+
+        const int max_check_len = 1024;
+        int check_len = MIN(max_check_len, raw_buf.data_left_continuous());
+
+        printf("read at %ld  avail %ld  check %d  ", raw_buf.get_read_offset(), raw_buf.data_left(), check_len);
+        int sync_word_offset = MP3FindSyncWord(raw_buf.read_ptr(), check_len);
+        printf("sync_word_offset: %d\n", sync_word_offset);
+        if (sync_word_offset < 0) {
+            // failed (read all <check_len>, and no sync word)
+            raw_buf.read_ack(check_len);
         }
         else {
+            // success after <sync_word_offset> bytes
             raw_buf.read_ack(sync_word_offset);
 
             printf("offset %5ld (%4d)  avail %ld  ", raw_buf.get_read_offset(), raw_buf.read_ptr() - orig_read_ptr, raw_buf.data_left());
@@ -40,7 +43,8 @@ void FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
 }
 
 int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
-    // watch_file_buffer();
+    if (user_abort)
+        return 0;
 
     // printf("decode o %ld  avail %ld\n", raw_buf.get_read_offset(), raw_buf.data_left_continuous());
 
@@ -91,11 +95,12 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
                 printf("o %ld  wrong sync-word\n", raw_buf.get_read_offset());
 
                 orig_read = raw_buf.read_ptr();
+#if BUF_REVERSE
                 rev = MAX(0, bytes_consumed_last - MP3_HEADER_SIZE);
                 // mp3_buf.debug_read(256, rev);
                 printf("reversing buffer by %d: %ld -> %ld\n", rev, raw_buf.get_read_offset(), raw_buf.get_read_offset() - rev);
-
                 raw_buf.read_reverse(rev);
+#endif
                 align_buffer(orig_read);
                 again = true;
                 break;

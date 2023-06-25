@@ -17,7 +17,7 @@ class CircularBuffer {
 
     using read_callback_fn = void(*)(void*, unsigned int);
     void* read_ack_arg;
-    read_callback_fn read_ack_callback;
+    volatile read_callback_fn read_ack_callback;
 
 public:
     const int size_hidden;
@@ -25,13 +25,14 @@ public:
 
     /**
      *
-     * @param size size of the visible buffer
-     * @param size_hidden_ area before visible buffer (for wrapping)
+     * @param size_ size of the visible buffer
+     * @param size_hidden_ size of the area before visible buffer (for wrapping)
+     * @param buf_ static buffer at least (size + size_hidden) bytes
      */
-    CircularBuffer(int size, int size_hidden_)
-        : size(size)
+    CircularBuffer(int size_, int size_hidden_, uint8_t* buf_)
+        : size(size_)
         , size_hidden(size_hidden_)
-        , buffer_hidden(new uint8_t[size + size_hidden_])
+        , buffer_hidden(buf_)
         , buffer(buffer_hidden + size_hidden_)
         {
             reset();
