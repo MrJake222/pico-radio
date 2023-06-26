@@ -2,6 +2,7 @@
 #include <st7735_init.h>
 
 #include <ubuntu_mono.hpp>
+#include <icons.hpp>
 
 #include <hardware/gpio.h>
 #include <pico/time.h>
@@ -140,41 +141,68 @@ static int rgb_blend(unsigned int fg, unsigned int bg, unsigned int fg_alpha) {
                 ((((fg & 0x0000FF) * fg_alpha + (bg & 0x0000FF) * bg_alpha) >> 8) & 0x0000FF));
 }
 
-void ST7735S::write_text(int text_x, int text_y, const char *str, int scale) {
-    while (*str) {
-        const uint8_t* chr_ptr;
+int ST7735S::write_char(int text_x, int text_y, const char* chr, int scale) {
+    const uint8_t* chr_ptr;
 
-        int index = try_map_utf8(str);
-        if (index != -1) {
-            // utf character
-            chr_ptr = get_font_data_ptr(utf8_data, index);
-            str += 2;
-        }
-        else {
-            // ascii character (probably)
-            index = try_map_ascii(str);
-            chr_ptr = get_font_data_ptr(ascii_data, index);
-            str += 1;
-        }
+    int bytes_consumed;
+    int index = try_map_utf8(chr);
+    if (index != -1) {
+        // utf character
+        chr_ptr = get_font_data_ptr(utf8_data, index);
+        bytes_consumed = 2;
+    }
+    else {
+        // ascii character (probably)
+        index = try_map_ascii(chr);
+        chr_ptr = get_font_data_ptr(ascii_data, index);
+        bytes_consumed = 1;
+    }
 
-        setup_write(text_x, text_y,
-                    text_x + FONT_W*scale,
-                    text_y + FONT_H*scale);
+    setup_write(text_x, text_y,
+                text_x + FONT_W*scale,
+                text_y + FONT_H*scale);
 
-        for (int y=0; y<FONT_H; y++) {
-            for (int i=0; i<scale; i++) {
-                for (int x=0; x<FONT_W; x++) {
-                    unsigned int alpha = *(chr_ptr + y*FONT_W + x);
-                    uint16_t color = from_rgb(rgb_blend(fg, bg, alpha));
+    for (int y=0; y<FONT_H; y++) {
+        for (int i=0; i<scale; i++) {
+            for (int x=0; x<FONT_W; x++) {
+                unsigned int alpha = *(chr_ptr + y*FONT_W + x);
+                uint16_t color = from_rgb(rgb_blend(fg, bg, alpha));
 
-                    for (int j=0; j<scale; j++) {
-                        spi_write16_blocking(spi, &color, 1);
-                    }
+                for (int j=0; j<scale; j++) {
+                    spi_write16_blocking(spi, &color, 1);
                 }
             }
         }
+    }
 
+    return bytes_consumed;
+}
+void ST7735S::write_text(int text_x, int text_y, const char *str, int scale) {
+    while (*str) {
+        str += write_char(text_x, text_y, str, scale);
         text_x += FONT_W * scale;
+    }
+}
+
+void ST7735S::write_text_maxlen(int text_x, int text_y, const char* str, int maxlen, int scale) {
+    while (*str && maxlen--) {
+        str += write_char(text_x, text_y, str, scale);
+        text_x += FONT_W * scale;
+    }
+}
+
+void ST7735S::draw_icon(int icon_x, int icon_y, struct icon icon) {
+    setup_write(icon_x, icon_y,
+                icon_x + icon.w,
+                icon_y + icon.h);
+
+    for (int y=0; y<icon.h; y++) {
+        for (int x=0; x<icon.w; x++) {
+            unsigned int alpha = icon.data[y*icon.w + x];
+            uint16_t color = from_rgb(rgb_blend(fg, bg, alpha));
+
+            spi_write16_blocking(spi, &color, 1);
+        }
     }
 }
 

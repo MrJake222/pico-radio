@@ -9,6 +9,11 @@ add_library(libs
         decode/formatmp3.cpp
         decode/formatwav.cpp
 
+        display/screen.cpp
+        display/screenmng.cpp
+        display/screens/scfavourites.cpp
+        display/screens/scsearch.cpp
+
         httpc/httpclient.cpp
         httpc/httpclientpico.cpp
 
@@ -20,6 +25,7 @@ add_library(libs
 
         tft/st7735s.cpp
         tft/ubuntu_mono.cpp
+        tft/icons.cpp
 
         circularbuffer.cpp
         )
@@ -30,6 +36,7 @@ target_include_directories(libs PUBLIC
         httpc
         mcorefifo
         player
+        display
         tft
         .
         )

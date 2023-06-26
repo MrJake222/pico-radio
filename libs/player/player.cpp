@@ -135,6 +135,7 @@ void player_begin() {
 
 
     // DMA configuration
+    // TODO move dma irq to core1
     irq_add_shared_handler(DMA_IRQ_0, dma_irq0, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
     irq_set_enabled(DMA_IRQ_0, true);
 

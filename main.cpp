@@ -1,9 +1,7 @@
 #include <cstdio>
-#include <cstdlib>
 #include <pico/stdlib.h>
 
 #include <hardware/clocks.h>
-#include <pico/multicore.h>
 #include <cstring>
 #include <vector>
 #include <string>
@@ -21,29 +19,22 @@
 #include <hw_config.h>
 
 #include <config.hpp>
-#include <formatmp3.hpp>
-#include <formatwav.hpp>
-#include <decodebase.hpp>
-#include <decodefile.hpp>
-#include <decodestream.hpp>
 #include <tft/st7735s.hpp>
 
 // wifi
 #include <pico/cyw43_arch.h>
+
 #include <player.hpp>
 #include <mcorefifo.hpp>
+#include <screen.hpp>
+#include <screenmng.hpp>
+
+static Screen* screen;
 
 const uint PIN_DBG = 13;
 #define DBG_ON() gpio_put(PIN_DBG, true)
 #define DBG_OFF() gpio_put(PIN_DBG, false)
 
-// SPI
-ST7735S disp(
-        160, 128,
-        1, 2,
-        LCD_SPI ? spi1 : spi0,
-        LCD_SCK, LCD_TX, LCD_CS,
-        LCD_RST, LCD_DC, LCD_BL);
 
 void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
@@ -83,34 +74,6 @@ FRESULT scan_files(char* path, std::vector<std::string>& files) {
     return res;
 }
 
-
-
-void print_mem_usage() {
-    // int size_pcm = sizeof(audio_pcm);
-    // printf("PCM buffer size:     %d\n", size_pcm);
-    // int size_raw = sizeof(raw_buf) + raw_buf.size + raw_buf.size_hidden;
-    // printf("RAW buffer size:     %d\n", size_raw);
-    //
-    // int size_mp3 = sizeof(format_mp3);
-    // printf("MP3 format size:     %d\n", size_mp3);
-    // int size_wav = sizeof(format_wav);
-    // printf("WAV format size:     %d\n", size_wav);
-    //
-    // int size_file = sizeof(dec_file);
-    // printf("File decoder size:   %d\n", size_file);
-    // int size_stream = sizeof(dec_stream);
-    // printf("Stream decoder size: %d\n", size_stream);
-
-    // int size_disp = disp.size();
-    // printf("Display driver size: %d\n", size_disp);
-    //
-    // printf("Total: %d\n",
-    //        size_pcm + size_raw +\
-    //        size_mp3 + size_wav +\
-    //        size_file + size_stream +\
-    //        size_disp);
-}
-
 void init_hardware() {
     // set_sys_clock_khz(140000, true);
     set_sys_clock_khz(180000, true);
@@ -123,7 +86,6 @@ void init_hardware() {
     // sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys)/1000000);
-    print_mem_usage();
     puts("");
 
     // IO
@@ -131,35 +93,13 @@ void init_hardware() {
     gpio_set_dir(PIN_DBG, GPIO_OUT);
     DBG_OFF();
 
-    player_begin();
-    puts("player done");
+    // player_begin();
+    // puts("player done");
 
     // Display config
-    disp.begin();
-    disp.set_bg_fg(0xCCCCCC, 0x0);
-    disp.clear_screen();
-    disp.write_text(0, 0, "Ulubione stacje", 1);
-
-    const char* tests[] = {
-            "RMF FM",
-            "Złote przeboje",
-            "Radio 357",
-            "Radio 2223",
-            "Radio Eska",
-    };
-
-    for (int i=0; i<5; i++) {
-        if (i == 2)
-            disp.set_bg(0x55AA55);
-        else
-            disp.set_bg(0xAAAAAA);
-
-        disp.fill_rect(5, 23 + 23*i, 150, 20, true);
-        disp.write_text(9, 25 + 23*i, tests[i], 1);
-    }
-
-    // disp.write_text(0, 16, "Wyniki wyszukiwania", 1);
-    // disp.write_text(10, 50, "MORŚWIN!", 2);
+    screenmng_begin();
+    screen = screenmng_get_default();
+    screen->show();
     puts("Display configuration & init done");
 
     // FS configuration
@@ -281,7 +221,7 @@ void oldmain() {
 }
 
 void task_wifi_startup(void* arg) {
-    init_wifi();
+    // init_wifi();
     vTaskDelete(nullptr);
 }
 
@@ -300,14 +240,16 @@ void task_wifi_startup(void* arg) {
             continue;
 
         printf("input: %d (cnt %5d)\n", input, cnt++);
+        screen->input(input);
+
         if (input == CENTER) {
-            if (player_is_running())
-                player_stop();
-            else
-                // player_start("/4mmc.wav");
-                // player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
-                player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
-                // player_start("http://172.17.1.2:8000/file.mp3");
+            // if (player_is_running())
+            //     player_stop();
+            // else
+            //     // player_start("/4mmc.wav");
+            //     // player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
+            //     player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
+            //     // player_start("http://172.17.1.2:8000/file.mp3");
         }
     }
 }

@@ -80,5 +80,12 @@ public:
     void fill_rect(int x, int y, int w, int h, bool fill_with_bg);
     void clear_screen();
 
+    // may try to access 2 bytes (for unicode)
+    // returns number of bytes consumed
+    int write_char(int text_x, int text_y, const char *chr, int scale);
+
     void write_text(int text_x, int text_y, const char *str, int scale);
+    void write_text_maxlen(int text_x, int text_y, const char *str, int maxlen, int scale);
+
+    void draw_icon(int icon_x, int icon_y, struct icon icon);
 };
