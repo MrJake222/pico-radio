@@ -1,31 +1,27 @@
 #pragma once
 
 #include <screen.hpp>
-#include <cstring>
+#include <screens/scsearch.hpp>
 
-#define MAX_PROMPT_LEN    16
+class ScSearchRes : public Screen {
 
-class ScSearch : public Screen {
-
-    const char * get_title() override { return "Wyszukaj stację"; }
+    const char * get_title() override { return "Wyniki wyszukiwania"; }
 
     int max_x(int y) override;
     int max_y() override;
-    int default_y() override { return 2; }
+    int default_y() override { return 0; }
 
     void draw_button(int x, int y, bool selected) override;
 
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
-    // text input field
-    int pi;
-    char prompt[MAX_PROMPT_LEN + 2]; // cursor + null
-    void draw_prompt_field();
+    char prompt[MAX_PROMPT_LEN + 1]; // null
 
 public:
     using Screen::Screen;
     void show() override;
 
+    // called when initialized from other screen
     void begin(const char* prompt_);
 };

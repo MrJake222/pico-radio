@@ -240,7 +240,11 @@ void task_wifi_startup(void* arg) {
             continue;
 
         printf("input: %d (cnt %5d)\n", input, cnt++);
-        screen->input(input);
+        Screen* screen_new = screen->input(input);
+        if (screen_new) {
+            screen = screen_new;
+            screen->show();
+        }
 
         if (input == CENTER) {
             // if (player_is_running())

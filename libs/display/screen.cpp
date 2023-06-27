@@ -28,10 +28,9 @@ void Screen::dey() {
     limit_x();
 }
 
-void Screen::input(ButtonEnum btn) {
+Screen* Screen::input(ButtonEnum btn) {
     if (btn == CENTER) {
-        run_action(get_action(current_x, current_y));
-        return;
+        return run_action(get_action(current_x, current_y));
     }
 
     draw_button(current_x, current_y, false);
@@ -55,6 +54,7 @@ void Screen::input(ButtonEnum btn) {
     }
 
     draw_button(current_x, current_y, true);
+    return nullptr;
 }
 
 void Screen::set_btn_bg(bool selected, bool dark) {

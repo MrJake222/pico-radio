@@ -1,4 +1,5 @@
 #include "scsearch.hpp"
+#include <screenmng.hpp>
 
 #include <icons.hpp>
 
@@ -117,13 +118,10 @@ void ScSearch::draw_prompt_field() {
 void ScSearch::show() {
     Screen::show();
 
-    pi = 0;
-    prompt[pi] = '_';
-    prompt[pi+1] = '\0';
     draw_prompt_field();
 }
 
-void ScSearch::run_action(int action) {
+Screen* ScSearch::run_action(int action) {
     switch ((Action) action) {
         case BACKSPACE:
             if (pi > 0)
@@ -139,7 +137,9 @@ void ScSearch::run_action(int action) {
             break;
 
         case SEARCH:
-            break;
+            prompt[pi] = '\0';
+            sc_search_res.begin(prompt);
+            return &sc_search_res;
 
         case KB:
             if (pi < MAX_PROMPT_LEN)
@@ -150,4 +150,14 @@ void ScSearch::run_action(int action) {
     prompt[pi] = '_';
     prompt[pi+1] = '\0';
     draw_prompt_field();
+
+    return nullptr;
+}
+
+void ScSearch::begin(const char* prompt_) {
+    strcpy(prompt, prompt_);
+
+    pi = strlen(prompt);
+    prompt[pi] = '_';
+    prompt[pi+1] = '\0';
 }

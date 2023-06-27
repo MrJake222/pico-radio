@@ -13,6 +13,7 @@ add_library(libs
         display/screenmng.cpp
         display/screens/scfavourites.cpp
         display/screens/scsearch.cpp
+        display/screens/scsearchres.cpp
 
         httpc/httpclient.cpp
         httpc/httpclientpico.cpp

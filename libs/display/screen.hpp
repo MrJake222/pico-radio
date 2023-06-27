@@ -35,7 +35,7 @@ class Screen {
     virtual void draw_button(int x, int y, bool selected) = 0;
 
     virtual int get_action(int x, int y) = 0;
-    virtual void run_action(int action) = 0;
+    virtual Screen* run_action(int action) = 0;
 
 protected:
     ST7735S& display;
@@ -50,12 +50,9 @@ public:
         : display(display_)
         { }
 
-    // called once when the screen is created
-    // virtual void begin() { }
-
     // called every time the screen is shown
     virtual void show();
 
     // called on input button pressed
-    void input(ButtonEnum btn);
+    Screen* input(ButtonEnum btn);
 };

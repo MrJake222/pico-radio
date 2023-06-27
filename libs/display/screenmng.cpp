@@ -4,6 +4,7 @@
 #include <st7735s.hpp>
 #include <screens/scfavourites.hpp>
 #include <screens/scsearch.hpp>
+#include <screens/scsearchres.hpp>
 
 static ST7735S display(
         160, 128,
@@ -13,12 +14,13 @@ static ST7735S display(
         LCD_RST, LCD_DC, LCD_BL);
 
 // static ScFavourites sc_favourites(display);
-static ScSearch sc_search(display);
+ScSearch sc_search(display);
+ScSearchRes sc_search_res(display);
 
 void screenmng_begin() {
     display.begin();
 
-    // sc_favourites.begin();
+    sc_search.begin("");
 }
 
 Screen* screenmng_get_default() {
