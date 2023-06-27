@@ -1,15 +1,12 @@
 #include "scsearch.hpp"
 
 #include <icons.hpp>
-#include <stack>
 
 #define KB_BNT_H   18
 #define KB_BNT_W   14
 
 #define ROWS             6
 #define ROWS_CHARACTERS  4    // actual characters A-Z, 0-9
-#define ROW_BACKSPACE    0
-#define ROW_SPACE        5
 
 static const char* letters[ROWS_CHARACTERS] = {
         "1234567890",
@@ -21,87 +18,100 @@ static const char* letters[ROWS_CHARACTERS] = {
 // offsets of rows
 static const char xoff[ROWS_CHARACTERS] = {5, 5, 8, 16};
 // number of character in rows
-static const char xlen[ROWS] = {1, 10, 10, 9, 7, 1};
+static const char xlen[ROWS] = {1, 10, 10, 9, 7, 3};
 
-static char get_letter(int y, int x) {
-    return letters[y - 1][x]; // backspace offset
+int ScSearch::max_x(int y) {
+    return xlen[y];
 }
 
-static char get_xoff(int y) {
-    return xoff[y - 1]; // backspace offset
+int ScSearch::max_y() {
+    return ROWS;
 }
 
-void ScSearch::draw_backspace() {
-    display.fill_rect(138, 20, 15, 15, true);
-    display.draw_icon(138, 20, icon_backspace);
-}
+enum Action {
+    BACKSPACE,
+    SPACE,
+    BACK,
+    SEARCH,
+    KB,
+};
 
-void ScSearch::draw_space() {
-    display.fill_rect(41, 120, 75, 6, true);
-}
+int ScSearch::get_action(int x, int y) {
+    if (y == 0) {
+        return BACKSPACE;
+    }
 
-void ScSearch::draw_kb_btn(int x, int y, bool selected) {
-
-    set_btn_bg(selected);
-
-    if (y == ROW_BACKSPACE)
-        draw_backspace();
-
-    else if (y == ROW_SPACE)
-        draw_space();
+    else if (y == ROWS-1) {
+        if (x == 0)
+            return BACK;
+        else if (x == 1)
+            return SPACE;
+        else
+            return SEARCH;
+    }
 
     else {
-        // screen coordinates
-        int xs = get_xoff(y) + (KB_BNT_W + 1)*x;
-        int ys = 42 + (KB_BNT_H + 1)*(y-1);
-        char letter = get_letter(y, x);
-
-        display.fill_rect(xs, ys, KB_BNT_W, KB_BNT_H, true);
-        display.write_char(xs + 3, ys, &letter, 1);
+        return KB;
     }
 }
 
-void ScSearch::draw_kb_row(int y) {
-    for (int x=0; x<xlen[y]; x++) {
-        draw_kb_btn(x, y, false);
+void ScSearch::draw_button(int x, int y, bool selected) {
+
+    auto action = (Action) get_action(x, y);
+    unsigned char xs, ys;
+    char letter;
+
+    switch (action) {
+        case BACKSPACE:
+        case BACK:
+        case SEARCH:
+            set_btn_bg(selected, false);
+            break;
+
+        default:
+            set_btn_bg(selected, true);
     }
-}
 
-void ScSearch::inx() {
-    current_x++;
-    current_x %= xlen[current_y];
-}
+    switch (action) {
+        case BACKSPACE:
+            display.fill_rect(138, 18, 20, 20, true);
+            display.draw_icon(140, 20, icon_backspace);
+            break;
 
-void ScSearch::dex() {
-    current_x--;
-    if (current_x < 0)
-        current_x = xlen[current_y] - 1;
-}
+        case SPACE:
+            display.fill_rect(41, 120, 75, 6, true);
+            break;
 
-void ScSearch::limit_x() {
-    current_x = MIN(current_x, xlen[current_y] - 1);
-}
+        case BACK:
+            display.fill_rect(1, 114, 13, 13, true);
+            display.draw_icon(2, 115, icon_back);
+            break;
 
-void ScSearch::iny() {
-    current_y++;
-    current_y %= ROWS;
-    limit_x();
-}
+        case SEARCH:
+            display.fill_rect(143, 111, 15, 15, true);
+            display.draw_icon(144, 112, icon_search);
+            break;
 
-void ScSearch::dey() {
-    current_y--;
-    if (current_y < 0)
-        current_y = ROWS - 1;
-    limit_x();
+        case KB:
+            y--; // backspace row
+
+            // screen coordinates
+            xs = xoff[y] + (KB_BNT_W + 1)*x;
+            ys = 42 + (KB_BNT_H + 1)*y;
+            letter = letters[y][x];
+
+            display.fill_rect(xs, ys, KB_BNT_W, KB_BNT_H, true);
+            display.write_char(xs + 3, ys, &letter, 1);
+            break;
+    }
 }
 
 void ScSearch::draw_prompt_field() {
     display.set_bg(COLOR_BG_DARK);
-    display.fill_rect(5, 18, 150, 20, true);
+    display.fill_rect(5, 18, 131, 20, true);
     display.write_text_maxlen(5 + 3, 18, prompt, MAX_PROMPT_LEN, 1);
 
-    set_btn_bg(current_x == 0 && current_y == ROW_BACKSPACE);
-    draw_backspace();
+    set_btn_bg(get_action(get_current_x(), get_current_y()) == BACKSPACE, false);
 }
 
 void ScSearch::show() {
@@ -111,55 +121,33 @@ void ScSearch::show() {
     prompt[pi] = '_';
     prompt[pi+1] = '\0';
     draw_prompt_field();
-
-    for (int y=0; y<ROWS; y++)
-        draw_kb_row(y);
-
-    draw_kb_btn(current_x, current_y, true);
 }
 
-void ScSearch::input(ButtonEnum btn) {
-    if (btn == CENTER) {
-        if (current_y == ROW_BACKSPACE) {
+void ScSearch::run_action(int action) {
+    switch ((Action) action) {
+        case BACKSPACE:
             if (pi > 0)
                 pi--;
-        }
+            break;
 
-        else if (current_y == ROW_SPACE) {
+        case SPACE:
             if (pi < MAX_PROMPT_LEN)
                 prompt[pi++] = ' ';
-        }
+            break;
 
-        else {
+        case BACK:
+            break;
+
+        case SEARCH:
+            break;
+
+        case KB:
             if (pi < MAX_PROMPT_LEN)
-                prompt[pi++] = get_letter(current_y, current_x);
-        }
-
-        prompt[pi] = '_';
-        prompt[pi+1] = '\0';
-        draw_prompt_field();
-        return;
-    }
-
-    draw_kb_btn(current_x, current_y, false);
-
-    switch (btn) {
-        case UP:
-            dey();
-            break;
-
-        case DOWN:
-            iny();
-            break;
-
-        case LEFT:
-            dex();
-            break;
-
-        case RIGHT:
-            inx();
+                prompt[pi++] = letters[get_current_y() - 1][get_current_x()];
             break;
     }
 
-    draw_kb_btn(current_x, current_y, true);
+    prompt[pi] = '_';
+    prompt[pi+1] = '\0';
+    draw_prompt_field();
 }

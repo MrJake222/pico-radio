@@ -9,5 +9,4 @@ class ScFavourites : public Screen {
 public:
     using Screen::Screen;
     void show() override;
-    void input(ButtonEnum btn) override {}
 };

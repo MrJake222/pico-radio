@@ -12,13 +12,13 @@ static ST7735S display(
         LCD_SCK, LCD_TX, LCD_CS,
         LCD_RST, LCD_DC, LCD_BL);
 
-static ScFavourites sc_favourites(display);
+// static ScFavourites sc_favourites(display);
 static ScSearch sc_search(display);
 
 void screenmng_begin() {
     display.begin();
 
-    sc_favourites.begin();
+    // sc_favourites.begin();
 }
 
 Screen* screenmng_get_default() {

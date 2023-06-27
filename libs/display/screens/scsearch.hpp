@@ -9,22 +9,14 @@ class ScSearch : public Screen {
 
     const char * get_title() override { return "Wyszukaj stację"; }
 
-    void draw_backspace();
-    void draw_space();
-    // used to draw individual buttons
-    void draw_kb_btn(int x, int y, bool selected);
-    // used to draw whole keyboard (x/y are col/row coordinates)
-    void draw_kb_row(int y);
+    int max_x(int y) override;
+    int max_y() override;
+    int default_y() override { return 2; }
 
-    // currently selected key
-    int current_x = 0;
-    int current_y = 0;
-    // increment/decrement x/y
-    void inx();
-    void dex();
-    inline void limit_x();
-    void iny();
-    void dey();
+    void draw_button(int x, int y, bool selected) override;
+
+    int get_action(int x, int y) override;
+    void run_action(int action) override;
 
     // text input field
     int pi;
@@ -34,5 +26,4 @@ class ScSearch : public Screen {
 public:
     using Screen::Screen;
     void show() override;
-    void input(ButtonEnum btn) override;
 };
