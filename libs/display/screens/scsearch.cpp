@@ -17,9 +17,9 @@ static const char* letters[ROWS_CHARACTERS] = {
 };
 
 // offsets of rows
-static const char xoff[ROWS_CHARACTERS] = {5, 5, 8, 16};
+static const int8_t xoff[ROWS_CHARACTERS] = {5, 5, 8, 16};
 // number of character in rows
-static const char xlen[ROWS] = {1, 10, 10, 9, 7, 3};
+static const int8_t xlen[ROWS] = {1, 10, 10, 9, 7, 3};
 
 int ScSearch::max_x(int y) {
     return xlen[y];
@@ -37,12 +37,117 @@ enum Action {
     KB,
 };
 
+void ScSearch::prev_x_clear() {
+    prev_x_first_to_kb = -1;
+    prev_x_first_to_last = -1;
+    prev_x_last_to_kb = -1;
+    prev_x_kb_to_last = -1;
+}
+
+// adjusts x to match ux
+// remembers last position when entering row with fewer elements
+int ScSearch::adjust_x(int old_x, int old_y, int new_y) {
+
+    int8_t new_x = -1;
+
+    // forward
+    // <clear>
+    // back
+
+    if (new_y == 0) {
+        // to top
+        // forward: always 0
+
+        prev_x_clear();
+
+        if (old_y == 1) {
+            // back: first to kb
+            prev_x_first_to_kb = (int8_t) old_x;
+        }
+
+        else {
+            // old_y == last_y
+            // back: first to last
+            prev_x_first_to_last = (int8_t) old_x;
+        }
+    }
+
+    else if (old_y == 0) {
+        // from top
+
+        if (new_y == 1) {
+            // forward: first to kb
+            new_x = prev_x_first_to_kb;
+            prev_x_first_to_kb = -1;
+        }
+
+        else {
+            // new_y == last_y
+            // forward: first to last
+            new_x = prev_x_first_to_last;
+            prev_x_first_to_last = -1;
+        }
+
+        if (new_x == -1)
+            new_x = (int8_t) last_x(new_y);
+
+        prev_x_clear();
+        // back: always 0
+    }
+
+    // between last <-> kb
+    else if (new_y == last_y() && old_y == (last_y() - 1)) {
+        // forward: kb to last
+        new_x = prev_x_kb_to_last;
+        prev_x_kb_to_last = -1;
+
+        prev_x_clear();
+
+        // back: last to kb
+        prev_x_last_to_kb = (int8_t) old_x;
+
+        if (new_x == -1)
+            new_x = (old_x == 0) ? 0 : 1; // Z -> search / rest -> space
+    }
+
+    else if (new_y == (last_y() - 1) && old_y == last_y()) {
+        // forward: last to kb
+        new_x = prev_x_last_to_kb;
+        prev_x_last_to_kb = -1;
+
+        prev_x_clear();
+
+        // back: kb to last
+        prev_x_kb_to_last = (int8_t) old_x;
+
+        if (new_x == -1) {
+            if (old_x == 1) // space
+                new_x = 3; // V
+            else if (old_x == last_x(old_y)) // search
+                new_x = (int8_t) last_x(new_y); // M
+        }
+    }
+
+    else {
+        prev_x_clear();
+    }
+
+    if (new_x != -1)
+        return new_x;
+
+    return Screen::adjust_x(old_x, old_y, new_y);
+}
+
+void ScSearch::x_changed() {
+    prev_x_clear();
+}
+
 int ScSearch::get_action(int x, int y) {
     if (y == 0) {
         return BACKSPACE;
     }
 
-    else if (y == ROWS-1) {
+    else if (y == (max_y() - 1)) {
         if (x == 0)
             return BACK;
         else if (x == 1)
@@ -160,4 +265,6 @@ void ScSearch::begin(const char* prompt_) {
     pi = strlen(prompt);
     prompt[pi] = '_';
     prompt[pi+1] = '\0';
+
+    prev_x_clear();
 }

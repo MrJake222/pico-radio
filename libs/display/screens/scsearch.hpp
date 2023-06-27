@@ -7,11 +7,21 @@
 
 class ScSearch : public Screen {
 
-    const char * get_title() override { return "Wyszukaj stację"; }
+    const char* get_title() override { return "Wyszukaj stację"; }
+
+    // navigation ux
+    int8_t prev_x_first_to_kb;
+    // * to first -- doesn't matter (only one icon)
+    int8_t prev_x_first_to_last;
+    int8_t prev_x_last_to_kb;
+    int8_t prev_x_kb_to_last;
+    void prev_x_clear();
 
     int max_x(int y) override;
     int max_y() override;
     int default_y() override { return 2; }
+    int adjust_x(int old_x, int old_y, int new_y) override;
+    void x_changed() override;
 
     void draw_button(int x, int y, bool selected) override;
 
@@ -19,7 +29,7 @@ class ScSearch : public Screen {
     Screen* run_action(int action) override;
 
     // text input field
-    int pi;
+    size_t pi;
     char prompt[MAX_PROMPT_LEN + 2]; // cursor + null
     void draw_prompt_field();
 

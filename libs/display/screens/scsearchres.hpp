@@ -5,7 +5,7 @@
 
 class ScSearchRes : public Screen {
 
-    const char * get_title() override { return "Wyniki wyszukiwania"; }
+    const char* get_title() override { return "Wyniki wyszukiwania"; }
 
     int max_x(int y) override;
     int max_y() override;

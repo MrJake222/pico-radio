@@ -3,29 +3,33 @@
 void Screen::inx() {
     current_x++;
     current_x %= max_x(current_y);
+    x_changed();
 }
 
 void Screen::dex() {
     current_x--;
     if (current_x < 0)
         current_x = max_x(current_y) - 1;
-}
-
-void Screen::limit_x() {
-    current_x = MIN(current_x, max_x(current_y) - 1);
+    x_changed();
 }
 
 void Screen::iny() {
+    int old_y = current_y;
     current_y++;
     current_y %= max_y();
-    limit_x();
+    current_x = adjust_x(current_x, old_y, current_y);
 }
 
 void Screen::dey() {
+    int old_y = current_y;
     current_y--;
     if (current_y < 0)
         current_y = max_y() - 1;
-    limit_x();
+    current_x = adjust_x(current_x, old_y, current_y);
+}
+
+int Screen::adjust_x(int old_x, int old_y, int new_y) {
+    return MIN(current_x, max_x(current_y) - 1);
 }
 
 Screen* Screen::input(ButtonEnum btn) {
