@@ -24,6 +24,9 @@ add_library(libs
         player/player.cpp
         player/filetype.cpp
 
+        radios/listm3u.cpp
+        radios/radiosearch.cpp
+
         tft/st7735s.cpp
         tft/ubuntu_mono.cpp
         tft/icons.cpp
@@ -38,6 +41,7 @@ target_include_directories(libs PUBLIC
         httpc
         mcorefifo
         player
+        radios
         display
         tft
         .

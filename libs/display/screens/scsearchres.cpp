@@ -1,5 +1,10 @@
 #include "scsearchres.hpp"
 #include <screenmng.hpp>
+#include <radiosearch.hpp>
+#include <listm3u.hpp>
+#include <buffers.hpp>
+
+static RadioSearch rs(get_http_buf());
 
 int ScSearchRes::max_x(int y) {
     return 0;
@@ -29,4 +34,5 @@ void ScSearchRes::show() {
 
 void ScSearchRes::begin(const char* prompt_) {
     strcpy(prompt, prompt_);
+    rs.begin(&get_raw_buf());
 }

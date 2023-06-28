@@ -84,10 +84,18 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
 
     auto httpc = ((argptr)arg);
 
-    if (!p_head || err != ERR_OK) {
+    if (!p_head) {
+        // connection closed
+        httpc->connection_closed = true;
+        puts("recv callback p null - disconnected");
+        return ERR_OK;
+    }
+
+    if (err != ERR_OK) {
         // some error occurred
-        printf("recv callback error p_head %p code %d\n", p_head, err);
+        printf("recv callback error code %d\n", err);
         httpc->err = true;
+        pbuf_free(p_head);
         return err;
     }
 
@@ -97,10 +105,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
         // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->content_buffer->space_left());
 
         if (httpc->is_content()) {
-            if (httpc->http_buf.data_left() > 0) {
-                printf("moving buffer: data %ld to -> free %ld\n", httpc->http_buf.data_left(), httpc->content_buffer->space_left());
-                httpc->http_buf.move_to(*httpc->content_buffer);
-            }
+            httpc->http_to_content();
 
             if (httpc->content_buffer->space_left() < p->len) {
                 puts("end of content buffer");
@@ -131,6 +136,21 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
 
     pbuf_free(p_head);
     return ERR_OK;
+}
+
+void HttpClientPico::http_to_content() volatile {
+    if (http_buf.data_left() > 0) {
+        if (content_buffer->space_left() < http_buf.data_left()) {
+            puts("end of content buffer");
+#if BUF_OVERRUN_PROTECTION
+            err = true;
+                return ERR_MEM;
+#endif
+        }
+
+        printf("moving buffer: data %ld to -> free %ld\n", http_buf.data_left(), content_buffer->space_left());
+        http_buf.move_to(*content_buffer);
+    }
 }
 
 
@@ -203,6 +223,7 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
 
     err = false;
     connected = false;
+    connection_closed = false;
     ret = tcp_connect(pcb, &addr, port, connected_callback);
     if (ret != ERR_OK) {
         printf("connect failed code %d\n", ret);
@@ -230,6 +251,10 @@ clean_up_failed:
 }
 
 int HttpClientPico::disconnect() {
+    // try to push out any remaining http data
+    if (is_content())
+        http_to_content();
+
     cyw43_arch_lwip_begin();
 
     err_t ret = tcp_close(pcb);

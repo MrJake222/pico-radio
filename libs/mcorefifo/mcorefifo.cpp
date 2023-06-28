@@ -62,6 +62,7 @@ void fifo_init() {
             3,
             nullptr);
 
+    multicore_fifo_drain();
     irq_set_exclusive_handler(SIO_IRQ_PROC0, fifo_rx_irq);
     irq_set_enabled(SIO_IRQ_PROC0, true);
 }

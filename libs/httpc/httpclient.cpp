@@ -219,6 +219,12 @@ int HttpClient::parse_http() {
             // http stream ended
             // time to receive content
             content = true;
+
+            if (is_connection_closed()) {
+                // remote server already closed the connection
+                close();
+            }
+
             return 0;
 
         case 301:
@@ -286,6 +292,10 @@ int HttpClient::get(const char* url) {
 }
 
 int HttpClient::close() {
+    if (closed)
+        return 0;
+
+    closed = true;
     return disconnect();
 }
 
