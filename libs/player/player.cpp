@@ -15,6 +15,7 @@
 #include <config.hpp>
 #include <i2s.pio.h>
 #include <circularbuffer.hpp>
+#include <buffers.hpp>
 #include <formatmp3.hpp>
 #include <formatwav.hpp>
 #include <decodebase.hpp>
@@ -51,12 +52,9 @@ static volatile int dma_channel_b;
 static char filepath[1024];
 static TaskHandle_t player_task_handle;
 
-static uint8_t raw_buf_arr[BUF_MP3_SIZE_BYTES + BUF_HIDDEN_MP3_SIZE_BYTES];
-volatile CircularBuffer raw_buf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTES, raw_buf_arr);
-
 HELIX_STATIC_DECLARE();
-static FormatMP3 format_mp3(raw_buf, (HMP3Decoder)&mp3DecInfo);
-static FormatWAV format_wav(raw_buf);
+static FormatMP3 format_mp3(get_raw_buf(), (HMP3Decoder)&mp3DecInfo);
+static FormatWAV format_wav(get_raw_buf());
 
 static DecodeFile dec_file(
         audio_pcm,
@@ -64,14 +62,12 @@ static DecodeFile dec_file(
         a_done_irq,
         b_done_irq);
 
-static uint8_t http_buf_arr[HTTP_DATA_BUF_SIZE_BYTES];
-static CircularBuffer http_buf(HTTP_DATA_BUF_SIZE_BYTES, 0, http_buf_arr);
 static DecodeStream dec_stream(
         audio_pcm,
         BUF_PCM_SIZE_32BIT,
         a_done_irq,
         b_done_irq,
-        http_buf);
+        get_http_buf());
 
 static DecodeBase* dec;
 

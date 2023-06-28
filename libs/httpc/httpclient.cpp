@@ -270,6 +270,7 @@ int HttpClient::get(const char* url) {
     send_string(qrbuf);
     sprintf(qrbuf, "Host: %s\r\n", host);
     send_string(qrbuf);
+    send_string("User-agent: PicoRadio/0.1\r\n");
     // TODO use cookies
     send_string("\r\n");
 

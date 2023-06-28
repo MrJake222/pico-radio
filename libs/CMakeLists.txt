@@ -28,6 +28,7 @@ add_library(libs
         tft/ubuntu_mono.cpp
         tft/icons.cpp
 
+        buffers.cpp
         circularbuffer.cpp
         )
 

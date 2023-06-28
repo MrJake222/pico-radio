@@ -14,9 +14,9 @@ public:
     struct tcp_pcb* pcb;
     volatile bool err;
     volatile bool connected;
-    CircularBuffer& http_buf;
+    volatile CircularBuffer& http_buf;
 
-    HttpClientPico(CircularBuffer& http_buf_)
+    HttpClientPico(volatile CircularBuffer& http_buf_)
         : HttpClient()
         , http_buf(http_buf_)
         { }

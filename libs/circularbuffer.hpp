@@ -48,6 +48,7 @@ public:
         read_at = 0;
         write_at = 0;
         read_ack_callback = nullptr;
+        write_ack_callback = nullptr;
     }
 
     long get_read_offset()  volatile const { return read_at; }

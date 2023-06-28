@@ -103,7 +103,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
             }
 
             if (httpc->content_buffer->space_left() < p->len) {
-                puts("end of mp3 buffer");
+                puts("end of content buffer");
 #if BUF_OVERRUN_PROTECTION
                 httpc->err = true;
                 return ERR_MEM;
