@@ -42,6 +42,9 @@ void CircularBuffer::read_ack(unsigned int bytes) volatile {
 void CircularBuffer::write_ack(unsigned int bytes) volatile {
     write_at += (long)bytes;
     write_at %= size;
+
+    if (write_ack_callback)
+        write_ack_callback(write_ack_arg, bytes);
 }
 
 bool CircularBuffer::can_wrap_buffer() volatile const {
@@ -81,9 +84,14 @@ void CircularBuffer::write(const uint8_t* data, long data_len) volatile {
     }
 }
 
-void CircularBuffer::set_read_ack_callback(void* arg, CircularBuffer::read_callback_fn callback) volatile {
+void CircularBuffer::set_read_ack_callback(void* arg, CircularBuffer::rw_callback_fn callback) volatile {
     read_ack_arg = arg;
     read_ack_callback = callback;
+}
+
+void CircularBuffer::set_write_ack_callback(void* arg, CircularBuffer::rw_callback_fn callback) volatile {
+    write_ack_arg = arg;
+    write_ack_callback = callback;
 }
 
 void CircularBuffer::debug_read(int bytes, int prepend) volatile {

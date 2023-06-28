@@ -15,9 +15,11 @@ class CircularBuffer {
     long read_at;
     long write_at;
 
-    using read_callback_fn = void(*)(void*, unsigned int);
+    using rw_callback_fn = void(*)(void*, unsigned int);
     void* read_ack_arg;
-    volatile read_callback_fn read_ack_callback;
+    volatile rw_callback_fn read_ack_callback;
+    void* write_ack_arg;
+    volatile rw_callback_fn write_ack_callback;
 
 public:
     const int size_hidden;
@@ -89,7 +91,11 @@ public:
     // register a callback when data was just consumed
     // (more free space available)
     // only one callback supported
-    void set_read_ack_callback(void* arg, read_callback_fn callback) volatile;
+    void set_read_ack_callback(void* arg, rw_callback_fn callback) volatile;
+
+    // register a callback when data was just written
+    // (more data available)
+    void set_write_ack_callback(void* arg, rw_callback_fn callback) volatile;
 
 
     // print read debug info

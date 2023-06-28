@@ -63,10 +63,14 @@ public:
     }
 
     // one concurrent connection supported
-    // these start a connection
+    // this will start a connection
     int get(const char* url);
 
     // this will close the connection
     int close();
 
+    // header access methods
+    bool has_header(const std::string& hdr);
+    const std::string& get_header(const std::string& hdr);
+    int get_header_int(const std::string& hdr);
 };

@@ -1,5 +1,18 @@
 #include <cstdlib>
 #include <httpclient.hpp>
+#include <algorithm>
+
+static std::string str_to_lower(const std::string& str) {
+    std::string out(str);
+    std::transform(out.begin(), out.end(), out.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    return out;
+}
+
+static void str_to_lower_inplace(std::string& str) {
+    std::transform(str.begin(), str.end(), str.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+}
 
 int HttpClient::send_all(const char *buf, int buflen) {
     int sent_bytes = 0;
@@ -159,7 +172,9 @@ int HttpClient::parse_headers() {
         if (*sep == ' ')
             sep += 1; // skip space
 
-        headers[qrbuf] = sep;
+        std::string name(qrbuf);
+        str_to_lower_inplace(name);
+        headers[name] = sep;
     }
 
     return 0;
@@ -212,13 +227,13 @@ int HttpClient::parse_http() {
         case 308:
             // redirection
             puts("redirect");
-            if (!headers.count("Location")) {
+            if (!has_header("Location")) {
                 puts("no location");
                 return -1;
             }
 
             close();
-            return get(headers["Location"].c_str());
+            return get(get_header("Location").c_str());
 
         default:
             puts("unsupported response status code");
@@ -271,4 +286,16 @@ int HttpClient::get(const char* url) {
 
 int HttpClient::close() {
     return disconnect();
+}
+
+bool HttpClient::has_header(const std::string& hdr) {
+    return headers.count(str_to_lower(hdr)) > 0;
+}
+
+const std::string& HttpClient::get_header(const std::string& hdr) {
+    return headers.at(str_to_lower(hdr));
+}
+
+int HttpClient::get_header_int(const std::string& hdr) {
+    return stoi(get_header(hdr));
 }
