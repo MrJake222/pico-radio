@@ -34,6 +34,7 @@ uint8_t* CircularBuffer::write_ptr() volatile const {
 void CircularBuffer::read_ack(unsigned int bytes) volatile {
     read_at += (long)bytes;
     read_at %= size;
+    read_bytes += (long)bytes;
 
     if (read_ack_callback)
         read_ack_callback(read_ack_arg, bytes);
@@ -42,9 +43,18 @@ void CircularBuffer::read_ack(unsigned int bytes) volatile {
 void CircularBuffer::write_ack(unsigned int bytes) volatile {
     write_at += (long)bytes;
     write_at %= size;
+    written_bytes += (long)bytes;
 
     if (write_ack_callback)
         write_ack_callback(write_ack_arg, bytes);
+}
+
+long CircularBuffer::read_bytes_total() volatile {
+    return read_bytes;
+}
+
+long CircularBuffer::written_bytes_total() volatile {
+    return written_bytes;
 }
 
 bool CircularBuffer::can_wrap_buffer() volatile const {
@@ -65,7 +75,7 @@ void CircularBuffer::set_read_ptr_end(unsigned int from_end) volatile {
 void CircularBuffer::move_to(volatile CircularBuffer &other) volatile {
     // read may be non-continuous
     // read 2 times, each time to a continuous limit
-    for (int i=0; i<2; i++) {
+    for (int i=0; i<2 && data_left_continuous()>0; i++) {
         other.write(read_ptr(), data_left_continuous());
         read_ack(data_left_continuous());
     }
@@ -74,7 +84,7 @@ void CircularBuffer::move_to(volatile CircularBuffer &other) volatile {
 void CircularBuffer::write(const uint8_t* data, long data_len) volatile {
     // data may be too big to write at once (wrapping)
     // write 2 times to wrap
-    for (int i=0; i<2; i++) {
+    for (int i=0; i<2 && data_len>0; i++) {
         long write = MIN(data_len, space_left_continuous());
         memcpy(write_ptr(), data, write);
         write_ack(write);

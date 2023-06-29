@@ -67,7 +67,7 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
         notify_playback_end();
     }
 
-    sum_units_decoded += decoded;
+    sum_units_decoded += decoded; // TODO try to use raw_buf->read_bytes_total();
     int seconds = format->units_to_sec(sum_units_decoded);
 
     if (seconds != last_seconds) {

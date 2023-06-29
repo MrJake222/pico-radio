@@ -15,6 +15,10 @@ class CircularBuffer {
     long read_at;
     long write_at;
 
+    // how many bytes was read from/written to this buffer
+    long read_bytes;
+    long written_bytes;
+
     using rw_callback_fn = void(*)(void*, unsigned int);
     void* read_ack_arg;
     volatile rw_callback_fn read_ack_callback;
@@ -40,13 +44,11 @@ public:
             reset();
         }
 
-    ~CircularBuffer() {
-        delete[] buffer_hidden;
-    }
-
     void reset() volatile {
         read_at = 0;
         write_at = 0;
+        read_bytes = 0;
+        written_bytes = 0;
         read_ack_callback = nullptr;
         write_ack_callback = nullptr;
     }
@@ -67,6 +69,9 @@ public:
 
     void read_ack(unsigned int bytes)  volatile;
     void write_ack(unsigned int bytes) volatile;
+
+    long read_bytes_total()    volatile;
+    long written_bytes_total() volatile;
 
     void read_reverse(unsigned int bytes) volatile { read_at -= (long)bytes; }
 

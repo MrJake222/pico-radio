@@ -33,6 +33,7 @@ add_library(libs
 
         buffers.cpp
         circularbuffer.cpp
+        circularbuffertools.cpp
         )
 
 target_include_directories(libs PUBLIC

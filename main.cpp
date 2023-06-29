@@ -223,6 +223,7 @@ void oldmain() {
 void task_wifi_startup(void* arg) {
     init_wifi();
     // player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
+    sc_search_res.begin("rmf");
     vTaskDelete(nullptr);
 }
 
