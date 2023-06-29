@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <format.hpp>
+#include <FreeRTOS.h>
+#include <task.h>
 
 enum class FinishReason {
     NoFinish,
@@ -57,6 +59,12 @@ protected:
     // return source medium size in bytes
     virtual int source_size_bytes() { return 0; }
 
+    // for internal usage
+    // notifies playback either directly or via fifo
+    // to be used when natural content end occurred (dma underflow)
+    // or on error on data read
+    void notify_playback_end();
+
 public:
     DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_)
             : audio_pcm(audio_pcm_)
@@ -70,14 +78,20 @@ public:
     virtual ~DecodeBase() = default;
 
     // called before and after decoding
+    // serves as a constructor with changing parameters
+    // can't fail
     virtual void begin(const char* path_, Format* format_);
-    virtual void end() { }
+
+    // does the heavy work (connect/open file)
+    // can fail with non-zero return value
+    virtual int start() { return 0; }
+    virtual int stop() { return 0; }
 
     // after core0_end caller needs to wait for DMA
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
     // called on user abort (from core0) to abort core1
-    void user_abort() { format->set_user_abort(); }
+    void abort_user() { format->set_user_abort(); }
 
     // functions called from core1
     void core1_init();
@@ -85,10 +99,12 @@ public:
 
     long bit_freq() { return format->bit_freq(); }
 
-    // DO NOT CALL MANUALLY
+    // NO MANUAL USE
     // Used in callbacks
 
     // Notifies when format reads from the raw buffer
     // Called from core0
     virtual void raw_buf_read_msg(unsigned int bytes) { }
+
+    TaskHandle_t player_task;
 };

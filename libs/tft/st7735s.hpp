@@ -60,7 +60,7 @@ public:
 
     int size() { return sizeof(ST7735S); }
 
-    void begin();
+    void init();
     // normal 24-bit RGB format
     void set_bg(int bg_) { bg = bg_; }
     void set_fg(int fg_) { fg = fg_; }

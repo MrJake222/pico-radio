@@ -6,6 +6,7 @@ static void raw_buf_write_cb_static(void* arg, unsigned int bytes) {
 }
 
 void RadioSearch::begin(volatile CircularBuffer* raw_buf_) {
+    // TODO refactor into init/begin/start(search)
     raw_buf = raw_buf_;
 
     raw_buf->reset();

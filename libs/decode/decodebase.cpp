@@ -17,17 +17,35 @@ static void raw_buf_read_msg_static(void* arg, uint32_t data) {
     ((DecodeBase*) arg)->raw_buf_read_msg(data);
 }
 
+static void player_wake_end(void* arg, uint32_t data) {
+    // called from core0 fifo task or directly from core0
+    xTaskNotifyGive(((DecodeBase*) arg)->player_task);
+}
+
 void DecodeBase::begin(const char* path_, Format* format_) {
     path = path_;
     format = format_;
+    player_task = xTaskGetCurrentTaskHandle();
 
-    format->init();
+    format->begin();
     format->raw_buf.set_read_ack_callback(this, raw_buf_read_cb_static);
     fifo_register(RAW_BUF_READ, raw_buf_read_msg_static, this, true);
+    fifo_register(PLAYER_WAKE_END, player_wake_end, this, true);
 
     decode_finished_by = FinishReason::NoFinish;
     sum_units_decoded = 0;
     last_seconds = -1;
+}
+
+void DecodeBase::notify_playback_end() {
+    if (get_core_num() == 1) {
+        // core1 -- non-local core for RTOS
+        fifo_send(PLAYER_WAKE_END);
+    }
+    else {
+        // core0 -- notify RTOS directly
+        player_wake_end(this, 0);
+    }
 }
 
 void DecodeBase::core1_init() {
@@ -46,7 +64,7 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
                 ? FinishReason::UnderflowChanA
                 : FinishReason::UnderflowChanB;
 
-        fifo_send(PLAYER_WAKE_END);
+        notify_playback_end();
     }
 
     sum_units_decoded += decoded;

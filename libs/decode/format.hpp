@@ -24,7 +24,7 @@ public:
     void set_user_abort() { user_abort = true; }
 
     // call every time before decoding starts
-    virtual void init() {
+    virtual void begin() {
         raw_buf.reset();
         eop = false;
         user_abort = false;

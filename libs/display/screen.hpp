@@ -60,6 +60,7 @@ public:
         { }
 
     // called every time the screen is shown
+    // replaces standard <start> method
     virtual void show();
 
     // called on input button pressed

@@ -93,14 +93,14 @@ void init_hardware() {
     gpio_set_dir(PIN_DBG, GPIO_OUT);
     DBG_OFF();
 
-    player_begin();
+    player_init();
     puts("player done");
 
     // Display config
-    screenmng_begin();
+    screenmng_init();
     screen = screenmng_get_default();
     screen->show();
-    puts("Display configuration & init done");
+    puts("Display configuration & begin done");
 
     // FS configuration
 #if SD_ENABLE
@@ -116,11 +116,11 @@ void init_hardware() {
     puts("mount ok");
 #endif
 
-    buttons_begin();
-    puts("buttons init ok");
+    buttons_init();
+    puts("buttons begin ok");
 
     fifo_init();
-    puts("mcorefifo init ok");
+    puts("mcorefifo begin ok");
 }
 
 void init_wifi() {
@@ -128,7 +128,7 @@ void init_wifi() {
     int err;
     err = cyw43_arch_init();
     if (err) {
-        printf("wifi arch init error code %d\n", err);
+        printf("wifi arch begin error code %d\n", err);
         while (1);
     }
 
@@ -222,7 +222,7 @@ void oldmain() {
 
 void task_wifi_startup(void* arg) {
     init_wifi();
-    player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
+    // player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
     vTaskDelete(nullptr);
 }
 

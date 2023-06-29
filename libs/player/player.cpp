@@ -1,14 +1,11 @@
 #include <player.hpp>
 
-#include <cstdint>
-
 #include <pico/multicore.h>
 #include <hardware/dma.h>
 #include <hardware/pio.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
-#include <semphr.h>
 
 #include <helix_static.h>
 
@@ -21,7 +18,6 @@
 #include <decodebase.hpp>
 #include <decodefile.hpp>
 #include <decodestream.hpp>
-#include <mcorefifo.hpp>
 
 static volatile bool a_done_irq = false;
 static volatile bool b_done_irq = false;
@@ -50,7 +46,6 @@ static volatile int dma_channel_b;
 
 // Playback
 static char filepath[1024];
-static TaskHandle_t player_task_handle;
 
 HELIX_STATIC_DECLARE();
 static FormatMP3 format_mp3(get_raw_buf(), (HMP3Decoder)&mp3DecInfo);
@@ -115,7 +110,7 @@ static void configure_pio_tx_dma(int dma_chan, uint32_t* data, uint count, int c
     );
 }
 
-void player_begin() {
+void player_init() {
     // PIO I2S configuration
     pio = pio0;
 
@@ -143,7 +138,7 @@ void player_begin() {
     puts("DMA configuration done");
 
     HELIX_STATIC_INIT(mp3DecInfo, fh, si, sfi, hi, di, mi, sbi);
-    puts("Decoder init done");
+    puts("Decoder begin done");
 }
 
 
@@ -179,6 +174,7 @@ static void core1_entry() {
 static void player_task(void* arg) {
 
     FileType type = filetype_from_name(filepath);
+    int r;
 
     // init decoder & format
     // this may open files + preload data/establish a connection/etc.
@@ -201,6 +197,12 @@ static void player_task(void* arg) {
         default:
             puts("format unsupported");
             goto clean_up;
+    }
+
+    r = dec->start();
+    if (r) {
+        printf("dec start failed, stopping playback");
+        goto clean_up;
     }
 
     multicore_launch_core1(core1_entry);
@@ -237,7 +239,7 @@ static void player_task(void* arg) {
 
     puts("dma channels stopped.");
 
-    dec->end();
+    dec->stop();
     dec = nullptr;
 
     pio_sm_put_blocking(pio, sm, 0);
@@ -246,15 +248,10 @@ clean_up:
     vTaskDelete(nullptr);
 }
 
-static void player_end_cb(void* arg, uint32_t data) {
-    xTaskNotifyGive(player_task_handle);
-}
-
 void player_start(const char* path) {
     printf("\nplaying: %s as %s file\n", path, filetype_from_name_string(path));
 
     strcpy(filepath, path);
-    fifo_register(PLAYER_WAKE_END, player_end_cb, nullptr, false);
 
     xTaskCreate(
             player_task,
@@ -262,11 +259,11 @@ void player_start(const char* path) {
             1024,
             nullptr,
             1,
-            &player_task_handle);
+            nullptr);
 }
 
 void player_stop() {
-    dec->user_abort();
+    dec->abort_user();
 }
 
 bool player_is_running() {

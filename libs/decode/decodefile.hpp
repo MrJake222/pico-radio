@@ -11,14 +11,15 @@ class DecodeFile : public DecodeBase {
     FIL fp;
 
     bool eof;
-    void load_buffer(int bytes);
-    void check_buffer();
+    int load_buffer(int bytes);
+    int check_buffer();
 
     int source_size_bytes() override { return f_size(&fp); }
 
 public:
     void begin(const char* path_, Format* format_) override;
-    void end() override;
+    int start() override;
+    int stop() override;
 
     // Do not call directly
     // used by callbacks

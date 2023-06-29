@@ -104,7 +104,7 @@ void ST7735S::setup_write(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8
     write_data16_prepare();
 }
 
-void ST7735S::begin() {
+void ST7735S::init() {
     gpio_setup();
     spi_setup();
 

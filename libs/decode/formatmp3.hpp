@@ -31,8 +31,8 @@ public:
         , hMP3Decoder(hMP3Decoder_)
         { }
 
-    void init() override {
-        Format::init();
+    void begin() override {
+        Format::begin();
 
         MP3ClearBuffers(hMP3Decoder);
         bytes_consumed_last = 0;

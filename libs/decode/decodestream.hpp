@@ -10,7 +10,8 @@ class DecodeStream : public DecodeBase {
 
 public:
     void begin(const char* path_, Format* format_) override;
-    void end() override;
+    int start() override;
+    int stop() override;
 
     // callback called from core0
     void raw_buf_read_msg(unsigned int bytes) override;

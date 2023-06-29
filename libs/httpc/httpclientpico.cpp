@@ -41,12 +41,13 @@ static err_t gethostbyname(const char* host, ip_addr_t* result) {
             puts("in progress");
 
             cyw43_arch_lwip_end();
-            while (!query.found && !query.failed);
+            while (!query.found && !query.failed); // TODO refactor notification (+timeout)
             cyw43_arch_lwip_begin();
 
             puts("done");
             if (query.failed) {
                 puts("dns query failed");
+                return -1;
             }
             break;
 
@@ -108,7 +109,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
             httpc->http_to_content();
 
             if (httpc->content_buffer->space_left() < p->len) {
-                puts("end of content buffer");
+                puts("stop of content buffer");
 #if BUF_OVERRUN_PROTECTION
                 httpc->err = true;
                 return ERR_MEM;
@@ -120,7 +121,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
         else {
 
             if (httpc->http_buf.space_left() < p->len) {
-                puts("end of http buffer");
+                puts("stop of http buffer");
                 httpc->err = true;
                 return ERR_MEM;
             }
@@ -141,7 +142,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
 void HttpClientPico::http_to_content() volatile {
     if (http_buf.data_left() > 0) {
         if (content_buffer->space_left() < http_buf.data_left()) {
-            puts("end of content buffer");
+            puts("stop of content buffer");
 #if BUF_OVERRUN_PROTECTION
             err = true;
                 return ERR_MEM;
@@ -181,6 +182,9 @@ clean_up_failed:
 int HttpClientPico::recv(char* buf, int buflen) {
     // printf("recv o %d read %d\n", stream_offset, stream_offset_read);
 
+    // probably not worth the refactor right now
+    // it only serves for receiving response headers
+    // (short wait time)
     while (http_buf.data_left() == 0);
 
     long len = MIN(http_buf.data_left(), buflen);
@@ -231,7 +235,7 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     }
 
     cyw43_arch_lwip_end();
-    while (!err && !connected);
+    while (!err && !connected); // TODO refactor notification (+timeout)
     cyw43_arch_lwip_begin();
 
     if (err) {

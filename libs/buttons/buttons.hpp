@@ -13,4 +13,4 @@ enum ButtonEnum {
     CENTER
 };
 
-void buttons_begin();
+void buttons_init();

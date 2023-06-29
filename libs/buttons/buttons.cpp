@@ -37,7 +37,7 @@ static void gpio_callback(uint gpio, uint32_t events) {
     xQueueSendFromISR(input_queue, &val, nullptr);
 }
 
-void buttons_begin() {
+void buttons_init() {
     const int all[] = {BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_CENTER};
     for (int gpio : all) {
         gpio_set_dir(gpio, GPIO_IN);

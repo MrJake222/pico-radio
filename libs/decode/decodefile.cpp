@@ -5,38 +5,50 @@
 #include <f_util.h>
 
 static void fs_err(FRESULT fr, const char* tag) {
-    panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
+    printf("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
 }
 
 void DecodeFile::begin(const char* path_, Format* format_) {
     DecodeBase::begin(path_, format_);
 
-    fr = f_open(&fp, path, FA_READ);
-    if (fr != FR_OK) {
-        fs_err(fr, "f_open");
-    }
-
-    // preload with file data
-    // this must be less than whole buffer
-    // because read == write is undefined behavior
-    load_buffer(format->raw_buf.size / 2);
-
     eof = false;
 }
 
-void DecodeFile::end() {
-    DecodeBase::end();
+int DecodeFile::start() {
+    fr = f_open(&fp, path, FA_READ);
+    if (fr != FR_OK) {
+        fs_err(fr, "f_open");
+        return fr;
+    }
 
-    f_close(&fp);
+    // preload with file data
+    // this must load less than whole buffer
+    // because read == write is undefined behavior
+    int r = check_buffer();
+    if (r)
+        return r;
+
+    return DecodeBase::start();
 }
 
-void DecodeFile::load_buffer(int bytes) {
+int DecodeFile::stop() {
+    fr = f_close(&fp);
+    if (fr != FR_OK) {
+        fs_err(fr, "f_close");
+        return fr;
+    }
+
+    return DecodeBase::stop();
+}
+
+int DecodeFile::load_buffer(int bytes) {
 //     printf("loading, offset %ld  load_at %ld\n", format->raw_buf.get_read_offset(), format->raw_buf.get_write_offset());
 
     uint read;
     fr = f_read(&fp, format->raw_buf.write_ptr(), bytes, &read);
     if (fr != FR_OK) {
         fs_err(fr, "f_read");
+        return fr;
     }
 
     if (read < bytes) {
@@ -47,9 +59,10 @@ void DecodeFile::load_buffer(int bytes) {
     format->raw_buf.write_ack(read);
 
     // printf("loaded,  offset %ld  load_at %ld\n", format->raw_buf.get_read_offset(), format->raw_buf.get_write_offset());
+    return 0;
 }
 
-void DecodeFile::check_buffer() {
+int DecodeFile::check_buffer() {
     if (format->raw_buf.data_left() < format->raw_buf.size / 2) {
         if (eof) {
             // eof, after wrap, set end-of-playback
@@ -58,12 +71,18 @@ void DecodeFile::check_buffer() {
 
         else {
             // no eof -> just load more
-            load_buffer(format->raw_buf.size/2);
+            return load_buffer(format->raw_buf.size/2);
         }
     }
+
+    return 0;
 }
 
 void DecodeFile::raw_buf_read_msg(unsigned int bytes) {
     DecodeBase::raw_buf_read_msg(bytes);
-    check_buffer();
+    int r = check_buffer();
+    if (r) {
+        printf("check_buffer failed, ending playback");
+        notify_playback_end();
+    }
 }

@@ -17,8 +17,8 @@ static ST7735S display(
 ScSearch sc_search(display);
 ScSearchRes sc_search_res(display);
 
-void screenmng_begin() {
-    display.begin();
+void screenmng_init() {
+    display.init();
 
     sc_search.begin("");
 }
