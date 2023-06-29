@@ -93,8 +93,8 @@ void init_hardware() {
     gpio_set_dir(PIN_DBG, GPIO_OUT);
     DBG_OFF();
 
-    // player_begin();
-    // puts("player done");
+    player_begin();
+    puts("player done");
 
     // Display config
     screenmng_begin();
@@ -221,7 +221,8 @@ void oldmain() {
 }
 
 void task_wifi_startup(void* arg) {
-    // init_wifi();
+    init_wifi();
+    player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
     vTaskDelete(nullptr);
 }
 
@@ -260,7 +261,6 @@ void task_wifi_startup(void* arg) {
 
 int main() {
     init_hardware();
-    // init_wifi();
 
     xTaskCreate(
             task_wifi_startup,
@@ -273,7 +273,7 @@ int main() {
     xTaskCreate(
             task_input_handle,
             "input handle",
-            configMINIMAL_STACK_SIZE,
+            configMINIMAL_STACK_SIZE * 4,
             nullptr,
             1,
             nullptr);
