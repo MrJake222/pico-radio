@@ -99,7 +99,8 @@ void init_hardware() {
     // Display config
     screenmng_init();
     screen = screenmng_get_default();
-    // show done in <input> task
+    screen->begin();
+    screen->show();
 
     puts("Display configuration & begin done");
 
@@ -229,9 +230,6 @@ void task_wifi_startup(void* arg) {
 }
 
 [[noreturn]] void task_input_handle(void* arg) {
-    // show default screen
-    screen->show();
-
     ButtonEnum input;
     int r;
     int cnt = 0;

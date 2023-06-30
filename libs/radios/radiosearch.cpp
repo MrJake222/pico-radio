@@ -4,7 +4,7 @@
 #include <listpls.hpp>
 
 static const char* urls[] = {
-        "http://de1.api.radio-browser.info/m3u/stations/search?codec=mp3&name=%s"
+        "http://de1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s"
 };
 
 static const int url_count = sizeof(urls) / sizeof(char*);
