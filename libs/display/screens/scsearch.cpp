@@ -215,7 +215,7 @@ void ScSearch::draw_button(int x, int y, bool selected) {
 void ScSearch::draw_prompt_field() {
     display.set_bg(COLOR_BG_DARK);
     display.fill_rect(5, 18, 131, 20, true);
-    display.write_text_maxlen(5 + 3, 18, prompt, MAX_PROMPT_LEN, 1);
+    display.write_text_maxlen(5 + 3, 18, prompt, 1, MAX_PROMPT_LEN);
 
     set_btn_bg(get_action(current_x, current_y) == BACKSPACE, false);
 }
@@ -259,21 +259,14 @@ Screen* ScSearch::run_action(int action) {
     return nullptr;
 }
 
-void ScSearch::begin(const char* prompt_, bool search_selected) {
-    strcpy(prompt, prompt_);
+void ScSearch::begin() {
+    Screen::begin();
+
+    strcpy(prompt, "");
 
     pi = strlen(prompt);
     prompt[pi] = '_';
     prompt[pi+1] = '\0';
-
-    if (search_selected) {
-        default_x_ = 2;
-        default_y_ = last_y();
-    }
-    else {
-        default_x_ = 0;
-        default_y_ = 2;
-    }
 
     prev_x_clear();
 }

@@ -2,9 +2,6 @@
 
 #include <config.hpp>
 #include <st7735s.hpp>
-#include <screens/scfavourites.hpp>
-#include <screens/scsearch.hpp>
-#include <screens/scsearchres.hpp>
 
 static ST7735S display(
         160, 128,
@@ -16,12 +13,13 @@ static ST7735S display(
 // static ScFavourites sc_favourites(display);
 ScSearch sc_search(display);
 ScSearchRes sc_search_res(display);
+ScPlay sc_play(display);
 
 void screenmng_init() {
     display.init();
 
-    sc_search.begin("RMF", true);
-    sc_search_res.begin("");
+    // sc_search.begin();
+    // sc_search_res.begin("");
 }
 
 Screen* screenmng_get_default() {

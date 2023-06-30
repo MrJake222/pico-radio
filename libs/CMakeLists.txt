@@ -12,6 +12,7 @@ add_library(libs
         display/screen.cpp
         display/screenmng.cpp
         display/screens/scfavourites.cpp
+        display/screens/scplay.cpp
         display/screens/scsearch.cpp
         display/screens/scsearchres.cpp
 

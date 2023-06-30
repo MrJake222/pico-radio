@@ -93,8 +93,8 @@ void init_hardware() {
     gpio_set_dir(PIN_DBG, GPIO_OUT);
     DBG_OFF();
 
-    // player_init();
-    // puts("player done");
+    player_init();
+    puts("player done");
 
     // Display config
     screenmng_init();

@@ -263,6 +263,9 @@ void player_start(const char* path) {
 }
 
 void player_stop() {
+    if (!player_is_running())
+        return;
+
     dec->abort_user();
 }
 

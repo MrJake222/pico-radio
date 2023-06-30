@@ -77,13 +77,15 @@ void Screen::draw_buttons() {
     }
 }
 
+void Screen::begin() {
+    current_x = default_x();
+    current_y = default_y();
+}
+
 void Screen::show() {
     display.set_bg_fg(COLOR_BG, COLOR_FG);
     display.clear_screen();
     display.write_text(2, 0, get_title(), 1);
-
-    current_y = default_y();
-    current_x = default_x();
 
     draw_buttons();
 }

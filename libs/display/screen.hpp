@@ -7,7 +7,8 @@
 #define COLOR_BG_SEL         0x66CC66
 #define COLOR_BG_DARK        0xa1af9f
 #define COLOR_BG_DARK_SEL    0x55AA55
-#define COLOR_BG_DARK_MAT    0x0077AC
+#define COLOR_BG_DARK_ACC1   0x0077AC
+#define COLOR_BG_DARK_ACC2   0x803E33
 #define COLOR_FG             0x0
 
 class Screen {
@@ -56,6 +57,10 @@ public:
     Screen(ST7735S& display_)
         : display(display_)
         { }
+
+    // called when the screen is entered the first time
+    // don't call on "back" button enter
+    virtual void begin();
 
     // called every time the screen is shown
     // replaces standard <start> method

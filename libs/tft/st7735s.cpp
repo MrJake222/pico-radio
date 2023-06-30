@@ -184,7 +184,7 @@ void ST7735S::write_text(int text_x, int text_y, const char *str, int scale) {
     }
 }
 
-void ST7735S::write_text_maxlen(int text_x, int text_y, const char* str, int maxlen, int scale) {
+void ST7735S::write_text_maxlen(int text_x, int text_y, const char* str, int scale, int maxlen) {
     while (*str && maxlen--) {
         str += write_char(text_x, text_y, str, scale);
         text_x += FONT_W * scale;

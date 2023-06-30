@@ -57,7 +57,7 @@ void ScSearchRes::draw_scroll_bar() {
     const float start   = y + segment * (float)base_y;         // skip base_y segments
     const float height  =     segment * (float)kb_buttons();   // display 4 segments high bar
 
-    display.set_bg(COLOR_BG_DARK_MAT);
+    display.set_bg(COLOR_BG_DARK_ACC1);
     display.fill_rect(152, (int)start, 5, (int)height, true);
 }
 
@@ -139,7 +139,7 @@ void ScSearchRes::draw_button(int x, int y, bool selected) {
             name = rs.get_station_name(base_y + y);
 
             display.fill_rect(xs, ys, S_RES_W, S_RES_H, true);
-            display.write_text_maxlen(xs+3, ys, name, 17, 1); // TODO do scrolling
+            display.write_text_maxlen(xs+3, ys, name, 1, 17); // TODO do scrolling
             break;
 
         case BACK:
@@ -150,13 +150,17 @@ void ScSearchRes::draw_button(int x, int y, bool selected) {
 }
 
 Screen* ScSearchRes::run_action(int action) {
+    int i;
+
     switch ((Action) action) {
         case PLAY:
-            break;
+            i = base_y + current_y;
+            sc_play.begin(rs.get_station_name(i),
+                          rs.get_station_url(i));
+            return &sc_play;
 
         case BACK:
             rs.load_abort();
-            sc_search.begin(prompt, true);
             return &sc_search;
     }
 
@@ -183,8 +187,10 @@ void ScSearchRes::show() {
 }
 
 void ScSearchRes::begin(const char* prompt_) {
+    Screen::begin();
+
     // called from previous screen (on input)
-    strcpy(prompt, prompt_);
+    prompt = prompt_;
 
     base_y = 0;
     first = true;

@@ -33,15 +33,15 @@ class ScSearchRes : public Screen {
     // gated count, only updated after all stations are loaded
     int station_count;
 
-    char prompt[MAX_PROMPT_LEN + 1]; // null
+    const char* prompt;
     char subtitle[10 + MAX_PROMPT_LEN + 1]; // null
 
 public:
     using Screen::Screen;
+    void begin(const char* prompt_);
     void show() override;
 
-    // called when initialized from other screen
-    void begin(const char* prompt_);
+
 
     friend void all_loaded_cb(void* arg);
 };
