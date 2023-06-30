@@ -136,7 +136,7 @@ void ScSearchRes::draw_button(int x, int y, bool selected) {
         case PLAY:
             xs = 5;
             ys = 31 + (S_RES_H + 1)*y;
-            name = rs.get_station(base_y + y)->name;
+            name = rs.get_station_name(base_y + y);
 
             display.fill_rect(xs, ys, S_RES_W, S_RES_H, true);
             display.write_text_maxlen(xs+3, ys, name, 17, 1); // TODO do scrolling
@@ -188,6 +188,8 @@ void ScSearchRes::begin(const char* prompt_) {
 
     base_y = 0;
     first = true;
+    station_count = 0;
+
     rs.begin(&get_raw_buf(), prompt);
     rs.set_all_loaded_cb(this, all_loaded_cb);
 }

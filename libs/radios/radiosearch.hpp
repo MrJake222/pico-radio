@@ -44,5 +44,6 @@ public:
     void set_all_loaded_cb(void* arg, all_ld_cb_fn cb);
 
     int get_station_count() { return stations_offset; }
-    struct station* get_station(int i) { return &stations[i]; }
+    const char* get_station_name(int i) { return stations[i].name; }
+    const char* get_station_url(int i);
 };

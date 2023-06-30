@@ -103,30 +103,10 @@ void rs_search_task(void* arg) {
         }
     }
 
-    // handle playlists
-    // some of the stations are in *.pls format (playlist, a couple of different streams)
-    // we need to load this files and choose random stream from them
-    for (int i=0; i<rs->stations_offset; i++) {
-        if (rs->should_abort)
-            break;
-
-        const char* url = rs->stations[i].url;
-        const char* ext = url + strlen(url) - 4;
-        if (strcmp(ext, ".pls") == 0) {
-
-            List* list = query_url(rs->client, url, rs->raw_buf, rs->stations_pls, MAX_STATIONS_PLS);
-            if (!list)
-                continue;
-
-            // printf("done loading pls, loaded %d stations\n", list->stations_found);
-            list->select_random(&rs->stations[i]);
-        }
-    }
-
     printf("done loading all, loaded %d stations\n", rs->stations_offset);
-    for (int i=0; i<rs->stations_offset; i++) {
-        printf("uuid %s name %32s url %s\n", rs->stations[i].uuid, rs->stations[i].name, rs->stations[i].url);
-    }
+    // for (int i=0; i<rs->stations_offset; i++) {
+    //     printf("uuid %s name %32s url %s\n", rs->stations[i].uuid, rs->stations[i].name, rs->stations[i].url);
+    // }
 
     if (rs->all_loaded_cb && !rs->should_abort)
         rs->all_loaded_cb(rs->cb_arg);
@@ -165,4 +145,23 @@ void RadioSearch::load_abort() {
 void RadioSearch::set_all_loaded_cb(void* arg, all_ld_cb_fn cb) {
     cb_arg = arg;
     all_loaded_cb = cb;
+}
+
+const char* RadioSearch::get_station_url(int i) {
+    // handle playlists
+    // some of the stations are in *.pls format (playlist, a couple of different streams)
+    // we need to load this files and choose random stream from them
+
+    const char* url = stations[i].url;
+    const char* ext = url + strlen(url) - 4;
+    if (strcmp(ext, ".pls") == 0) {
+        List* list = query_url(client, url, raw_buf, stations_pls, MAX_STATIONS_PLS);
+        if (!list)
+            return nullptr;
+
+        // printf("done loading pls, loaded %d stations\n", list->stations_found);
+        list->select_random(&stations[i]);
+    }
+
+    return stations[i].url;
 }
