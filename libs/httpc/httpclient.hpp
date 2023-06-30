@@ -36,7 +36,6 @@ class HttpClient {
 
     // if not http, these are returned higher
     char buf_http[5] = { 0 };
-    int buf_http_content = 0;
     int test_for_http();
 
     // Query response buffer
@@ -65,7 +64,6 @@ public:
 
     void begin(volatile CircularBuffer* content_buffer_) {
         content_buffer = content_buffer_;
-        closed = false;
     }
 
     // one concurrent connection supported

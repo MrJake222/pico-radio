@@ -31,6 +31,18 @@
 // buffer overrun protection, can lead to loop
 #define BUF_OVERRUN_PROTECTION     0
 
+// --------------------------------- Radio buffers --------------------------------- //
+// Search prompt length
+#define MAX_PROMPT_LEN    16
+#define SEARCH_URL_BUF    (128 + MAX_PROMPT_LEN + 1)
+
+// Max stations per query
+#define MAX_STATIONS          64 // max stations returned from search
+#define MAX_STATIONS_PLS       4 // max stations to resolve from *.pls file
+#define ST_UUID_LEN            0 // disabled
+#define ST_NAME_LEN           32
+#define ST_URL_LEN            64
+
 // --------------------------------- SD --------------------------------- //
 #define SD_ENABLE 1
 

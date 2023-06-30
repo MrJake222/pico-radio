@@ -24,7 +24,9 @@ add_library(libs
         player/player.cpp
         player/filetype.cpp
 
+        radios/list.cpp
         radios/listm3u.cpp
+        radios/listpls.cpp
         radios/radiosearch.cpp
 
         tft/st7735s.cpp

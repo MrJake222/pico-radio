@@ -41,14 +41,18 @@ public:
         , buffer_hidden(buf_)
         , buffer(buffer_hidden + size_hidden_)
         {
-            reset();
+            reset_with_cb();
         }
 
-    void reset() volatile {
+    void reset_only_data() volatile {
         read_at = 0;
         write_at = 0;
         read_bytes = 0;
         written_bytes = 0;
+    }
+
+    void reset_with_cb() volatile {
+        reset_only_data();
         read_ack_callback = nullptr;
         write_ack_callback = nullptr;
     }
@@ -67,6 +71,9 @@ public:
     uint8_t* read_ptr()  volatile const; // TODO make this return const, requires helixmp3 adjustments
     uint8_t* write_ptr() volatile const;
 
+    uint8_t* read_ptr_of(int of)  volatile const; // TODO make this return const, requires helixmp3 adjustments
+    uint8_t* write_ptr_of(int of) volatile const;
+
     void read_ack(unsigned int bytes)  volatile;
     void write_ack(unsigned int bytes) volatile;
 
@@ -77,8 +84,15 @@ public:
 
 
     // wrapping
-    bool can_wrap_buffer()  volatile const;
-    void wrap_buffer()      volatile;
+    // 'can' returns whether remaining data will fit into
+    // the hidden section of the buffer
+    bool can_wrap_buffer()     volatile const;
+
+    // 'should' returns whether the read buffer is near
+    // the end of the buffer
+    bool should_wrap_buffer()  volatile const;
+
+    void wrap_buffer()         volatile;
 
 
     // set read pointer almost at the end of continuous buffer chunk.

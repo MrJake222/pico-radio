@@ -148,7 +148,6 @@ int HttpClient::test_for_http() {
     recv_all(buf_http, 4);
     if (strcmp(buf_http, "HTTP") != 0) {
         puts("no http");
-        buf_http_content = 4;
         return 0;
     }
 
@@ -174,7 +173,12 @@ int HttpClient::parse_headers() {
 
         std::string name(qrbuf);
         str_to_lower_inplace(name);
-        headers[name] = sep;
+
+        char* div = strchr(sep, ';');
+        if (div)
+            *div = 0; // trim any parameters, for ex. charset: "audio/scpls; charset=utf-8"
+
+        headers[name] = sep; // TODO fix a lot of allocations here (do static strcmp)
     }
 
     return 0;
@@ -192,7 +196,7 @@ int HttpClient::parse_http() {
     *(codestr + 3) = 0;
 
     // code 3 + space 1
-    char* codedesc = codestr + 4;
+    char* codedesc = codestr + 4; // TODO this doesn't work
 
     printf("code '%s' str '%s'\n", codestr, codedesc);
 
@@ -263,6 +267,8 @@ int HttpClient::get(const char* url) {
         puts("split_host_path_port failed");
         return -1;
     }
+
+    closed = false;
 
     res = connect_to(host, port);
     if (res < 0) {

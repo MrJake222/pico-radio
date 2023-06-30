@@ -34,5 +34,5 @@ void ScSearchRes::show() {
 
 void ScSearchRes::begin(const char* prompt_) {
     strcpy(prompt, prompt_);
-    rs.begin(&get_raw_buf());
+    rs.begin(&get_raw_buf(), prompt);
 }

@@ -28,6 +28,7 @@ void DecodeBase::begin(const char* path_, Format* format_) {
     player_task = xTaskGetCurrentTaskHandle();
 
     format->begin();
+    format->raw_buf.reset_with_cb();
     format->raw_buf.set_read_ack_callback(this, raw_buf_read_cb_static);
     fifo_register(RAW_BUF_READ, raw_buf_read_msg_static, this, true);
     fifo_register(PLAYER_WAKE_END, player_wake_end, this, true);

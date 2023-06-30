@@ -31,6 +31,14 @@ uint8_t* CircularBuffer::write_ptr() volatile const {
     return buffer + write_at;
 }
 
+uint8_t* CircularBuffer::read_ptr_of(int of) volatile const {
+    return buffer + (read_at + of) % size;
+}
+
+uint8_t* CircularBuffer::write_ptr_of(int of) volatile const {
+    return buffer + (write_at + of) % size;
+}
+
 void CircularBuffer::read_ack(unsigned int bytes) volatile {
     read_at += (long)bytes;
     read_at %= size;
@@ -59,6 +67,10 @@ long CircularBuffer::written_bytes_total() volatile {
 
 bool CircularBuffer::can_wrap_buffer() volatile const {
     return data_left_continuous() <= size_hidden;
+}
+
+bool CircularBuffer::should_wrap_buffer() volatile const {
+    return (size - read_at) <= size_hidden;
 }
 
 void CircularBuffer::wrap_buffer() volatile {

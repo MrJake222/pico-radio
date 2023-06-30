@@ -25,7 +25,6 @@ public:
 
     // call every time before decoding starts
     virtual void begin() {
-        raw_buf.reset();
         eop = false;
         user_abort = false;
     }

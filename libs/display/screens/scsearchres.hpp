@@ -1,7 +1,7 @@
 #pragma once
 
+#include <config.hpp>
 #include <screen.hpp>
-#include <screens/scsearch.hpp>
 
 class ScSearchRes : public Screen {
 

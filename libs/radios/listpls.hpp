@@ -3,9 +3,9 @@
 #include <list.hpp>
 
 
-class ListM3U : public List {
+class ListPLS : public List {
 public:
     ListError try_consume() override;
 };
 
-extern ListM3U listm3u;
+extern ListPLS listpls;

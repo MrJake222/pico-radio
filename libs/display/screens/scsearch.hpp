@@ -1,9 +1,8 @@
 #pragma once
 
+#include <config.hpp>
 #include <screen.hpp>
 #include <cstring>
-
-#define MAX_PROMPT_LEN    16
 
 class ScSearch : public Screen {
 

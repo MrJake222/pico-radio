@@ -225,6 +225,8 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     tcp_err(pcb, error_callback);
     tcp_recv(pcb, recv_callback);
 
+    http_buf.reset_with_cb();
+
     err = false;
     connected = false;
     connection_closed = false;
@@ -244,7 +246,6 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     }
 
     puts("connected");
-    http_buf.reset();
 
     cyw43_arch_lwip_end();
     return 0;
