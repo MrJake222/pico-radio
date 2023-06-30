@@ -272,7 +272,7 @@ int main() {
             "wifi startup",
             configMINIMAL_STACK_SIZE * 4,
             nullptr,
-            1,
+            PRI_WIFI_SETUP,
             nullptr);
 
     xTaskCreate(
@@ -280,7 +280,7 @@ int main() {
             "input handle",
             configMINIMAL_STACK_SIZE * 4,
             nullptr,
-            1,
+            PRI_INPUT,
             nullptr);
 
     vTaskStartScheduler();

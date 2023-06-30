@@ -8,7 +8,7 @@
 #define LWIP_SOCKET                 0
 
 #define TCPIP_THREAD_NAME           "tcpip"
-#define TCPIP_THREAD_PRIO           2
+#define TCPIP_THREAD_PRIO           PRI_LWIP_TCPIP
 #define TCPIP_THREAD_STACKSIZE      2048
 
 #define DEFAULT_TCP_RECVMBOX_SIZE   5

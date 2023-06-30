@@ -134,7 +134,7 @@ void RadioSearch::load_stations() {
                 "search",
                 configMINIMAL_STACK_SIZE * 4,
                 this,
-                1,
+                PRI_RADIO_SEARCH,
                 &search_task);
 }
 

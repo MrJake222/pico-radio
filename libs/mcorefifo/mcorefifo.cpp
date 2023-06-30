@@ -1,5 +1,6 @@
 #include "mcorefifo.hpp"
 
+#include <config.hpp>
 #include <pico/multicore.h>
 #include <hardware/irq.h>
 #include <cstdio>
@@ -59,7 +60,7 @@ void fifo_init() {
             "fifo",
             1024,
             nullptr,
-            3,
+            PRI_FIFO_QUEUE,
             nullptr);
 
     multicore_fifo_drain();

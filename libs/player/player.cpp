@@ -258,7 +258,7 @@ void player_start(const char* path) {
             "player",
             1024,
             nullptr,
-            1,
+            PRI_PLAYER,
             nullptr);
 }
 

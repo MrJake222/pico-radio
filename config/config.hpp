@@ -51,6 +51,14 @@
 #define ST_NAME_LEN           32
 #define ST_URL_LEN            64
 
+// --------------------------------- RTOS priorities --------------------------------- //
+#define PRI_FIFO_QUEUE          3  // handles player's buffer ack & playback stop
+#define PRI_LWIP_TCPIP          2
+#define PRI_PLAYER              1  // task only for start/stop playback
+#define PRI_RADIO_SEARCH        1
+#define PRI_WIFI_SETUP          1
+#define PRI_INPUT               1
+
 // --------------------------------- SD --------------------------------- //
 #define SD_ENABLE 1
 
