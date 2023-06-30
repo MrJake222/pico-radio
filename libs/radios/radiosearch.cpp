@@ -28,14 +28,13 @@ static List* query_url(HttpClientPico& client, const char* url, volatile Circula
         return nullptr;
     }
 
-    const auto& type = client.get_header("Content-type");
     List* list;
 
-    if (type == "audio/mpegurl") {
+    if (strcmp(client.get_content_type(), "audio/mpegurl") == 0) {
         // .m3u file
         list = &listm3u;
     }
-    else if (type == "audio/scpls") {
+    else if (strcmp(client.get_content_type(), "audio/scpls") == 0) {
         // .pls file
         list = &listpls;
     }
@@ -49,7 +48,7 @@ static List* query_url(HttpClientPico& client, const char* url, volatile Circula
                 stations,
                 max_stations);
 
-    while (raw_buf->read_bytes_total() < client.get_header_int("Content-length")) {
+    while (raw_buf->read_bytes_total() < client.get_content_length()) {
         // loop until all content data has been read
         
         ListError lr = list->try_consume();
@@ -83,7 +82,7 @@ void rs_search_task(void* arg) {
     // load stations from all URLs
 
     for (int i=0; i<url_count; i++) {
-        snprintf(rs->url_buf, SEARCH_URL_BUF, urls[i], rs->query);
+        snprintf(rs->url_buf, SEARCH_URL_BUF_LEN, urls[i], rs->query);
         
         List* list = query_url(rs->client, rs->url_buf, rs->raw_buf,
                                rs->stations + rs->stations_offset,
@@ -92,7 +91,7 @@ void rs_search_task(void* arg) {
         if (!list)
             continue;
 
-        printf("done loading url, loaded %d stations\n", list->stations_found);
+        // printf("done loading url, loaded %d stations\n", list->stations_found);
         rs->stations_offset += list->stations_found;
 
         if (rs->stations_offset == MAX_STATIONS) {
@@ -113,7 +112,7 @@ void rs_search_task(void* arg) {
             if (!list)
                 continue;
 
-            printf("done loading pls, loaded %d stations\n", list->stations_found);
+            // printf("done loading pls, loaded %d stations\n", list->stations_found);
             list->select_random(&rs->stations[i]);
         }
     }
@@ -144,21 +143,3 @@ void RadioSearch::begin(volatile CircularBuffer* raw_buf_, const char* query_) {
                 1,
                 &search_task);
 }
-
-// void RadioSearch::search() {
-//
-// }
-//
-// void RadioSearch::raw_buf_write_cb(unsigned int bytes) {
-//     // called directly from lwip callback
-//     // raw_buf->debug_read(bytes, 0);
-//     raw_buf->read_ack(bytes);
-//
-//     cbt_line_is_avail(*raw_buf);
-//
-//     printf("written: %5ld / %5d bytes (this time %5d)\n", raw_buf->written_bytes_total(), client.get_header_int("Content-length"), bytes);
-//
-//     if (raw_buf->written_bytes_total() == client.get_header_int("Content-length")) {
-//         puts("written all, interpreted all");
-//     }
-// }

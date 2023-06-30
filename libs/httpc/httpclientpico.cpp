@@ -16,7 +16,7 @@ void gethost_callback(const char* name, const ip_addr_t* ipaddr, void* callback_
 
     auto query = (struct dns_query*) callback_arg;
     if (ipaddr) {
-        printf("resolved callback %s (hex %08x)\n", ipaddr_ntoa(ipaddr), *ipaddr);
+        // printf("resolved callback %s (hex %08x)\n", ipaddr_ntoa(ipaddr), *ipaddr);
         memcpy(query->addr, ipaddr, sizeof(ip_addr_t));
         query->found = true;
     } else {
@@ -34,17 +34,17 @@ static err_t gethostbyname(const char* host, ip_addr_t* result) {
     err_t ret = dns_gethostbyname_addrtype(host, result, gethost_callback, (void *) &query, LWIP_DNS_ADDRTYPE_IPV4);
     switch (ret) {
         case ERR_OK:
-            printf("resolved cache %s (hex %08x)\n", ipaddr_ntoa(result), *result);
+            // printf("resolved cache %s (hex %08x)\n", ipaddr_ntoa(result), *result);
             break;
 
         case ERR_INPROGRESS:
-            puts("in progress");
+            // puts("in progress");
 
             cyw43_arch_lwip_end();
             while (!query.found && !query.failed); // TODO refactor notification (+timeout)
             cyw43_arch_lwip_begin();
 
-            puts("done");
+            // puts("done");
             if (query.failed) {
                 puts("dns query failed");
                 return -1;
@@ -73,7 +73,7 @@ void error_callback(void *arg, err_t err) {
 err_t connected_callback(void* arg, struct tcp_pcb* tpcb, err_t err) {
     cyw43_arch_lwip_check();
 
-    puts("connected callback");
+    // puts("connected callback");
     ((argptr)arg)->connected = true;
 
     return err;
@@ -84,6 +84,9 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
     cyw43_arch_lwip_check();
 
     auto httpc = ((argptr)arg);
+
+    if (httpc->is_content())
+        httpc->http_to_content();
 
     if (!p_head) {
         // connection closed
@@ -106,10 +109,8 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
         // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->content_buffer->space_left());
 
         if (httpc->is_content()) {
-            httpc->http_to_content();
-
             if (httpc->content_buffer->space_left() < p->len) {
-                puts("stop of content buffer");
+                puts("end of content buffer");
 #if BUF_OVERRUN_PROTECTION
                 httpc->err = true;
                 return ERR_MEM;
@@ -121,7 +122,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
         else {
 
             if (httpc->http_buf.space_left() < p->len) {
-                puts("stop of http buffer");
+                puts("end of http buffer");
                 httpc->err = true;
                 return ERR_MEM;
             }
@@ -142,7 +143,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
 void HttpClientPico::http_to_content() volatile {
     if (http_buf.data_left() > 0) {
         if (content_buffer->space_left() < http_buf.data_left()) {
-            puts("stop of content buffer");
+            puts("end of content buffer");
 #if BUF_OVERRUN_PROTECTION
             err = true;
                 return ERR_MEM;
@@ -212,7 +213,7 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
         goto clean_up_failed;
     }
 
-    printf("connecting to: %s (hex %08x)\n", ipaddr_ntoa(&addr), addr);
+    // printf("connecting to: %s (hex %08x)\n", ipaddr_ntoa(&addr), addr);
 
     pcb = tcp_new();
 
@@ -245,7 +246,7 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
         goto clean_up_failed;
     }
 
-    puts("connected");
+    // puts("connected");
 
     cyw43_arch_lwip_end();
     return 0;

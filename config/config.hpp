@@ -21,20 +21,28 @@
 // for WAV playing
 #define BUF_PCM_SIZE_BYTES     (BUF_PCM_SIZE_32BIT * 4)
 
-// HTTP
-#define HTTP_DATA_BUF_SIZE_BYTES    TCP_WND
-#define HTTP_CONTENT_BUFFER_TARGET  75
-
 // --------------------------------- Playback variables --------------------------------- //
 // buffer reversing after bad frame, dangerous can lead to loops
 #define BUF_REVERSE                0
 // buffer overrun protection, can lead to loop
 #define BUF_OVERRUN_PROTECTION     0
+// target buffer health
+#define HTTP_CONTENT_BUFFER_TARGET      75
+
+// --------------------------------- Http buffers --------------------------------- //
+#define HTTP_HOST_MAX_LEN               128
+#define HTTP_PATH_MAX_LEN               256
+
+#define HTTP_QUERY_RESP_BUF_SIZE        256
+#define HTTP_LOCATION_HDR_SIZE          256
+#define HTTP_CONTENT_TYPE_HDR_SIZE      256
+
+#define HTTP_DATA_BUF_SIZE_BYTES        TCP_WND
 
 // --------------------------------- Radio buffers --------------------------------- //
 // Search prompt length
-#define MAX_PROMPT_LEN    16
-#define SEARCH_URL_BUF    (128 + MAX_PROMPT_LEN + 1)
+#define MAX_PROMPT_LEN        16
+#define SEARCH_URL_BUF_LEN    (128 + MAX_PROMPT_LEN + 1)
 
 // Max stations per query
 #define MAX_STATIONS          64 // max stations returned from search

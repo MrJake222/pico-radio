@@ -2,16 +2,11 @@
 #include <httpclient.hpp>
 #include <algorithm>
 
-static std::string str_to_lower(const std::string& str) {
-    std::string out(str);
-    std::transform(out.begin(), out.end(), out.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
-    return out;
-}
-
-static void str_to_lower_inplace(std::string& str) {
-    std::transform(str.begin(), str.end(), str.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
+static void str_to_lower(char* str) {
+    for (int i=0; i<strlen(str); i++) {
+        if (str[i] <= 'Z' && str[i] >= 'A')
+            str[i] -= ('A' - 'a');
+    }
 }
 
 int HttpClient::send_all(const char *buf, int buflen) {
@@ -78,7 +73,7 @@ int HttpClient::recv_line(char *buf, int maxlen) {
     return line_length;
 }
 
-int HttpClient::split_host_path_port(const char *url, char *host, int host_maxlen, char *path, int path_maxlen, unsigned short* port) {
+int HttpClient::split_host_path_port(const char *url) {
 
     if (strncmp(url, "http://", 7) == 0) {
         url += 7;
@@ -92,12 +87,12 @@ int HttpClient::split_host_path_port(const char *url, char *host, int host_maxle
     if (sep) {
         // separator found
         size_t host_len = sep - url;
-        if (host_len > host_maxlen) {
+        if (host_len > HTTP_HOST_MAX_LEN) {
             return -1;
         }
 
         size_t path_len = strlen(sep);
-        if (path_len > path_maxlen) {
+        if (path_len > HTTP_PATH_MAX_LEN) {
             return -1;
         }
 
@@ -109,7 +104,7 @@ int HttpClient::split_host_path_port(const char *url, char *host, int host_maxle
     else {
         // no sep
         size_t host_len = strlen(url);
-        if (host_len > host_maxlen) {
+        if (host_len > HTTP_HOST_MAX_LEN) {
             return -1;
         }
 
@@ -128,18 +123,16 @@ int HttpClient::split_host_path_port(const char *url, char *host, int host_maxle
         sep += 1;
         // sep points to port
         char* end;
-        *port = strtol(sep, &end, 10);
+        port = strtol(sep, &end, 10);
         if (*end) {
             return -1;
         }
     }
     else {
-        *port = 80;
+        port = 80;
     }
 
-    printf("host: '%s'\n", host);
-    printf("port: '%d'\n", *port);
-    printf("path: '%s'\n", path);
+    printf("host: '%s', port: '%d', path: '%s'\n", host, port, path);
 
     return 0;
 }
@@ -147,7 +140,7 @@ int HttpClient::split_host_path_port(const char *url, char *host, int host_maxle
 int HttpClient::test_for_http() {
     recv_all(buf_http, 4);
     if (strcmp(buf_http, "HTTP") != 0) {
-        puts("no http");
+        puts("no http response found");
         return 0;
     }
 
@@ -155,30 +148,34 @@ int HttpClient::test_for_http() {
 }
 
 int HttpClient::parse_headers() {
-    headers.clear();
-
     while (1) {
-        int len = recv_line(qrbuf, qrbuf_size);
+        int len = recv_line(qrbuf, HTTP_QUERY_RESP_BUF_SIZE);
         if (len == 0)
             break;
 
-        char* sep = strchr(qrbuf, ':');
-        if (!sep)
-            break;
+        char* val = strchr(qrbuf, ':');
+        if (!val)
+            continue;
 
-        *sep = 0;
-        sep += 1; // skip separator
-        if (*sep == ' ')
-            sep += 1; // skip space
+        *val++ = 0; // end name / skip separator
+        if (*val == ' ')
+            val += 1; // skip space
 
-        std::string name(qrbuf);
-        str_to_lower_inplace(name);
-
-        char* div = strchr(sep, ';');
+        char* div = strchr(val, ';');
         if (div)
             *div = 0; // trim any parameters, for ex. charset: "audio/scpls; charset=utf-8"
 
-        headers[name] = sep; // TODO fix a lot of allocations here (do static strcmp)
+        str_to_lower(qrbuf);
+
+        // names all lowercase
+        if (strcmp(qrbuf, "location") == 0)
+            strncpy(h_location, val, HTTP_LOCATION_HDR_SIZE);
+
+        else if (strcmp(qrbuf, "content-type") == 0)
+            strncpy(h_content_type, val, HTTP_CONTENT_TYPE_HDR_SIZE);
+
+        else if (strcmp(qrbuf, "content-length") == 0)
+            h_content_length = atoi(val);
     }
 
     return 0;
@@ -187,9 +184,9 @@ int HttpClient::parse_headers() {
 int HttpClient::parse_http() {
     memcpy(qrbuf, buf_http, 4);
 
-    int len = recv_line(qrbuf + 4, qrbuf_size - 4);
+    int len = recv_line(qrbuf + 4, HTTP_QUERY_RESP_BUF_SIZE - 4);
     qrbuf[4 + len] = 0;
-    puts(qrbuf);
+    // puts(qrbuf);
 
     // http 4 + slash 1 + version 3 + space 1
     char* codestr = qrbuf + 9;
@@ -198,7 +195,7 @@ int HttpClient::parse_http() {
     // code 3 + space 1
     char* codedesc = codestr + 4; // TODO this doesn't work
 
-    printf("code '%s' str '%s'\n", codestr, codedesc);
+    // printf("code '%s' str '%s'\n", codestr, codedesc);
 
     char* end;
     int code = (int)strtol(codestr, &end, 10);
@@ -211,15 +208,15 @@ int HttpClient::parse_http() {
 
     // TODO remember cookies
 
-    for (auto entry : headers) {
-        printf("%20s   %s\n", entry.first.c_str(), entry.second.c_str());
-    }
+    // for (auto entry : headers) {
+    //     printf("%20s   %s\n", entry.first.c_str(), entry.second.c_str());
+    // }
 
-    printf("code %d\n", code);
+    // printf("code %d\n", code);
     switch (code) {
         case 200:
             // ok
-            puts("ok");
+            puts("http 200 ok");
             // http stream ended
             // time to receive content
             content = true;
@@ -237,13 +234,8 @@ int HttpClient::parse_http() {
         case 308:
             // redirection
             puts("redirect");
-            if (!has_header("Location")) {
-                puts("no location");
-                return -1;
-            }
-
             close();
-            return get(get_header("Location").c_str());
+            return get(h_location);
 
         default:
             puts("unsupported response status code");
@@ -253,15 +245,7 @@ int HttpClient::parse_http() {
 
 int HttpClient::get(const char* url) {
 
-    char host[HTTP_HOST_MAX_LEN];
-    char path[HTTP_PATH_MAX_LEN];
-    unsigned short port;
-
-    int res = split_host_path_port(
-            url,
-            host, HTTP_HOST_MAX_LEN,
-            path, HTTP_PATH_MAX_LEN,
-            &port);
+    int res = split_host_path_port(url);
 
     if (res) {
         puts("split_host_path_port failed");
@@ -278,16 +262,16 @@ int HttpClient::get(const char* url) {
 
     content = false;
 
-    sprintf(qrbuf, "GET %s HTTP/1.0\r\n", path);
+    snprintf(qrbuf, HTTP_QUERY_RESP_BUF_SIZE, "GET %s HTTP/1.0\r\n", path);
     send_string(qrbuf);
-    sprintf(qrbuf, "Host: %s\r\n", host);
+    snprintf(qrbuf, HTTP_QUERY_RESP_BUF_SIZE, "Host: %s\r\n", host);
     send_string(qrbuf);
     send_string("User-agent: PicoRadio/0.1\r\n");
     // TODO use cookies
     send_string("\r\n");
 
     if (test_for_http()) {
-        puts("http");
+        // puts("http");
         res = parse_http();
         if (res) {
             puts("parse_http failed");
@@ -305,14 +289,14 @@ int HttpClient::close() {
     return disconnect();
 }
 
-bool HttpClient::has_header(const std::string& hdr) {
-    return headers.count(str_to_lower(hdr)) > 0;
-}
-
-const std::string& HttpClient::get_header(const std::string& hdr) {
-    return headers.at(str_to_lower(hdr));
-}
-
-int HttpClient::get_header_int(const std::string& hdr) {
-    return stoi(get_header(hdr));
-}
+// bool HttpClient::has_header(const std::string& hdr) {
+//     return headers.count(str_to_lower(hdr)) > 0;
+// }
+//
+// const std::string& HttpClient::get_header(const std::string& hdr) {
+//     return headers.at(str_to_lower(hdr));
+// }
+//
+// int HttpClient::get_header_int(const std::string& hdr) {
+//     return stoi(get_header(hdr));
+// }

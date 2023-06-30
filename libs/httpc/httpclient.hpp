@@ -9,9 +9,6 @@
 
 class HttpClient {
 
-    static const int HTTP_HOST_MAX_LEN = 128;
-    static const int HTTP_PATH_MAX_LEN = 256;
-
     // these are platform-specific
     // send as much as possible, return how many was sent
     virtual int send(const char* buf, int buflen) = 0;
@@ -32,17 +29,22 @@ class HttpClient {
     // searches for \r\n, returns line+length without \r\n
     int recv_line(char* buf, int maxlen);
 
-    static int split_host_path_port(const char* url, char* host, int host_maxlen, char* path, int path_maxlen, unsigned short* port);
+    char host[HTTP_HOST_MAX_LEN];
+    char path[HTTP_PATH_MAX_LEN];
+    unsigned short port;
+
+    int split_host_path_port(const char* url);
 
     // if not http, these are returned higher
     char buf_http[5] = { 0 };
     int test_for_http();
 
-    // Query response buffer
-    const static int qrbuf_size = 1024;
-    char qrbuf[qrbuf_size];
+    // Query/Response buffer
+    char qrbuf[HTTP_QUERY_RESP_BUF_SIZE];
 
-    std::map<std::string, std::string> headers;
+    int h_content_length;
+    char h_content_type[HTTP_CONTENT_TYPE_HDR_SIZE];
+    char h_location[HTTP_LOCATION_HDR_SIZE];
     int parse_headers();
 
     int parse_http();
@@ -74,7 +76,6 @@ public:
     int close();
 
     // header access methods
-    bool has_header(const std::string& hdr);
-    const std::string& get_header(const std::string& hdr);
-    int get_header_int(const std::string& hdr);
+    int get_content_length() { return h_content_length; }
+    const char* get_content_type() { return h_content_type; }
 };

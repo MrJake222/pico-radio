@@ -15,7 +15,7 @@ class RadioSearch {
     TaskHandle_t search_task;
 
     const char* query;
-    char url_buf[SEARCH_URL_BUF];
+    char url_buf[SEARCH_URL_BUF_LEN];
 
     struct station stations[MAX_STATIONS];
     int stations_offset;
