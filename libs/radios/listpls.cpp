@@ -31,7 +31,7 @@ ListError ListPLS::try_consume() {
         val++;
 
         set_current_url(val);
-        stations_found++; // TODO raw buf reset
+        stations_found++;
     }
 
     try_consume_post(eol);

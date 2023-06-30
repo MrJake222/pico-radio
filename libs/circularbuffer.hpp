@@ -68,10 +68,10 @@ public:
     int health() volatile const { return data_left() * 100 / size; }
 
 
-    uint8_t* read_ptr()  volatile const; // TODO make this return const, requires helixmp3 adjustments
+    uint8_t* read_ptr()  volatile const;
     uint8_t* write_ptr() volatile const;
 
-    uint8_t* read_ptr_of(int of)  volatile const; // TODO make this return const, requires helixmp3 adjustments
+    uint8_t* read_ptr_of(int of)  volatile const;
     uint8_t* write_ptr_of(int of) volatile const;
 
     void read_ack(unsigned int bytes)  volatile;
