@@ -20,7 +20,8 @@ ScSearchRes sc_search_res(display);
 void screenmng_init() {
     display.init();
 
-    sc_search.begin("");
+    sc_search.begin("RMF", true);
+    sc_search_res.begin("");
 }
 
 Screen* screenmng_get_default() {

@@ -21,11 +21,11 @@ static const int8_t xoff[ROWS_CHARACTERS] = {5, 5, 8, 16};
 // number of character in rows
 static const int8_t xlen[ROWS] = {1, 10, 10, 9, 7, 3};
 
-int ScSearch::max_x(int y) {
+int ScSearch::size_x(int y) {
     return xlen[y];
 }
 
-int ScSearch::max_y() {
+int ScSearch::size_y() {
     return ROWS;
 }
 
@@ -147,7 +147,7 @@ int ScSearch::get_action(int x, int y) {
         return BACKSPACE;
     }
 
-    else if (y == (max_y() - 1)) {
+    else if (y == (size_y() - 1)) {
         if (x == 0)
             return BACK;
         else if (x == 1)
@@ -217,7 +217,7 @@ void ScSearch::draw_prompt_field() {
     display.fill_rect(5, 18, 131, 20, true);
     display.write_text_maxlen(5 + 3, 18, prompt, MAX_PROMPT_LEN, 1);
 
-    set_btn_bg(get_action(get_current_x(), get_current_y()) == BACKSPACE, false);
+    set_btn_bg(get_action(current_x, current_y) == BACKSPACE, false);
 }
 
 void ScSearch::show() {
@@ -248,7 +248,7 @@ Screen* ScSearch::run_action(int action) {
 
         case KB:
             if (pi < MAX_PROMPT_LEN)
-                prompt[pi++] = letters[get_current_y() - 1][get_current_x()];
+                prompt[pi++] = letters[current_y - 1][current_x];
             break;
     }
 
@@ -259,12 +259,21 @@ Screen* ScSearch::run_action(int action) {
     return nullptr;
 }
 
-void ScSearch::begin(const char* prompt_) {
+void ScSearch::begin(const char* prompt_, bool search_selected) {
     strcpy(prompt, prompt_);
 
     pi = strlen(prompt);
     prompt[pi] = '_';
     prompt[pi+1] = '\0';
+
+    if (search_selected) {
+        default_x_ = 2;
+        default_y_ = last_y();
+    }
+    else {
+        default_x_ = 0;
+        default_y_ = 2;
+    }
 
     prev_x_clear();
 }

@@ -16,9 +16,13 @@ class ScSearch : public Screen {
     int8_t prev_x_kb_to_last;
     void prev_x_clear();
 
-    int max_x(int y) override;
-    int max_y() override;
-    int default_y() override { return 2; }
+    int default_x_;
+    int default_y_;
+    int default_x() override { return default_x_; }
+    int default_y() override { return default_y_; }
+
+    int size_x(int y) override;
+    int size_y() override;
     int adjust_x(int old_x, int old_y, int new_y) override;
     void x_changed() override;
 
@@ -36,5 +40,5 @@ public:
     using Screen::Screen;
     void show() override;
 
-    void begin(const char* prompt_);
+    void begin(const char* prompt_, bool search_selected);
 };

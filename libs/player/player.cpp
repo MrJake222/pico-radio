@@ -152,7 +152,7 @@ static void dma_chain_enable(int dma_chan, int chain_to) {
 }
 
 static void dma_start() {
-    printf("dma start\n");
+    printf("dma load_stations\n");
 
     // setup chaining
     dma_chain_enable(dma_channel_a, dma_channel_b);
@@ -201,7 +201,7 @@ static void player_task(void* arg) {
 
     r = dec->start();
     if (r) {
-        printf("dec start failed, stopping playback");
+        printf("dec load_stations failed, stopping playback");
         goto clean_up;
     }
 

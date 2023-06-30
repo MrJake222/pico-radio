@@ -39,7 +39,7 @@ static List* query_url(HttpClientPico& client, const char* url, volatile Circula
         list = &listpls;
     }
     else {
-        printf("unsupported type of radio listing");
+        printf("unsupported type of radio listing: %s\n", client.get_content_type());
         client.close();
         return nullptr;
     }
@@ -82,6 +82,9 @@ void rs_search_task(void* arg) {
     // load stations from all URLs
 
     for (int i=0; i<url_count; i++) {
+        if (rs->should_abort)
+            break;
+
         snprintf(rs->url_buf, SEARCH_URL_BUF_LEN, urls[i], rs->query);
         
         List* list = query_url(rs->client, rs->url_buf, rs->raw_buf,
@@ -104,6 +107,9 @@ void rs_search_task(void* arg) {
     // some of the stations are in *.pls format (playlist, a couple of different streams)
     // we need to load this files and choose random stream from them
     for (int i=0; i<rs->stations_offset; i++) {
+        if (rs->should_abort)
+            break;
+
         const char* url = rs->stations[i].url;
         const char* ext = url + strlen(url) - 4;
         if (strcmp(ext, ".pls") == 0) {
@@ -122,6 +128,9 @@ void rs_search_task(void* arg) {
         printf("uuid %s name %32s url %s\n", rs->stations[i].uuid, rs->stations[i].name, rs->stations[i].url);
     }
 
+    if (rs->all_loaded_cb && !rs->should_abort)
+        rs->all_loaded_cb(rs->cb_arg);
+
     rs->search_task = nullptr;
     vTaskDelete(nullptr);
 }
@@ -134,12 +143,26 @@ void RadioSearch::begin(volatile CircularBuffer* raw_buf_, const char* query_) {
     raw_buf->set_write_ack_callback(this, rs_raw_buf_write_cb);
 
     client.begin(raw_buf);
-    stations_offset = 0;
+    should_abort = false;
 
+    stations_offset = 0;
+    all_loaded_cb = nullptr;
+}
+
+void RadioSearch::load_stations() {
     xTaskCreate(rs_search_task,
                 "search",
                 configMINIMAL_STACK_SIZE * 4,
                 this,
                 1,
                 &search_task);
+}
+
+void RadioSearch::load_abort() {
+    should_abort = true;
+}
+
+void RadioSearch::set_all_loaded_cb(void* arg, all_ld_cb_fn cb) {
+    cb_arg = arg;
+    all_loaded_cb = cb;
 }

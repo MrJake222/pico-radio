@@ -93,13 +93,14 @@ void init_hardware() {
     gpio_set_dir(PIN_DBG, GPIO_OUT);
     DBG_OFF();
 
-    player_init();
-    puts("player done");
+    // player_init();
+    // puts("player done");
 
     // Display config
     screenmng_init();
     screen = screenmng_get_default();
-    screen->show();
+    // show done in <input> task
+
     puts("Display configuration & begin done");
 
     // FS configuration
@@ -223,11 +224,14 @@ void oldmain() {
 void task_wifi_startup(void* arg) {
     init_wifi();
     // player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
-    sc_search_res.begin("rmf");
+    // sc_search_res.begin("rmf");
     vTaskDelete(nullptr);
 }
 
 [[noreturn]] void task_input_handle(void* arg) {
+    // show default screen
+    screen->show();
+
     ButtonEnum input;
     int r;
     int cnt = 0;

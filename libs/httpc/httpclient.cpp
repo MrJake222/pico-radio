@@ -238,7 +238,7 @@ int HttpClient::parse_http() {
             return get(h_location);
 
         default:
-            puts("unsupported response status code");
+            printf("unsupported response status code: %d ('%s' / %s)\n", code, codestr, codedesc);
             return -1;
     }
 }
