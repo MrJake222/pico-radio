@@ -47,7 +47,7 @@ class HttpClient {
     int parse_http();
 
     int connect_url(const char* url);
-    virtual void connect_ok() { }
+    virtual void header_parsing_done() { }
 
 public:
     // one concurrent connection supported

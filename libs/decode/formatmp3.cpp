@@ -18,9 +18,9 @@ void FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
         const int max_check_len = 1024;
         int check_len = MIN(max_check_len, raw_buf.data_left_continuous());
 
-        printf("read at %ld  avail %ld  check %d  ", raw_buf.get_read_offset(), raw_buf.data_left(), check_len);
+        // printf("read at %ld  avail %ld  check %d  ", raw_buf.get_read_offset(), raw_buf.data_left(), check_len);
         int sync_word_offset = MP3FindSyncWord(raw_buf.read_ptr(), check_len);
-        printf("sync_word_offset: %d\n", sync_word_offset);
+        // printf("sync_word_offset: %d\n", sync_word_offset);
         if (sync_word_offset < 0) {
             // failed (read all <check_len>, and no sync word)
             raw_buf.read_ack(check_len);

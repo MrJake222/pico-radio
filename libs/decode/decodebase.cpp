@@ -79,7 +79,7 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
 
         // TODO move this to a callback/task
         // this is on core1, probably easier to just create a task with interval of 1 sec
-        printf("\n\n\n-------------------------------------------------------------------------------------------------------- ");
+        // printf("\n\n\n-------------------------------------------------------------------------------------------------------- ");
         printf("%02d:%02d / %02d:%02d   decode %5.2fms %2d%%   health %2d%%\n",
                seconds/60, seconds%60,
                duration/60, duration%60,
@@ -87,8 +87,8 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
                int(took_ms * 100 / format->ms_per_unit()),
                format->raw_buf.health()
         );
-
-        stats_display();
+        //
+        // stats_display();
     }
 }
 

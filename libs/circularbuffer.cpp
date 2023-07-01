@@ -4,11 +4,8 @@
 #include <pico/platform.h>
 #include <cstdio>
 
-// this returns empty buffer when read_at == write_at
 long CircularBuffer::data_left() volatile const {
-    return write_at < read_at
-           ? ((size - read_at) + write_at)  // from reading position to end + wrapped
-           : (write_at - read_at);          // from reading to next write pos
+    return (long) (written_bytes - read_bytes);
 }
 
 long CircularBuffer::data_left_continuous() volatile const {
@@ -42,7 +39,7 @@ uint8_t* CircularBuffer::write_ptr_of(int of) volatile const {
 void CircularBuffer::read_ack(unsigned int bytes) volatile {
     read_at += (long)bytes;
     read_at %= size;
-    read_bytes += (long)bytes;
+    read_bytes += (b_type)bytes;
 
     if (read_ack_callback)
         read_ack_callback(read_ack_arg, bytes);
@@ -51,18 +48,15 @@ void CircularBuffer::read_ack(unsigned int bytes) volatile {
 void CircularBuffer::write_ack(unsigned int bytes) volatile {
     write_at += (long)bytes;
     write_at %= size;
-    written_bytes += (long)bytes;
+    written_bytes += (b_type)bytes;
 
     if (write_ack_callback)
         write_ack_callback(write_ack_arg, bytes);
 }
 
-long CircularBuffer::read_bytes_total() volatile {
-    return read_bytes;
-}
-
-long CircularBuffer::written_bytes_total() volatile {
-    return written_bytes;
+void CircularBuffer::read_reverse(unsigned int bytes) volatile {
+    read_at -= (long)bytes;
+    read_bytes -= (b_type) bytes;
 }
 
 bool CircularBuffer::can_wrap_buffer() volatile const {
@@ -78,10 +72,6 @@ void CircularBuffer::wrap_buffer() volatile {
 
     memcpy(buffer - buf_left, read_ptr(), buf_left);
     read_at = -buf_left;
-}
-
-void CircularBuffer::set_read_ptr_end(unsigned int from_end) volatile {
-    read_at = write_at - (long)from_end;
 }
 
 void CircularBuffer::move_to(volatile CircularBuffer &other) volatile {

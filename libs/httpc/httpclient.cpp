@@ -267,6 +267,8 @@ int HttpClient::get(const char* url) {
     // TODO use cookies
     send_string("\r\n");
 
+    puts("connect ok, sent request");
+
     res = test_for_http();
     if (res < 0) {
         puts("not http response");
@@ -281,7 +283,7 @@ int HttpClient::get(const char* url) {
 
     // parse_http consumed all headers
     // now only receiving content
-    connect_ok();
+    header_parsing_done();
 
     return 0;
 }

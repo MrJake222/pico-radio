@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+typedef unsigned int b_type;
+
 class CircularBuffer {
 
     uint8_t* const buffer_hidden;
@@ -12,13 +14,16 @@ class CircularBuffer {
     // read/write keep that separate
 
     // where to read/write data from/to
+    // used to calculate effective addresses (must be signed for wrapping)
     long read_at;
     long write_at;
 
     // how many bytes was read from/written to this buffer
-    long read_bytes;
-    long written_bytes;
+    // used to calculate bytes in the buffer
+    b_type read_bytes;
+    b_type written_bytes;
 
+    // callbacks
     using rw_callback_fn = void(*)(void*, unsigned int);
     void* read_ack_arg;
     volatile rw_callback_fn read_ack_callback;
@@ -77,10 +82,10 @@ public:
     void read_ack(unsigned int bytes)  volatile;
     void write_ack(unsigned int bytes) volatile;
 
-    long read_bytes_total()    volatile;
-    long written_bytes_total() volatile;
+    b_type read_bytes_total()    volatile const { return read_bytes; }
+    b_type written_bytes_total() volatile const { return written_bytes; }
 
-    void read_reverse(unsigned int bytes) volatile { read_at -= (long)bytes; }
+    void read_reverse(unsigned int bytes) volatile;
 
 
     // wrapping
@@ -93,11 +98,6 @@ public:
     bool should_wrap_buffer()  volatile const;
 
     void wrap_buffer()         volatile;
-
-
-    // set read pointer almost at the end of continuous buffer chunk.
-    // This may involve write pointer (marks the end of available data)
-    void set_read_ptr_end(unsigned int from_end) volatile;
 
 
     // helper functions

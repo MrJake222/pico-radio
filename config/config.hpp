@@ -27,7 +27,7 @@
 // buffer overrun protection, can lead to loop
 #define BUF_OVERRUN_PROTECTION     0
 // target buffer health
-#define HTTP_CONTENT_BUFFER_TARGET      75
+#define HTTP_CONTENT_BUFFER_TARGET      70
 
 // --------------------------------- Http buffers --------------------------------- //
 #define HTTP_HOST_MAX_LEN               128

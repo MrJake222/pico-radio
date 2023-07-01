@@ -10,7 +10,7 @@ class HttpClientPico : public HttpClient {
     int connect_to(const char* host, unsigned short port) override;
     int disconnect() override;
 
-    void connect_ok() override;
+    void header_parsing_done() override;
 
     // lwip structure
     struct tcp_pcb* pcb;

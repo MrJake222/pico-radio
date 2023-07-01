@@ -101,7 +101,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
     struct pbuf* p = p_head;
 
     while(true) {
-        // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->content_buffer.space_left());
+        // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->cbuf.space_left());
 
         if (httpc->get_buffer().space_left() < p->len) {
             puts("end of buffer");
@@ -123,7 +123,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
     return ERR_OK;
 }
 
-void HttpClientPico::connect_ok() {
+void HttpClientPico::header_parsing_done() {
     // blocks lwip thread to enter callbacks
     cyw43_arch_lwip_begin();
 
