@@ -55,6 +55,9 @@ void ScPlay::show() {
     display.write_text_maxlen(15, 24, radio_name, 17, 1);
 
     player_start(radio_url);
+    // TODO when failed, close the screen
+    // interesting how to do it, only main.cpp can show screens currently
+    // maybe move it to screen manager
 }
 
 void ScPlay::begin(const char* name_, const char* url_) {

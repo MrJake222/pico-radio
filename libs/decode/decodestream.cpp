@@ -1,15 +1,23 @@
 #include <decodestream.hpp>
 
-void DecodeStream::begin(const char* path_, Format* format_) {
-    DecodeBase::begin(path_, format_);
+void lwip_err_cb(void* arg, int err) {
+    // called from lwip callback
+    ((DecodeStream*) arg)->notify_playback_end(true);
 }
 
-int DecodeStream::start() {
+void DecodeStream::begin(const char* path_, Format* format_) {
+    DecodeBase::begin(path_, format_);
+
+    client.begin();
+    client.set_err_cb(lwip_err_cb, this);
+}
+
+int DecodeStream::play() {
     int r = client.get(path);
     if (r)
         return r;
 
-    return DecodeBase::start();
+    return DecodeBase::play();
 }
 
 int DecodeStream::stop() {
@@ -20,8 +28,8 @@ int DecodeStream::stop() {
     return DecodeBase::stop();
 }
 
-void DecodeStream::raw_buf_read_msg(unsigned int bytes) {
+void DecodeStream::raw_buf_just_read(unsigned int bytes) {
     // TODO handle content-length
-    DecodeBase::raw_buf_read_msg(bytes);
+    DecodeBase::raw_buf_just_read(bytes);
     client.rx_ack(bytes);
 }

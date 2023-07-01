@@ -18,14 +18,14 @@ class DecodeFile : public DecodeBase {
 
 public:
     void begin(const char* path_, Format* format_) override;
-    int start() override;
+    int play() override;
     int stop() override;
 
     // Do not call directly
     // used by callbacks
 
     // callback from fifo data (on core0)
-    void raw_buf_read_msg(unsigned int bytes) override;
+    void raw_buf_just_read(unsigned int bytes) override;
 
     using DecodeBase::DecodeBase;
 };

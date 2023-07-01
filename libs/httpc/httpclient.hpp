@@ -47,9 +47,18 @@ class HttpClient {
     int parse_http();
 
     int connect_url(const char* url);
+
+protected:
     virtual void header_parsing_done() { }
 
+    // always call before starting a connection
+    virtual void reset_state() { }
+    virtual void reset_state_with_cb() { reset_state(); }
+
 public:
+
+    virtual void begin() { reset_state_with_cb(); }
+
     // one concurrent connection supported
     // this will start a connection
     int get(const char* url);

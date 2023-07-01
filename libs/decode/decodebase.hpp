@@ -3,6 +3,7 @@
 #include <format.hpp>
 #include <FreeRTOS.h>
 #include <task.h>
+#include <queue.h>
 
 enum class FinishReason {
     NoFinish,
@@ -13,6 +14,12 @@ enum class FinishReason {
 enum class DMAChannel {
     ChanA,
     ChanB
+};
+
+enum DecodeMsgType {
+    BUF_READ,
+    ERROR,
+    END
 };
 
 class DecodeBase {
@@ -44,6 +51,11 @@ class DecodeBase {
     int sum_units_decoded;
     int last_seconds;
 
+    // Main task variables
+    xQueueHandle queue;
+    friend void raw_buf_read_msg_static(void* arg, uint32_t data);
+    friend void player_wake(void* arg, uint32_t error);
+
 protected:
     // generic path to resource
     // (used by implementations to connect open file/stream)
@@ -63,7 +75,11 @@ protected:
     // notifies playback either directly or via fifo
     // to be used when natural content end occurred (dma underflow)
     // or on error on data read
-    void notify_playback_end();
+    void notify_playback_end(bool error);
+
+    // Notifies when format reads from the raw buffer
+    // Called from core0
+    virtual void raw_buf_just_read(unsigned int bytes) { }
 
 public:
     DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_)
@@ -84,7 +100,8 @@ public:
 
     // does the heavy work (connect/open file)
     // can fail with non-zero return value
-    virtual int start() { return 0; }
+    // start blocks calling task or fails
+    virtual int play();
     virtual int stop() { return 0; }
 
     // after core0_end caller needs to wait for DMA
@@ -98,13 +115,4 @@ public:
     bool core1_loop();
 
     long bit_freq() { return format->bit_freq(); }
-
-    // NO MANUAL USE
-    // Used in callbacks
-
-    // Notifies when format reads from the raw buffer
-    // Called from core0
-    virtual void raw_buf_read_msg(unsigned int bytes) { }
-
-    TaskHandle_t player_task;
 };

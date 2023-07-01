@@ -12,40 +12,84 @@ static void raw_buf_read_cb_static(void* arg, unsigned int bytes) {
     fifo_send_with_data(RAW_BUF_READ, bytes);
 }
 
-static void raw_buf_read_msg_static(void* arg, uint32_t data) {
-    // called from core0 task
-    ((DecodeBase*) arg)->raw_buf_read_msg(data);
+void raw_buf_read_msg_static(void* arg, uint32_t data) {
+    // called from core0 fifo IRQ
+    uint32_t msg = MSG_MAKE(BUF_READ, data);
+
+    xQueueSendFromISR(((DecodeBase*) arg)->queue,
+                      &msg,
+                      nullptr);
 }
 
-static void player_wake_end(void* arg, uint32_t data) {
-    // called from core0 fifo task or directly from core0
-    xTaskNotifyGive(((DecodeBase*) arg)->player_task);
+void player_wake(void* arg, uint32_t error) {
+    // called from core0 fifo IRQ
+    uint32_t msg = MSG_MAKE(error ? ERROR : END, 0);
+
+    xQueueSendFromISR(((DecodeBase*) arg)->queue,
+                      &msg,
+                      nullptr);
 }
 
 void DecodeBase::begin(const char* path_, Format* format_) {
     path = path_;
     format = format_;
-    player_task = xTaskGetCurrentTaskHandle();
 
     format->begin();
     format->raw_buf.reset_with_cb();
     format->raw_buf.set_read_ack_callback(this, raw_buf_read_cb_static);
-    fifo_register(RAW_BUF_READ, raw_buf_read_msg_static, this, true);
-    fifo_register(PLAYER_WAKE_END, player_wake_end, this, true);
+    fifo_register(RAW_BUF_READ, raw_buf_read_msg_static, this, false);
+    fifo_register(PLAYER_WAKE, player_wake, this, false);
 
     decode_finished_by = FinishReason::NoFinish;
     sum_units_decoded = 0;
     last_seconds = -1;
 }
 
-void DecodeBase::notify_playback_end() {
+int DecodeBase::play() {
+
+    queue = xQueueCreate(8, sizeof(uint32_t));
+    if (!queue) {
+        puts("failed to create queue");
+        return -1;
+    }
+
+    bool error = false;
+
+    while (true) {
+        uint32_t msg;
+        xQueueReceive(queue,
+                      &msg,
+                      portMAX_DELAY);
+
+        auto type = (DecodeMsgType) MSG_TYPE(msg);
+
+        if (type == BUF_READ) {
+            raw_buf_just_read(MSG_DATA(msg));
+        }
+        else if (type == ERROR) {
+            puts("playback error");
+            error = true;
+            break;
+        }
+        else if (type == END) {
+            break;
+        }
+    }
+
+    vQueueDelete(queue);
+
+    return error ? -1 : 0;
+}
+
+void DecodeBase::notify_playback_end(bool error) {
     if (get_core_num() == 1) {
         // core1 -- non-local core for RTOS
-        fifo_send(PLAYER_WAKE_END);
+        fifo_send_with_data(PLAYER_WAKE, error);
     }
     else {
         // core0 -- notify RTOS directly
-        player_wake_end(this, 0);
+        uint32_t msg = MSG_MAKE(error ? ERROR : END, 0);
+        xQueueSend(queue, &msg, portMAX_DELAY);
     }
 }
 
@@ -65,7 +109,7 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
                 ? FinishReason::UnderflowChanA
                 : FinishReason::UnderflowChanB;
 
-        notify_playback_end();
+        notify_playback_end(false);
     }
 
     sum_units_decoded += decoded; // TODO try to use raw_buf->read_bytes_total();

@@ -1,12 +1,7 @@
 #pragma once
 
 #include <cstdint>
-
-#define MSG_TYPE_BITS 8
-#define MSG_DATA_MASK ((1 << (32 - MSG_TYPE_BITS)) - 1)
-#define MSG_TYPE(val) ((FifoMsgType) (val >> (32 - MSG_TYPE_BITS)))
-#define MSG_DATA(val) (val & MSG_DATA_MASK)
-#define MSG_MAKE(type, data) ((type << (32 - MSG_TYPE_BITS)) | (data & MSG_DATA_MASK))
+#include <bitmsg.hpp>
 
 enum FifoMsgType {
     // raw buffer just got read on core1
@@ -16,7 +11,7 @@ enum FifoMsgType {
 
     // used to wake up the player thread
     // when ending playback
-    PLAYER_WAKE_END
+    PLAYER_WAKE
 };
 
 typedef void(*FifoCallback)(void* arg, uint32_t data);

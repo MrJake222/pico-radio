@@ -121,6 +121,9 @@ void RadioSearch::begin(const char* query_) {
     cbuf.reset_with_cb();
     cbuf.set_write_ack_callback(this, rs_raw_buf_write_cb);
 
+    client.begin();
+    // TODO attach error callback
+
     should_abort = false;
 
     stations_offset = 0;

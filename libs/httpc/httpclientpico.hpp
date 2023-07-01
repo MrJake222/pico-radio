@@ -3,14 +3,14 @@
 #include <httpclient.hpp>
 #include <lwip/tcp.h>
 
+typedef void(*h_cb)(void* arg, int err);
+
 class HttpClientPico : public HttpClient {
 
     int send(const char* buf, int buflen) override;
     int recv(char* buf, int buflen) override;
     int connect_to(const char* host, unsigned short port) override;
     int disconnect() override;
-
-    void header_parsing_done() override;
 
     // lwip structure
     struct tcp_pcb* pcb;
@@ -30,6 +30,16 @@ class HttpClientPico : public HttpClient {
     volatile bool err;
     volatile bool connected;
 
+    // callbacks (for reporting errors/timeouts during receiving content data)
+    void* err_cb_arg;
+    h_cb err_cb;
+
+protected:
+    void header_parsing_done() override;
+
+    void reset_state() override;
+    void reset_state_with_cb() override;
+
 public:
 
     HttpClientPico(volatile CircularBuffer& http_buf_, volatile CircularBuffer& cbuf_)
@@ -39,6 +49,8 @@ public:
         { }
 
     void rx_ack(unsigned int bytes);
+
+    void set_err_cb(h_cb cb_, void* arg_);
 
     // callbacks
     friend void error_callback(void *arg, err_t err);

@@ -14,7 +14,7 @@ void DecodeFile::begin(const char* path_, Format* format_) {
     eof = false;
 }
 
-int DecodeFile::start() {
+int DecodeFile::play() {
     fr = f_open(&fp, path, FA_READ);
     if (fr != FR_OK) {
         fs_err(fr, "f_open");
@@ -28,7 +28,7 @@ int DecodeFile::start() {
     if (r)
         return r;
 
-    return DecodeBase::start();
+    return DecodeBase::play();
 }
 
 int DecodeFile::stop() {
@@ -78,11 +78,11 @@ int DecodeFile::check_buffer() {
     return 0;
 }
 
-void DecodeFile::raw_buf_read_msg(unsigned int bytes) {
-    DecodeBase::raw_buf_read_msg(bytes);
+void DecodeFile::raw_buf_just_read(unsigned int bytes) {
+    DecodeBase::raw_buf_just_read(bytes);
     int r = check_buffer();
     if (r) {
         printf("check_buffer failed, ending playback");
-        notify_playback_end();
+        notify_playback_end(true);
     }
 }

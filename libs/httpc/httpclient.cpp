@@ -235,6 +235,8 @@ int HttpClient::parse_http() {
 }
 
 int HttpClient::connect_url(const char* url) {
+    reset_state();
+
     int res = split_host_path_port(url);
 
     if (res) {

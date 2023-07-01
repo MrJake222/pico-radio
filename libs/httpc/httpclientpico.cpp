@@ -66,7 +66,12 @@ void error_callback(void *arg, err_t err) {
     cyw43_arch_lwip_check();
 
     printf("error callback code %d\n", err);
-    ((argptr)arg)->err = true;
+
+    auto httpc = ((argptr)arg);
+    httpc->err = true;
+    if (httpc->content && httpc->err_cb)
+        // only content errors are propagated
+        httpc->err_cb(httpc->err_cb_arg, err); // TODO watch for idle connection
 }
 
 err_t connected_callback(void* arg, struct tcp_pcb* tpcb, err_t err) {
@@ -124,6 +129,8 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
 }
 
 void HttpClientPico::header_parsing_done() {
+    HttpClient::header_parsing_done();
+
     // blocks lwip thread to enter callbacks
     cyw43_arch_lwip_begin();
 
@@ -194,6 +201,26 @@ int HttpClientPico::recv(char* buf, int buflen) {
     return len;
 }
 
+void HttpClientPico::reset_state() {
+    HttpClient::reset_state();
+
+    content = false;
+    err = false;
+    connected = false;
+}
+
+void HttpClientPico::reset_state_with_cb() {
+    HttpClient::reset_state_with_cb(); // calls reset state
+
+    http_buf.reset_with_cb();
+    err_cb = nullptr;
+}
+
+void HttpClientPico::set_err_cb(h_cb cb_, void* arg_) {
+    err_cb = cb_;
+    err_cb_arg = arg_;
+}
+
 int HttpClientPico::connect_to(const char *host, unsigned short port) {
     cyw43_arch_lwip_begin();
 
@@ -217,12 +244,6 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     tcp_arg(pcb, this);
     tcp_err(pcb, error_callback);
     tcp_recv(pcb, recv_callback);
-
-    content = false;
-    http_buf.reset_with_cb();
-
-    err = false;
-    connected = false;
 
     ret = tcp_connect(pcb, &addr, port, connected_callback);
     if (ret != ERR_OK) {
@@ -252,7 +273,7 @@ clean_up_failed:
 int HttpClientPico::disconnect() {
     cyw43_arch_lwip_begin();
 
-    err_t ret = tcp_close(pcb);
+    err_t ret = tcp_close(pcb); // TODO check err
 
     if (ret != ERR_OK) {
         printf("tcp_close failed code %d\n", ret);

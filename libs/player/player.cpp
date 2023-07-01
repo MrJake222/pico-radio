@@ -153,7 +153,7 @@ static void dma_chain_enable(int dma_chan, int chain_to) {
 }
 
 static void dma_start() {
-    printf("dma load_stations\n");
+    printf("dma play\n");
 
     // setup chaining
     dma_chain_enable(dma_channel_a, dma_channel_b);
@@ -200,20 +200,15 @@ static void player_task(void* arg) {
             goto clean_up;
     }
 
-    r = dec->start();
-    if (r) {
-        printf("dec load_stations failed, stopping playback");
-        goto clean_up;
-    }
-
     multicore_launch_core1(core1_entry);
 
-    // wait for notification
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    r = dec->play();
+    if (r) {
+        printf("play failed");
+    }
 
-    // watch for:
-    // decode not starting
-    // decode errors (file read / http client errors)
+    // TODO watch for decode not starting (server not sending data)
+    // TODO watch for stream just ending (server stops sending data)
 
     multicore_reset_core1();
 
@@ -233,7 +228,7 @@ static void player_task(void* arg) {
         b_done_irq = false;
     }
     else {
-        // user abort
+        // user abort / failure
         dma_chain_disable(dma_channel_a);
         dma_chain_disable(dma_channel_b);
         dma_channel_abort(dma_channel_a);
