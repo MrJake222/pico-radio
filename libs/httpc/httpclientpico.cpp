@@ -4,33 +4,28 @@
 #include <lwip/dns.h>
 #include <pico/cyw43_arch.h>
 
-struct dns_query {
-    bool found = false;
-    bool failed = false;
-    ip_addr_t* addr = nullptr;
-};
-
-void gethost_callback(const char* name, const ip_addr_t* ipaddr, void* callback_arg) {
+void gethost_callback(const char* name, const ip_addr_t* ipaddr, void* arg) {
     cyw43_arch_lwip_check();
 
-    auto query = (struct dns_query*) callback_arg;
+    auto httpc = ((argptr)arg);
+
     if (ipaddr) {
         // printf("resolved callback %s (hex %08x)\n", ipaddr_ntoa(ipaddr), *ipaddr);
-        memcpy(query->addr, ipaddr, sizeof(ip_addr_t));
-        query->found = true;
+        memcpy((void*)&httpc->dns_addr, ipaddr, sizeof(ip_addr_t));
+        httpc->dns_found = true;
     } else {
         puts("resolve failed");
-        query->failed = true;
+        httpc->dns_failed = true;
     }
+
+    httpc->notify();
 }
 
-// this is private, only called from connect_to
-static err_t gethostbyname(const char* host, ip_addr_t* result) {
+err_t HttpClientPico::gethostbyname(const char* host) {
+    cyw43_arch_lwip_check(); // only call this with lwip lock
+    save_current_task_handle();
 
-    volatile struct dns_query query;
-    query.addr = result;
-
-    err_t ret = dns_gethostbyname_addrtype(host, result, gethost_callback, (void *) &query, LWIP_DNS_ADDRTYPE_IPV4);
+    err_t ret = dns_gethostbyname_addrtype(host, (ip_addr_t*)&dns_addr, gethost_callback, this, LWIP_DNS_ADDRTYPE_IPV4);
     switch (ret) {
         case ERR_OK:
             // printf("resolved cache %s (hex %08x)\n", ipaddr_ntoa(result), *result);
@@ -38,16 +33,19 @@ static err_t gethostbyname(const char* host, ip_addr_t* result) {
 
         case ERR_INPROGRESS:
             // puts("in progress");
-
-            cyw43_arch_lwip_end();
-            while (!query.found && !query.failed); // TODO refactor notification (+timeout)
-            cyw43_arch_lwip_begin();
+            wait();
 
             // puts("done");
-            if (query.failed) {
+            if (dns_failed) {
                 puts("dns query failed");
                 return -1;
             }
+
+            if (!dns_found) {
+                puts("dns query timeout");
+                return -1;
+            }
+
             break;
 
         case ERR_ARG:
@@ -69,16 +67,20 @@ void error_callback(void *arg, err_t err) {
 
     auto httpc = ((argptr)arg);
     httpc->err = true;
-    if (httpc->content && httpc->err_cb)
-        // only content errors are propagated
-        httpc->err_cb(httpc->err_cb_arg, err); // TODO watch for idle connection
+    httpc->pcb = nullptr;
+    httpc->notify();
+
+    httpc->err_cb_call(err);
 }
 
 err_t connected_callback(void* arg, struct tcp_pcb* tpcb, err_t err) {
     cyw43_arch_lwip_check();
 
     // puts("connected callback");
-    ((argptr)arg)->connected = true;
+
+    auto httpc = ((argptr)arg);
+    httpc->connected = true;
+    httpc->notify();
 
     return err;
 }
@@ -117,6 +119,10 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
         }
 
         httpc->get_buffer().write((uint8_t*)p->payload, p->len);
+        if (!httpc->content)
+            httpc->notify();
+
+        httpc->bytes_rx_tx_since_poll += p->len;
 
         if (p->len == p->tot_len)
             break;
@@ -125,6 +131,29 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
     }
 
     pbuf_free(p_head);
+    return ERR_OK;
+}
+
+err_t sent_callback(void* arg, struct tcp_pcb* tpcb, u16_t len) {
+
+    auto httpc = ((argptr)arg);
+    httpc->bytes_rx_tx_since_poll += len;
+
+    return ERR_OK;
+}
+
+err_t poll_callback(void* arg, struct tcp_pcb* tpcb) {
+
+    auto httpc = ((argptr)arg);
+    printf("poll bytes rx/tx %6d\n", httpc->bytes_rx_tx_since_poll);
+    if (httpc->bytes_rx_tx_since_poll == 0) {
+        tcp_abort(httpc->pcb);
+
+        // this gets propagated as ABRT to error_callback
+        return ERR_ABRT;
+    }
+
+    httpc->bytes_rx_tx_since_poll = 0;
     return ERR_OK;
 }
 
@@ -155,37 +184,49 @@ void HttpClientPico::http_to_content() {
     }
 }
 
-int HttpClientPico::send(const char *buf, int buflen) {
+int HttpClientPico::send(const char *buf, int buflen, bool more) {
+    // printf("send %5d bytes: %p\n", buflen, buf);
     cyw43_arch_lwip_begin();
 
+    int f = more ? TCP_WRITE_FLAG_MORE : 0;
+
+    buflen = MIN(buflen, tcp_sndbuf(pcb));
+
     err_t ret;
-    ret = tcp_write(pcb, buf, buflen, 0);
+    ret = tcp_write(pcb, buf, buflen, f);
+    if (ret == ERR_MEM) {
+        cyw43_arch_lwip_end();
+        return 0;
+    }
     if (ret != ERR_OK) {
         printf("tcp_write failed code %d\n", ret);
-        goto clean_up_failed;
+        cyw43_arch_lwip_end();
+        return -1;
     }
 
-    ret = tcp_output(pcb);
-    if (ret != ERR_OK) {
-        printf("tcp_output failed code %d\n", ret);
-        goto clean_up_failed;
+    if (!more) {
+        ret = tcp_output(pcb);
+        if (ret != ERR_OK) {
+            printf("tcp_output failed code %d\n", ret);
+            cyw43_arch_lwip_end();
+            return -1;
+        }
     }
 
     cyw43_arch_lwip_end();
     return buflen;
-
-clean_up_failed:
-    cyw43_arch_lwip_end();
-    return 0;
 }
 
 int HttpClientPico::recv(char* buf, int buflen) {
     // printf("recv o %d read %d\n", stream_offset, stream_offset_read);
+    save_current_task_handle();
 
-    // probably not worth the refactor right now
-    // it only serves for receiving response headers
-    // (short wait time)
-    while (http_buf.data_left() == 0);
+    if (http_buf.data_left() == 0)
+        wait(false);
+
+    if (http_buf.data_left() == 0)
+        // no data received, timeout
+        return -1;
 
     long len = MIN(http_buf.data_left(), buflen);
 
@@ -207,6 +248,7 @@ void HttpClientPico::reset_state() {
     content = false;
     err = false;
     connected = false;
+    bytes_rx_tx_since_poll = 0;
 }
 
 void HttpClientPico::reset_state_with_cb() {
@@ -221,12 +263,26 @@ void HttpClientPico::set_err_cb(h_cb cb_, void* arg_) {
     err_cb_arg = arg_;
 }
 
+void HttpClientPico::wait(bool unlock_lwip) {
+    save_current_task_handle();
+
+    if (unlock_lwip) {
+        // check if owner of the lock if unlocking requested
+        cyw43_arch_lwip_check();
+        cyw43_arch_lwip_end();
+    }
+
+    ulTaskNotifyTakeIndexed(HTTP_NOTIFY_INDEX, pdTRUE, HTTP_CONNECT_TIMEOUT_MS / portTICK_PERIOD_MS);
+    if (unlock_lwip) cyw43_arch_lwip_begin();
+
+    erase_task_handle();
+}
+
 int HttpClientPico::connect_to(const char *host, unsigned short port) {
     cyw43_arch_lwip_begin();
 
-    ip_addr_t addr;
     err_t ret;
-    ret = gethostbyname(host, &addr);
+    ret = gethostbyname(host);
     if (ret) {
         puts("gethostbyname failed");
         goto clean_up_failed;
@@ -244,23 +300,30 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     tcp_arg(pcb, this);
     tcp_err(pcb, error_callback);
     tcp_recv(pcb, recv_callback);
+    tcp_sent(pcb, sent_callback);
 
-    ret = tcp_connect(pcb, &addr, port, connected_callback);
+    ret = tcp_connect(pcb, (ip_addr_t*)&dns_addr, port, connected_callback);
     if (ret != ERR_OK) {
         printf("connect failed code %d\n", ret);
         goto clean_up_failed;
     }
 
-    cyw43_arch_lwip_end();
-    while (!err && !connected); // TODO refactor notification (+timeout)
-    cyw43_arch_lwip_begin();
+    wait();
 
     if (err) {
         puts("connect failed");
         goto clean_up_failed;
     }
 
+    if (!connected) {
+        puts("not connected (timeout)");
+        goto clean_up_failed;
+    }
+
     // puts("connected");
+
+    // start polling
+    tcp_poll(pcb, poll_callback, HTTP_POLL_INTERVAL_MS / 500); // interval unit is 0.5s
 
     cyw43_arch_lwip_end();
     return 0;
@@ -273,13 +336,18 @@ clean_up_failed:
 int HttpClientPico::disconnect() {
     cyw43_arch_lwip_begin();
 
-    err_t ret = tcp_close(pcb); // TODO check err
+    // pcb can be null after tcp_err fires
+    if (!err) {
+        err_t ret = tcp_close(pcb);
 
-    if (ret != ERR_OK) {
-        printf("tcp_close failed code %d\n", ret);
-        cyw43_arch_lwip_end();
-        return -1;
+        if (ret != ERR_OK) {
+            printf("tcp_close failed code %d\n", ret);
+            cyw43_arch_lwip_end();
+            return -1;
+        }
     }
+
+    puts("disconnected");
 
     cyw43_arch_lwip_end();
     return 0;

@@ -11,20 +11,21 @@ class HttpClient {
 
     // these are platform-specific
     // send as much as possible, return how many was sent
-    virtual int send(const char* buf, int buflen) = 0;
+    // or -1 on failure
+    virtual int send(const char* buf, int buflen, bool more) = 0;
     virtual int recv(char* buf, int buflen) = 0;
     virtual int connect_to(const char* host, unsigned short port) = 0;
     virtual int disconnect() = 0;
 
     // returns number of bytes transferred
     // fails only on socket error
-    // return value < buflen -> error
-    int send_all(const char* buf, int buflen);
+    // returns -1 on failure
+    int send_all(const char* buf, int buflen, bool more);
     int recv_all(char* buf, int buflen);
 
     // helper functions
-    int send_string(const char* buf);
-    // searches for \r\n, returns line+length without \r\n
+    int send_string(const char* buf, bool more);
+    // searches for \r\n, returns line+length without \r\n (or -1 on failure)
     int recv_line(char* buf, int maxlen);
 
     char host[HTTP_HOST_MAX_LEN];

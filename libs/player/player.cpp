@@ -203,8 +203,8 @@ static void player_task(void* arg) {
     multicore_launch_core1(core1_entry);
 
     r = dec->play();
-    if (r) {
-        printf("play failed");
+    if (r < 0) {
+        puts("play failed");
     }
 
     // TODO watch for decode not starting (server not sending data)

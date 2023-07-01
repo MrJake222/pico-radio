@@ -29,7 +29,7 @@
 // target buffer health
 #define HTTP_CONTENT_BUFFER_TARGET      70
 
-// --------------------------------- Http buffers --------------------------------- //
+// --------------------------------- Http --------------------------------- //
 #define HTTP_HOST_MAX_LEN               128
 #define HTTP_PATH_MAX_LEN               256
 
@@ -38,8 +38,11 @@
 #define HTTP_CONTENT_TYPE_HDR_SIZE      256
 
 #define HTTP_DATA_BUF_SIZE_BYTES        TCP_WND
+#define HTTP_CONNECT_TIMEOUT_MS         5000
+#define HTTP_POLL_INTERVAL_MS           2000     // minimum is half a second
+#define HTTP_NOTIFY_INDEX               1
 
-// --------------------------------- Radio buffers --------------------------------- //
+// --------------------------------- Radio --------------------------------- //
 // Search prompt length
 #define MAX_PROMPT_LEN        16
 #define SEARCH_URL_BUF_LEN    (128 + MAX_PROMPT_LEN + 1)
@@ -51,7 +54,7 @@
 #define ST_NAME_LEN           32
 #define ST_URL_LEN            64
 
-// --------------------------------- RTOS priorities --------------------------------- //
+// --------------------------------- RTOS --------------------------------- //
 #define PRI_PLAYER              3  // handles player's buffer ack & playback stop
 #define PRI_FIFO_QUEUE          3  // handles message passing to for ex. player task
 #define PRI_LWIP_TCPIP          2

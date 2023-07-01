@@ -14,11 +14,11 @@ void DecodeFile::begin(const char* path_, Format* format_) {
     eof = false;
 }
 
-int DecodeFile::play() {
+int DecodeFile::play_() {
     fr = f_open(&fp, path, FA_READ);
     if (fr != FR_OK) {
         fs_err(fr, "f_open");
-        return fr;
+        return -1;
     }
 
     // preload with file data
@@ -28,14 +28,14 @@ int DecodeFile::play() {
     if (r)
         return r;
 
-    return DecodeBase::play();
+    return 0;
 }
 
 int DecodeFile::stop() {
     fr = f_close(&fp);
     if (fr != FR_OK) {
         fs_err(fr, "f_close");
-        return fr;
+        return -1;
     }
 
     return DecodeBase::stop();
@@ -48,7 +48,7 @@ int DecodeFile::load_buffer(int bytes) {
     fr = f_read(&fp, format->raw_buf.write_ptr(), bytes, &read);
     if (fr != FR_OK) {
         fs_err(fr, "f_read");
-        return fr;
+        return -1;
     }
 
     if (read < bytes) {

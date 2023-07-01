@@ -12,7 +12,7 @@ class DecodeStream : public DecodeBase {
 
 public:
     void begin(const char* path_, Format* format_) override;
-    int play() override;
+    int play_() override;
     int stop() override;
 
     // callback called from core0

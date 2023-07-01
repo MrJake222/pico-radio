@@ -53,13 +53,18 @@ int DecodeBase::play() {
         return -1;
     }
 
-    bool error = false;
+    int ret = play_();
+    if (ret < 0)
+        return -1;
 
+    bool error = false;
     while (true) {
         uint32_t msg;
+        puts("rx");
         xQueueReceive(queue,
                       &msg,
                       portMAX_DELAY);
+        puts("rxed");
 
         auto type = (DecodeMsgType) MSG_TYPE(msg);
 
@@ -76,9 +81,13 @@ int DecodeBase::play() {
         }
     }
 
+    return error ? -1 : 0;
+}
+
+int DecodeBase::stop() {
     vQueueDelete(queue);
 
-    return error ? -1 : 0;
+    return 0;
 }
 
 void DecodeBase::notify_playback_end(bool error) {
@@ -90,6 +99,7 @@ void DecodeBase::notify_playback_end(bool error) {
         // core0 -- notify RTOS directly
         uint32_t msg = MSG_MAKE(error ? ERROR : END, 0);
         xQueueSend(queue, &msg, portMAX_DELAY);
+        puts("pushed");
     }
 }
 

@@ -9,19 +9,19 @@ static void str_to_lower(char* str) {
     }
 }
 
-int HttpClient::send_all(const char *buf, int buflen) {
+int HttpClient::send_all(const char *buf, int buflen, bool more) {
     int sent_bytes = 0;
 
     while (sent_bytes < buflen) {
-        int res = send(buf + sent_bytes, buflen - sent_bytes);
-        if (res <= 0) {
-            return sent_bytes;
+        int res = send(buf + sent_bytes, buflen - sent_bytes, more);
+        if (res < 0) {
+            return -1;
         }
 
         sent_bytes += res;
     }
 
-    return sent_bytes;
+    return 0;
 }
 
 int HttpClient::recv_all(char *buf, int buflen) {
@@ -29,29 +29,36 @@ int HttpClient::recv_all(char *buf, int buflen) {
 
     while (recv_bytes < buflen) {
         int res = recv(buf + recv_bytes, buflen - recv_bytes);
-        if (res <= 0) {
-            return recv_bytes;
+        if (res < 0) {
+            return -1;
         }
 
         recv_bytes += res;
     }
 
-    return recv_bytes;
+    return 0;
 }
 
-int HttpClient::send_string(const char *buf) {
+int HttpClient::send_string(const char *buf, bool more) {
     int buflen = strlen(buf);
-    int sent = send_all(buf, buflen);
+    int ret = send_all(buf, buflen, more);
 
-    return sent == buflen;
+    if (ret < 0)
+        return -1;
+
+    return 0;
 }
 
 int HttpClient::recv_line(char *buf, int maxlen) {
 
     int line_length = 0;
+    int ret;
 
     while (line_length+1 < maxlen) {
-        recv_all(buf, 2);
+        ret = recv_all(buf, 2);
+        if (ret < 0)
+            return -1;
+
         if (buf[0] == '\r' && buf[1] == '\n') {
             buf[0] = 0;
             return line_length;
@@ -59,7 +66,10 @@ int HttpClient::recv_line(char *buf, int maxlen) {
 
         if (buf[1] == '\r') {
             buf += 2;
-            recv_all(buf, 1);
+            ret = recv_all(buf, 1);
+            if (ret < 0)
+                return -1;
+
             if (buf[0] == '\n') {
                 buf[-1] = 0;
                 return line_length - 1;
@@ -138,7 +148,10 @@ int HttpClient::split_host_path_port(const char *url) {
 }
 
 int HttpClient::test_for_http() {
-    recv_all(buf_http, 4);
+    int ret = recv_all(buf_http, 4);
+    if (ret < 0)
+        return -1;
+
     if (strcmp(buf_http, "HTTP") != 0) {
         puts("no http response found");
         return -1;
@@ -150,6 +163,8 @@ int HttpClient::test_for_http() {
 int HttpClient::parse_headers() {
     while (1) {
         int len = recv_line(qrbuf, HTTP_QUERY_RESP_BUF_SIZE);
+        if (len < 0)
+            return -1;
         if (len == 0)
             break;
 
@@ -185,6 +200,9 @@ int HttpClient::parse_http() {
     memcpy(qrbuf, buf_http, 4);
 
     int len = recv_line(qrbuf + 4, HTTP_QUERY_RESP_BUF_SIZE - 4);
+    if (len < 0)
+        return -1;
+
     qrbuf[4 + len] = 0;
     // puts(qrbuf);
 
@@ -262,12 +280,31 @@ int HttpClient::get(const char* url) {
 
     // send GET request
     snprintf(qrbuf, HTTP_QUERY_RESP_BUF_SIZE, "GET %s HTTP/1.0\r\n", path);
-    send_string(qrbuf);
+    res = send_string(qrbuf, true);
+    if (res < 0) {
+        puts("send string GET failed");
+        return -1;
+    }
+
     snprintf(qrbuf, HTTP_QUERY_RESP_BUF_SIZE, "Host: %s\r\n", host);
-    send_string(qrbuf);
-    send_string("User-agent: PicoRadio/0.1\r\n");
+    res = send_string(qrbuf, true);
+    if (res < 0) {
+        puts("send string Host failed");
+        return -1;
+    }
+
+    res = send_string("User-agent: PicoRadio/0.1\r\n", true);
+    if (res < 0) {
+        puts("send string User-agent failed");
+        return -1;
+    }
+
     // TODO use cookies
-    send_string("\r\n");
+    res = send_string("\r\n", false);
+    if (res < 0) {
+        puts("send string <empty-line> failed");
+        return -1;
+    }
 
     puts("connect ok, sent request");
 

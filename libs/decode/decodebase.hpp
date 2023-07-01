@@ -81,6 +81,11 @@ protected:
     // Called from core0
     virtual void raw_buf_just_read(unsigned int bytes) { }
 
+    // internal version of <play>
+    // is virtual, can be overridden
+    // when this function is called <queue> is initialized
+    virtual int play_() = 0;
+
 public:
     DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_)
             : audio_pcm(audio_pcm_)
@@ -101,8 +106,8 @@ public:
     // does the heavy work (connect/open file)
     // can fail with non-zero return value
     // start blocks calling task or fails
-    virtual int play();
-    virtual int stop() { return 0; }
+    int play();
+    virtual int stop();
 
     // after core0_end caller needs to wait for DMA
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }

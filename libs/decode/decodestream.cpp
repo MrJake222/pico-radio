@@ -12,18 +12,18 @@ void DecodeStream::begin(const char* path_, Format* format_) {
     client.set_err_cb(lwip_err_cb, this);
 }
 
-int DecodeStream::play() {
+int DecodeStream::play_() {
     int r = client.get(path);
     if (r)
-        return r;
+        return -1;
 
-    return DecodeBase::play();
+    return 0;
 }
 
 int DecodeStream::stop() {
     int r = client.close();
     if (r)
-        return r;
+        return -1;
 
     return DecodeBase::stop();
 }
