@@ -85,12 +85,8 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
 
     auto httpc = ((argptr)arg);
 
-    if (httpc->is_content())
-        httpc->http_to_content();
-
     if (!p_head) {
         // connection closed
-        httpc->connection_closed = true;
         puts("recv callback p null - disconnected");
         return ERR_OK;
     }
@@ -106,10 +102,10 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
     struct pbuf* p = p_head;
 
     while(true) {
-        // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->content_buffer->space_left());
+        // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->content_buffer.space_left());
 
-        if (httpc->is_content()) {
-            if (httpc->content_buffer->space_left() < p->len) {
+        if (httpc->content) {
+            if (httpc->cbuf.space_left()<p->len) {
                 puts("end of content buffer");
 #if BUF_OVERRUN_PROTECTION
                 httpc->err = true;
@@ -117,14 +113,16 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
 #endif
             }
 
-            httpc->content_buffer->write((uint8_t*)p->payload, p->len);
+            httpc->cbuf.write((uint8_t*)p->payload, p->len);
         }
-        else {
 
+        else {
             if (httpc->http_buf.space_left() < p->len) {
                 puts("end of http buffer");
+#if BUF_OVERRUN_PROTECTION
                 httpc->err = true;
                 return ERR_MEM;
+#endif
             }
 
             httpc->http_buf.write((uint8_t*)p->payload, p->len);
@@ -140,9 +138,19 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
     return ERR_OK;
 }
 
+void HttpClientPico::connect_ok() {
+    // blocks lwip thread to enter callbacks
+    cyw43_arch_lwip_begin();
+
+    content = true;
+    http_to_content();
+
+    cyw43_arch_lwip_end();
+}
+
 void HttpClientPico::http_to_content() volatile {
     if (http_buf.data_left() > 0) {
-        if (content_buffer->space_left() < http_buf.data_left()) {
+        if (cbuf.space_left()<http_buf.data_left()) {
             puts("end of content buffer");
 #if BUF_OVERRUN_PROTECTION
             err = true;
@@ -150,11 +158,10 @@ void HttpClientPico::http_to_content() volatile {
 #endif
         }
 
-        printf("moving buffer: data %ld to -> free %ld\n", http_buf.data_left(), content_buffer->space_left());
-        http_buf.move_to(*content_buffer);
+        printf("moving buffer: data %ld to -> free %ld\n", http_buf.data_left(), cbuf.space_left());
+        http_buf.move_to(cbuf);
     }
 }
-
 
 int HttpClientPico::send(const char *buf, int buflen) {
     cyw43_arch_lwip_begin();
@@ -226,11 +233,12 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     tcp_err(pcb, error_callback);
     tcp_recv(pcb, recv_callback);
 
+    content = false;
     http_buf.reset_with_cb();
 
     err = false;
     connected = false;
-    connection_closed = false;
+
     ret = tcp_connect(pcb, &addr, port, connected_callback);
     if (ret != ERR_OK) {
         printf("connect failed code %d\n", ret);
@@ -257,10 +265,6 @@ clean_up_failed:
 }
 
 int HttpClientPico::disconnect() {
-    // try to push out any remaining http data
-    if (is_content())
-        http_to_content();
-
     cyw43_arch_lwip_begin();
 
     err_t ret = tcp_close(pcb);
@@ -276,7 +280,7 @@ int HttpClientPico::disconnect() {
 }
 
 void HttpClientPico::rx_ack(unsigned int bytes) {
-    int d = HTTP_CONTENT_BUFFER_TARGET - content_buffer->health();
+    int d = HTTP_CONTENT_BUFFER_TARGET - cbuf.health();
     int b_new = ((100 + d) * (int)bytes) / 100;
 
     // printf("[%ld us]try ack bytes %d\n", time_us_32(), bytes);

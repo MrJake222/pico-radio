@@ -7,7 +7,7 @@
 
 void all_loaded_cb(void* arg);
 
-static RadioSearch rs(get_http_buf());
+static RadioSearch rs(get_http_buf(), get_raw_buf());
 
 #define S_RES_W     145
 #define S_RES_H      20
@@ -196,7 +196,7 @@ void ScSearchRes::begin(const char* prompt_) {
     first = true;
     station_count = 0;
 
-    rs.begin(&get_raw_buf(), prompt);
+    rs.begin(prompt);
     rs.set_all_loaded_cb(this, all_loaded_cb);
 }
 

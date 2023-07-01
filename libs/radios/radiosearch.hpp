@@ -11,7 +11,7 @@ typedef void(*all_ld_cb_fn)(void*);
 
 class RadioSearch {
 
-    volatile CircularBuffer* raw_buf;
+    volatile CircularBuffer& cbuf;
 
     HttpClientPico client;
     TaskHandle_t search_task;
@@ -30,11 +30,12 @@ class RadioSearch {
     all_ld_cb_fn all_loaded_cb;
 
 public:
-    RadioSearch(volatile CircularBuffer& http_buf)
-        : client(http_buf)
+    RadioSearch(volatile CircularBuffer& http_buf, volatile CircularBuffer& cbuf_)
+        : cbuf(cbuf_)
+        , client(http_buf, cbuf_)
         { }
 
-    void begin(volatile CircularBuffer* raw_buf_, const char* query_);
+    void begin(const char* query_);
     void load_stations();
     void load_abort();
 

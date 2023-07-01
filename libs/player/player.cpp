@@ -62,7 +62,8 @@ static DecodeStream dec_stream(
         BUF_PCM_SIZE_32BIT,
         a_done_irq,
         b_done_irq,
-        get_http_buf());
+        get_http_buf(),
+        get_raw_buf());
 
 static DecodeBase* dec;
 
@@ -209,6 +210,10 @@ static void player_task(void* arg) {
 
     // wait for notification
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    // watch for:
+    // decode not starting
+    // decode errors (file read / http client errors)
 
     multicore_reset_core1();
 

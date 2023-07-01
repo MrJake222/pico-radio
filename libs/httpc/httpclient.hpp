@@ -15,8 +15,6 @@ class HttpClient {
     virtual int recv(char* buf, int buflen) = 0;
     virtual int connect_to(const char* host, unsigned short port) = 0;
     virtual int disconnect() = 0;
-    // true if the connection was closed by the remote host
-    virtual bool is_connection_closed() = 0;
 
     // returns number of bytes transferred
     // fails only on socket error
@@ -46,28 +44,12 @@ class HttpClient {
     char h_content_type[HTTP_CONTENT_TYPE_HDR_SIZE];
     char h_location[HTTP_LOCATION_HDR_SIZE];
     int parse_headers();
-
     int parse_http();
 
-    // prevents double-closing
-    bool closed;
-
-    // marks when data will be flowing into content_buffer
-    // instead of http_buf
-    volatile bool content;
+    int connect_url(const char* url);
+    virtual void connect_ok() { }
 
 public:
-    // to be used by callback functions
-    // for writing content data (not headers)
-    volatile CircularBuffer* content_buffer;
-    bool is_content() volatile const { return content; }
-
-    HttpClient() { }
-
-    void begin(volatile CircularBuffer* content_buffer_) {
-        content_buffer = content_buffer_;
-    }
-
     // one concurrent connection supported
     // this will start a connection
     int get(const char* url);

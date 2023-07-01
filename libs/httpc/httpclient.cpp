@@ -141,10 +141,10 @@ int HttpClient::test_for_http() {
     recv_all(buf_http, 4);
     if (strcmp(buf_http, "HTTP") != 0) {
         puts("no http response found");
-        return 0;
+        return -1;
     }
 
-    return 1;
+    return 0;
 }
 
 int HttpClient::parse_headers() {
@@ -217,15 +217,6 @@ int HttpClient::parse_http() {
         case 200:
             // ok
             puts("http 200 ok");
-            // http stream ended
-            // time to receive content
-            content = true;
-
-            if (is_connection_closed()) {
-                // remote server already closed the connection
-                close();
-            }
-
             return 0;
 
         case 301:
@@ -243,8 +234,7 @@ int HttpClient::parse_http() {
     }
 }
 
-int HttpClient::get(const char* url) {
-
+int HttpClient::connect_url(const char* url) {
     int res = split_host_path_port(url);
 
     if (res) {
@@ -252,16 +242,23 @@ int HttpClient::get(const char* url) {
         return -1;
     }
 
-    closed = false;
-
     res = connect_to(host, port);
     if (res < 0) {
         puts("connect_to failed");
         return -1;
     }
 
-    content = false;
+    return 0;
+}
 
+int HttpClient::get(const char* url) {
+
+    int res = connect_url(url);
+    if (res < 0) {
+        return -1;
+    }
+
+    // send GET request
     snprintf(qrbuf, HTTP_QUERY_RESP_BUF_SIZE, "GET %s HTTP/1.0\r\n", path);
     send_string(qrbuf);
     snprintf(qrbuf, HTTP_QUERY_RESP_BUF_SIZE, "Host: %s\r\n", host);
@@ -270,22 +267,26 @@ int HttpClient::get(const char* url) {
     // TODO use cookies
     send_string("\r\n");
 
-    if (test_for_http()) {
-        // puts("http");
-        res = parse_http();
-        if (res) {
-            puts("parse_http failed");
-        }
+    res = test_for_http();
+    if (res < 0) {
+        puts("not http response");
+        return -1;
     }
+
+    res = parse_http();
+    if (res < 0) {
+        puts("parse_http failed");
+        return -1;
+    }
+
+    // parse_http consumed all headers
+    // now only receiving content
+    connect_ok();
 
     return 0;
 }
 
 int HttpClient::close() {
-    if (closed)
-        return 0;
-
-    closed = true;
     return disconnect();
 }
 

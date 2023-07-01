@@ -20,8 +20,8 @@ void rs_raw_buf_write_cb(void* arg, unsigned int bytes) {
     xTaskNotifyGive(task);
 }
 
-static List* query_url(HttpClientPico& client, const char* url, volatile CircularBuffer* raw_buf, struct station* stations, int max_stations) {
-    raw_buf->reset_only_data();
+static List* query_url(HttpClientPico& client, const char* url, volatile CircularBuffer& raw_buf, struct station* stations, int max_stations) {
+    raw_buf.reset_only_data();
     int r = client.get(url);
     if (r) {
         printf("querying url %s failed", url);
@@ -44,11 +44,11 @@ static List* query_url(HttpClientPico& client, const char* url, volatile Circula
         return nullptr;
     }
 
-    list->begin(raw_buf,
+    list->begin(&raw_buf,
                 stations,
                 max_stations);
 
-    while (raw_buf->read_bytes_total() < client.get_content_length()) {
+    while (raw_buf.read_bytes_total() < client.get_content_length()) {
         // loop until all content data has been read
         
         ListError lr = list->try_consume();
@@ -87,7 +87,7 @@ void rs_search_task(void* arg) {
 
         snprintf(rs->url_buf, SEARCH_URL_BUF_LEN, urls[i], rs->query);
         
-        List* list = query_url(rs->client, rs->url_buf, rs->raw_buf,
+        List* list = query_url(rs->client, rs->url_buf, rs->cbuf,
                                rs->stations + rs->stations_offset,
                                MAX_STATIONS - rs->stations_offset);
 
@@ -115,14 +115,12 @@ void rs_search_task(void* arg) {
     vTaskDelete(nullptr);
 }
 
-void RadioSearch::begin(volatile CircularBuffer* raw_buf_, const char* query_) {
-    raw_buf = raw_buf_;
+void RadioSearch::begin(const char* query_) {
     query = query_;
 
-    raw_buf->reset_with_cb();
-    raw_buf->set_write_ack_callback(this, rs_raw_buf_write_cb);
+    cbuf.reset_with_cb();
+    cbuf.set_write_ack_callback(this, rs_raw_buf_write_cb);
 
-    client.begin(raw_buf);
     should_abort = false;
 
     stations_offset = 0;
@@ -155,7 +153,7 @@ const char* RadioSearch::get_station_url(int i) {
     const char* url = stations[i].url;
     const char* ext = url + strlen(url) - 4;
     if (strcmp(ext, ".pls") == 0) {
-        List* list = query_url(client, url, raw_buf, stations_pls, MAX_STATIONS_PLS);
+        List* list = query_url(client, url, cbuf, stations_pls, MAX_STATIONS_PLS);
         if (!list)
             return nullptr;
 
