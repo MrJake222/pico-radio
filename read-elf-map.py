@@ -47,10 +47,12 @@ for line in open(PATH):
 		discarded = True
 	elif ls == "Linker script and memory map":
 		valid = True
-	elif len(line) > 0 and not line.startswith(" ") and not line.startswith("."):
+	elif len(line) > 0 and not line.startswith(" ") and not line.startswith("LOAD") and not line.startswith("."):
 		discarded = False
 		valid = False
 	
+	# print(discarded, valid, line[:80])
+
 	if valid:
 		if line.startswith(" .bss"):
 			S += process(line, True, D)

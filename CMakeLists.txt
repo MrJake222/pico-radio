@@ -50,7 +50,6 @@ pico_enable_stdio_usb(${PROJECT_NAME} 1)
 pico_enable_stdio_uart(${PROJECT_NAME} 1)
 
 # memory stats
-# TODO fix this, reports 0kB
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/read-elf-map.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
