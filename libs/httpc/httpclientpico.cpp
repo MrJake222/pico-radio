@@ -1,5 +1,4 @@
 #include <httpclientpico.hpp>
-#include <circularbuffer.hpp>
 
 #include <lwip/tcp.h>
 #include <lwip/dns.h>
@@ -104,29 +103,15 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
     while(true) {
         // printf("recv cb received %d bytes (free http %ld mp3 %ld)\n", p->len, httpc->http_buf.space_left(), httpc->content_buffer.space_left());
 
-        if (httpc->content) {
-            if (httpc->cbuf.space_left()<p->len) {
-                puts("end of content buffer");
+        if (httpc->get_buffer().space_left() < p->len) {
+            puts("end of buffer");
 #if BUF_OVERRUN_PROTECTION
-                httpc->err = true;
-                return ERR_MEM;
+            httpc->err = true;
+            return ERR_MEM;
 #endif
-            }
-
-            httpc->cbuf.write((uint8_t*)p->payload, p->len);
         }
 
-        else {
-            if (httpc->http_buf.space_left() < p->len) {
-                puts("end of http buffer");
-#if BUF_OVERRUN_PROTECTION
-                httpc->err = true;
-                return ERR_MEM;
-#endif
-            }
-
-            httpc->http_buf.write((uint8_t*)p->payload, p->len);
-        }
+        httpc->get_buffer().write((uint8_t*)p->payload, p->len);
 
         if (p->len == p->tot_len)
             break;
@@ -148,9 +133,9 @@ void HttpClientPico::connect_ok() {
     cyw43_arch_lwip_end();
 }
 
-void HttpClientPico::http_to_content() volatile {
+void HttpClientPico::http_to_content() {
     if (http_buf.data_left() > 0) {
-        if (cbuf.space_left()<http_buf.data_left()) {
+        if (cbuf.space_left() < http_buf.data_left()) {
             puts("end of content buffer");
 #if BUF_OVERRUN_PROTECTION
             err = true;
