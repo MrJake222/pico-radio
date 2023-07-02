@@ -33,13 +33,14 @@ int Screen::adjust_x(int old_x, int old_y, int new_y) {
 }
 
 Screen* Screen::input(ButtonEnum btn) {
+    if (is_err_displayed) {
+        show(); // redraw normal screen
+        is_err_displayed = false;
+        return nullptr;
+    }
+
     if (btn == CENTER) {
-        if (is_err_displayed) {
-            show(); // redraw normal screen
-            is_err_displayed = false;
-        } else {
-            return run_action(get_action(current_x, current_y));
-        }
+        return run_action(get_action(current_x, current_y));
     }
 
     draw_button(current_x, current_y, false);
