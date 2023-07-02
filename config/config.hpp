@@ -4,6 +4,7 @@
 // --------------------------------- Playback buffers --------------------------------- //
 // RAW buffer must be at least the size of PCM buffer
 // for WAV decoding (can be fixed by modifying DMA address chain)
+// Now these buffers are equal and 18 432 bytes each
 
 // MP3 compressed data buffer
 #define BUF_HIDDEN_MP3_SIZE_FRAMES     2
@@ -27,7 +28,7 @@
 // buffer overrun protection, can lead to loop
 #define BUF_OVERRUN_PROTECTION          0
 // target buffer health
-#define HTTP_CONTENT_BUFFER_TARGET      70
+// #define HTTP_CONTENT_BUFFER_TARGET      70
 #define PLAYER_END_TIMEOUT_MS           1000
 
 // --------------------------------- Http --------------------------------- //

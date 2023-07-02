@@ -29,6 +29,7 @@
 #define TCP_WND                     (8 * TCP_MSS)
 #define TCP_SND_BUF                 (8 * TCP_MSS)
 #define TCP_SND_QUEUELEN            ((4 * (TCP_SND_BUF) + (TCP_MSS - 1)) / (TCP_MSS))
+// #define TCP_FAST_INTERVAL           50
 #define LWIP_NETIF_STATUS_CALLBACK  1
 #define LWIP_NETIF_LINK_CALLBACK    1
 #define LWIP_NETIF_HOSTNAME         1

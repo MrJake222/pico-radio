@@ -147,6 +147,7 @@ err_t poll_callback(void* arg, struct tcp_pcb* tpcb) {
     auto httpc = ((argptr)arg);
     // printf("poll bytes rx/tx %6d\n", httpc->bytes_rx_tx_since_poll);
     if (httpc->bytes_rx_tx_since_poll == 0) {
+        puts("poll callback aborting stalling connection");
         tcp_abort(httpc->pcb);
 
         // this gets propagated as ABRT to error_callback
@@ -170,6 +171,10 @@ void HttpClientPico::header_parsing_done() {
 }
 
 void HttpClientPico::http_to_content() {
+
+    // needs to be locked not to mess up the recv_callback
+    cyw43_arch_lwip_check();
+
     if (http_buf.data_left() > 0) {
         if (cbuf.space_left() < http_buf.data_left()) {
             puts("end of content buffer");
@@ -354,13 +359,15 @@ int HttpClientPico::disconnect() {
 }
 
 void HttpClientPico::rx_ack(unsigned int bytes) {
-    int d = HTTP_CONTENT_BUFFER_TARGET - cbuf.health();
-    int b_new = ((100 + d) * (int)bytes) / 100;
+    // int d = HTTP_CONTENT_BUFFER_TARGET - cbuf.health();
+    // int b_new = ((100 + d) * (int)bytes) / 100;
 
     // printf("[%ld us]try ack bytes %d\n", time_us_32(), bytes);
 
+    // not using sketchy multiply techniques fixes a lot
+
     cyw43_arch_lwip_begin();
-    tcp_recved(pcb, (uint16_t)b_new);
+    tcp_recved(pcb, (uint16_t)bytes);
     cyw43_arch_lwip_end();
 
     // printf("[%ld us]acked b %d\n", time_us_32(), b_new);

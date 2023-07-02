@@ -192,5 +192,7 @@ int FormatMP3::units_to_sec(int units) {
 }
 
 int FormatMP3::duration_sec(int file_size_bytes) {
+    // raw_buf.get_read_offset()
+    //   for a 128kbps file and 20kB buffer it gives a difference of 1.28s
     return (file_size_bytes - raw_buf.get_read_offset()) * 8 / avg_bitrate();
 }
