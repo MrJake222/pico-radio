@@ -37,7 +37,7 @@ static List* query_url(HttpClientPico& client, const char* url, volatile Circula
         // .m3u file
         list = &listm3u;
     }
-    else if (strcmp(client.get_content_type(), "audio/scpls") == 0) {
+    else if (strcmp(client.get_content_type(), "audio/scpls") == 0 || strcmp(client.get_content_type(), "audio/x-scpls") == 0) {
         // .pls file
         list = &listpls;
     }

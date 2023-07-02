@@ -230,24 +230,26 @@ int HttpClient::parse_http() {
     //     printf("%20s   %s\n", entry.first.c_str(), entry.second.c_str());
     // }
 
-    // printf("code %d\n", code);
+    printf("code %d: ", code);
     switch (code) {
         case 200:
             // ok
-            puts("http 200 ok");
+            puts("ok");
             return 0;
 
-        case 301:
-        case 302:
-        case 307:
-        case 308:
-            // redirection
-            puts("redirect");
+        case 301: // moved permanently
+        case 308: // permanent redirect
+            puts("permanent redirect, aborting (may be https redirect, db should update)");
+            return -1;
+
+        case 302: // found
+        case 307: // temporary redirect
+            puts("found");
             close();
             return get(h_location);
 
         default:
-            printf("unsupported response status code: %d ('%s' / %s)\n", code, codestr, codedesc);
+            printf("unsupported response status code ('%s' / %s)\n", codestr, codedesc);
             return -1;
     }
 }
