@@ -31,15 +31,10 @@
 
 static Screen* screen;
 
-const uint PIN_DBG = 13;
-#define DBG_ON() gpio_put(PIN_DBG, true)
-#define DBG_OFF() gpio_put(PIN_DBG, false)
-
 
 void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
 }
-
 
 FRESULT scan_files(char* path, std::vector<std::string>& files) {
     FRESULT res = FR_OK;
@@ -72,6 +67,18 @@ FRESULT scan_files(char* path, std::vector<std::string>& files) {
 #endif
 
     return res;
+
+    // Usage:
+    // // File scan
+    // char path[1024] = "/";
+    // std::vector<std::string> files;
+    // scan_files(path, files);
+    //
+    // // radio
+    // files.emplace_back("http://stream.rcs.revma.com/an1ugyygzk8uv"); // Radio 357
+    // files.emplace_back("http://rmfstream1.interia.pl:8000/rmf_fm");  // RMF FM
+    // files.emplace_back("http://zt03.cdn.eurozet.pl/zet-tun.mp3");   // Radio Zet
+    // files.emplace_back("http://stream.streambase.ch/radio32/mp3-192/direct");   // Radio 32 Switzerland
 }
 
 void init_hardware() {
@@ -87,11 +94,6 @@ void init_hardware() {
     printf("\n\nHello usb pico-radio!\n");
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys)/1000000);
     puts("");
-
-    // IO
-    gpio_init(PIN_DBG);
-    gpio_set_dir(PIN_DBG, GPIO_OUT);
-    DBG_OFF();
 
     player_init();
     puts("player done");
@@ -176,56 +178,15 @@ void init_wifi() {
     cyw43_arch_lwip_end();
 }
 
-void oldmain() {
-    // File scan
-    char path[1024] = "/";
-    std::vector<std::string> files;
-    scan_files(path, files);
-
-    // radio
-    files.emplace_back("http://stream.rcs.revma.com/an1ugyygzk8uv"); // Radio 357
-    files.emplace_back("http://rmfstream1.interia.pl:8000/rmf_fm");  // RMF FM
-    files.emplace_back("http://zt03.cdn.eurozet.pl/zet-tun.mp3");   // Radio Zet
-    files.emplace_back("http://stream.streambase.ch/radio32/mp3-192/direct");   // Radio 32 Switzerland
-
-    while (1) {
-        for (uint i=0; i<files.size(); i++) {
-            printf("[%02d] %s\n", i+1, files[i].c_str());
-        }
-
-        // const char* filepath;
-        // FileType type;
-        //
-        // while (1) {
-        //     uint choice;
-        //     scanf("%d", &choice);
-        //     if ((choice < 1) || (choice > files.size())) {
-        //         puts("invalid number");
-        //     }
-        //     else {
-        //         filepath = files[choice - 1].c_str();
-        //         type = get_file_type(filepath);
-        //
-        //         if (type == FileType::UNSUPPORTED) {
-        //             puts("unsupported format. Supported: wav, wave, mp3, http(s)");
-        //         }
-        //         else {
-        //             // valid & supported
-        //             break;
-        //         }
-        //     }
-        // }
-
-        // play(filepath, type);
-
-        printf("\033[2J"); // clear screen
-    }
-}
-
 void task_wifi_startup(void* arg) {
     init_wifi();
+
+    // testing
     // player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
+    // player_start("http://172.17.1.2:8080/audio.mp3");
+    // player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
     // sc_search_res.begin("rmf");
+
     vTaskDelete(nullptr);
 }
 
@@ -248,16 +209,6 @@ void task_wifi_startup(void* arg) {
         if (screen_new) {
             screen = screen_new;
             screen->show();
-        }
-
-        if (input == CENTER) {
-            // if (player_is_running())
-            //     player_stop();
-            // else
-            //     // player_start("/4mmc.wav");
-            //     // player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
-            //     player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
-            //     // player_start("http://172.17.1.2:8000/file.mp3");
         }
     }
 }

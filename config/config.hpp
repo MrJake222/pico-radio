@@ -23,11 +23,12 @@
 
 // --------------------------------- Playback variables --------------------------------- //
 // buffer reversing after bad frame, dangerous can lead to loops
-#define BUF_REVERSE                0
+#define BUF_REVERSE                     0
 // buffer overrun protection, can lead to loop
-#define BUF_OVERRUN_PROTECTION     0
+#define BUF_OVERRUN_PROTECTION          0
 // target buffer health
 #define HTTP_CONTENT_BUFFER_TARGET      70
+#define PLAYER_END_TIMEOUT_MS           1000
 
 // --------------------------------- Http --------------------------------- //
 #define HTTP_HOST_MAX_LEN               128

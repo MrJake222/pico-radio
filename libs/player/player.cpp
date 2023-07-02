@@ -67,6 +67,12 @@ static DecodeStream dec_stream(
 
 static DecodeBase* dec;
 
+// failure callback
+static fail_cb_fn fail_cb;
+static void* fail_cb_arg;
+
+// task to notify when playback really ends
+xTaskHandle task_to_notify_end;
 
 /* ------------------------------- INIT FUNCTIONS -------------------------------*/
 static void dma_irq_A() {
@@ -176,6 +182,7 @@ static void player_task(void* arg) {
 
     FileType type = filetype_from_name(filepath);
     int r;
+    bool failed = false;
 
     // init decoder & format
     // this may open files + preload data/establish a connection/etc.
@@ -197,6 +204,7 @@ static void player_task(void* arg) {
 
         default:
             puts("format unsupported");
+            failed = true;
             goto clean_up;
     }
 
@@ -205,6 +213,7 @@ static void player_task(void* arg) {
     r = dec->play();
     if (r < 0) {
         puts("play failed");
+        failed = true;
     }
 
     // TODO watch for decode not starting (server not sending data)
@@ -245,13 +254,22 @@ static void player_task(void* arg) {
     pio_sm_put_blocking(pio, sm, 0);
 
 clean_up:
+    if (failed && fail_cb)
+        fail_cb(fail_cb_arg);
+
+    if (task_to_notify_end)
+        xTaskNotifyGive(task_to_notify_end);
+
     vTaskDelete(nullptr);
 }
 
-void player_start(const char* path) {
+void player_start(const char* path, fail_cb_fn fail_cb_, void* fail_cb_arg_) {
     printf("\nplaying: %s as %s file\n", path, filetype_from_name_string(path));
 
     strcpy(filepath, path);
+    fail_cb = fail_cb_;
+    fail_cb_arg = fail_cb_arg_;
+    task_to_notify_end = nullptr;
 
     xTaskCreate(
             player_task,
@@ -263,12 +281,24 @@ void player_start(const char* path) {
 }
 
 void player_stop() {
-    if (!player_is_running())
+    if (!player_is_started())
         return;
 
     dec->abort_user();
 }
 
-bool player_is_running() {
+bool player_is_started() {
     return dec;
+}
+
+void player_wait_for_end() {
+    if (!player_is_started())
+        return;
+
+    // TODO player closing too fast errors
+    // player calls error callback -13 when stopped too early
+    // see player_stop
+    task_to_notify_end = xTaskGetCurrentTaskHandle();
+    ulTaskNotifyTake(pdTRUE, PLAYER_END_TIMEOUT_MS / portTICK_PERIOD_MS);
+    task_to_notify_end = nullptr;
 }

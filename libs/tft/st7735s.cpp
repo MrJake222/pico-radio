@@ -6,6 +6,7 @@
 
 #include <hardware/gpio.h>
 #include <pico/time.h>
+#include <cstring>
 
 void ST7735S::gpio_setup() {
     gpio_init(p_rst);
@@ -177,18 +178,40 @@ int ST7735S::write_char(int text_x, int text_y, const char* chr, int scale) {
 
     return bytes_consumed;
 }
-void ST7735S::write_text(int text_x, int text_y, const char *str, int scale) {
+
+const char* ST7735S::write_text(int text_x, int text_y, const char *str, int scale) {
     while (*str) {
         str += write_char(text_x, text_y, str, scale);
         text_x += FONT_W * scale;
     }
+
+    return str;
 }
 
-void ST7735S::write_text_maxlen(int text_x, int text_y, const char* str, int scale, int maxlen) {
+const char* ST7735S::write_text_maxlen(int text_x, int text_y, const char* str, int scale, int maxlen) {
     while (*str && maxlen--) {
         str += write_char(text_x, text_y, str, scale);
         text_x += FONT_W * scale;
     }
+
+    return str;
+}
+
+const char* ST7735S::write_text_wrap(int text_x, int text_y, const char* str, int scale) {
+    const int chars_fitting = (W - text_x) / FONT_W;
+    int len = strlen(str);
+
+    while (*str) {
+        while (*str == ' ') {
+            str++; // skip all beginning spaces
+            len--;
+        }
+
+        str = write_text_maxlen(text_x, text_y, str, scale, chars_fitting);
+        text_y += FONT_H; // newline
+    }
+
+    return str;
 }
 
 void ST7735S::draw_icon(int icon_x, int icon_y, struct icon icon) {

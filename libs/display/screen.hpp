@@ -4,6 +4,7 @@
 #include <buttons.hpp>
 
 #define COLOR_BG             0xCCCCCC
+#define COLOR_BG_ERR         0xCC7A7A
 #define COLOR_BG_SEL         0x66CC66
 #define COLOR_BG_DARK        0xa1af9f
 #define COLOR_BG_DARK_SEL    0x55AA55
@@ -40,6 +41,11 @@ protected:
     virtual void iny();
     virtual void dey();
 
+    // error screen
+    // this can (and should) be used in <show>
+    // to disable some actions (for ex. player playback)
+    bool is_err_displayed;
+
     // passed to <run_action> but can be used by subclasses for other purposes
     virtual int get_action(int x, int y) = 0;
 
@@ -65,6 +71,9 @@ public:
     // called every time the screen is shown
     // replaces standard <start> method
     virtual void show();
+
+    // called after show on some error
+    void show_error(const char* err);
 
     // called on input button pressed
     Screen* input(ButtonEnum btn);

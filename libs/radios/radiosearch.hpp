@@ -7,7 +7,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-typedef void(*all_ld_cb_fn)(void*);
+typedef void(*all_ld_cb_fn)(void* arg, int errored);
 
 class RadioSearch {
 
@@ -29,6 +29,8 @@ class RadioSearch {
     void* cb_arg;
     all_ld_cb_fn all_loaded_cb;
 
+    void notify();
+
 public:
     RadioSearch(volatile CircularBuffer& http_buf, volatile CircularBuffer& cbuf_)
         : cbuf(cbuf_)
@@ -40,6 +42,7 @@ public:
     void load_abort();
 
     friend void rs_raw_buf_write_cb(void* arg, unsigned int bytes);
+    friend void client_err_cb(void* arg, int err);
     friend void rs_search_task(void* arg);
 
     void set_all_loaded_cb(void* arg, all_ld_cb_fn cb);

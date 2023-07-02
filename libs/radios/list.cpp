@@ -52,5 +52,6 @@ void List::set_current_url(const char* p) {
 void List::select_random(station* ts) {
     const struct station* ss = &stations[random() % stations_found];
 
+    // can't copy name because listpls doesn't parse names
     strcpy(ts->url, ss->url);
 }

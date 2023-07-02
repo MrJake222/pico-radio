@@ -75,6 +75,7 @@ public:
     void rx_ack(unsigned int bytes);
 
     void set_err_cb(h_cb cb_, void* arg_);
+    bool is_err() volatile { return err; }
 
     // callbacks
     friend void gethost_callback(const char* name, const ip_addr_t* ipaddr, void* arg);

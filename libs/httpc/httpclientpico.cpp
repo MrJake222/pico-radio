@@ -145,7 +145,7 @@ err_t sent_callback(void* arg, struct tcp_pcb* tpcb, u16_t len) {
 err_t poll_callback(void* arg, struct tcp_pcb* tpcb) {
 
     auto httpc = ((argptr)arg);
-    printf("poll bytes rx/tx %6d\n", httpc->bytes_rx_tx_since_poll);
+    // printf("poll bytes rx/tx %6d\n", httpc->bytes_rx_tx_since_poll);
     if (httpc->bytes_rx_tx_since_poll == 0) {
         tcp_abort(httpc->pcb);
 
@@ -288,7 +288,7 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
         goto clean_up_failed;
     }
 
-    // printf("connecting to: %s (hex %08x)\n", ipaddr_ntoa(&addr), addr);
+    printf("dns resolved: %s\n", ipaddr_ntoa((ip_addr_t*)&dns_addr));
 
     pcb = tcp_new();
 

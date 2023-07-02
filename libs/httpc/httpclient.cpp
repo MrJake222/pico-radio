@@ -211,7 +211,7 @@ int HttpClient::parse_http() {
     *(codestr + 3) = 0;
 
     // code 3 + space 1
-    char* codedesc = codestr + 4; // TODO this doesn't work
+    char* codedesc = codestr + 4;
 
     // printf("code '%s' str '%s'\n", codestr, codedesc);
 

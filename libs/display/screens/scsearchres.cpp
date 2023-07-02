@@ -5,7 +5,7 @@
 #include <buffers.hpp>
 #include <icons.hpp>
 
-void all_loaded_cb(void* arg);
+void all_loaded_cb(void* arg, int errored);
 
 static RadioSearch rs(get_http_buf(), get_raw_buf());
 
@@ -151,12 +151,18 @@ void ScSearchRes::draw_button(int x, int y, bool selected) {
 
 Screen* ScSearchRes::run_action(int action) {
     int i;
+    const char* url;
 
     switch ((Action) action) {
         case PLAY:
             i = base_y + current_y;
-            sc_play.begin(rs.get_station_name(i),
-                          rs.get_station_url(i));
+            url = rs.get_station_url(i);
+            if (!url) {
+                show_error("Błąd: nie można otworzyć strumienia");
+                return nullptr;
+            }
+
+            sc_play.begin(rs.get_station_name(i), url);
             return &sc_play;
 
         case BACK:
@@ -201,7 +207,7 @@ void ScSearchRes::begin(const char* prompt_) {
 }
 
 
-void all_loaded_cb(void* arg) {
+void all_loaded_cb(void* arg, int errored) {
     // called from RadioSearch task
     auto sc = ((ScSearchRes*) arg);
 
@@ -210,4 +216,9 @@ void all_loaded_cb(void* arg) {
 
     // re-draw the screen
     sc->show();
+    if (errored > 0) {
+        char c[80];
+        snprintf(c, 80, "Błąd: nie udało się załadować %d dostawców stacji.", errored);
+        sc->show_error(c);
+    }
 }

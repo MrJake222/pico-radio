@@ -34,7 +34,12 @@ int Screen::adjust_x(int old_x, int old_y, int new_y) {
 
 Screen* Screen::input(ButtonEnum btn) {
     if (btn == CENTER) {
-        return run_action(get_action(current_x, current_y));
+        if (is_err_displayed) {
+            show(); // redraw normal screen
+            is_err_displayed = false;
+        } else {
+            return run_action(get_action(current_x, current_y));
+        }
     }
 
     draw_button(current_x, current_y, false);
@@ -80,6 +85,7 @@ void Screen::draw_buttons() {
 void Screen::begin() {
     current_x = default_x();
     current_y = default_y();
+    is_err_displayed = false;
 }
 
 void Screen::show() {
@@ -88,4 +94,12 @@ void Screen::show() {
     display.write_text(2, 0, get_title(), 1);
 
     draw_buttons();
+}
+
+void Screen::show_error(const char* err) {
+    display.set_bg_fg(COLOR_BG_ERR, COLOR_FG);
+    display.clear_screen();
+    display.write_text_wrap(2, 0, err, 1);
+
+    is_err_displayed = true;
 }

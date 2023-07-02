@@ -60,11 +60,9 @@ int DecodeBase::play() {
     bool error = false;
     while (true) {
         uint32_t msg;
-        puts("rx");
         xQueueReceive(queue,
                       &msg,
                       portMAX_DELAY);
-        puts("rxed");
 
         auto type = (DecodeMsgType) MSG_TYPE(msg);
 
@@ -99,7 +97,6 @@ void DecodeBase::notify_playback_end(bool error) {
         // core0 -- notify RTOS directly
         uint32_t msg = MSG_MAKE(error ? ERROR : END, 0);
         xQueueSend(queue, &msg, portMAX_DELAY);
-        puts("pushed");
     }
 }
 

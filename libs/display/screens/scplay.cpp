@@ -42,22 +42,29 @@ Screen* ScPlay::run_action(int action) {
     switch ((Action) action) {
         case BACK:
             player_stop();
+            player_wait_for_end();
             return &sc_search_res;
     }
 
     return nullptr;
 }
 
+void player_failed_callback(void* arg) {
+    // called from player task
+
+    auto sc = (ScPlay*) arg;
+    sc->show_error("odtwarzanie zakończyło się błędem");
+}
+
 void ScPlay::show() {
     Screen::show();
 
     display.set_bg_fg(COLOR_BG, COLOR_BG_DARK_ACC2);
-    display.write_text_maxlen(15, 24, radio_name, 17, 1);
+    display.write_text_maxlen(15, 24, radio_name, 1, 17);
 
-    player_start(radio_url);
-    // TODO when failed, close the screen
-    // interesting how to do it, only main.cpp can show screens currently
-    // maybe move it to screen manager
+    if (!is_err_displayed) {
+        player_start(radio_url, player_failed_callback, this);
+    }
 }
 
 void ScPlay::begin(const char* name_, const char* url_) {

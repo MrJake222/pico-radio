@@ -41,7 +41,5 @@ public:
     void begin(const char* prompt_);
     void show() override;
 
-
-
-    friend void all_loaded_cb(void* arg);
+    friend void all_loaded_cb(void* arg, int errored);
 };

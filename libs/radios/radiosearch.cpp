@@ -5,26 +5,29 @@
 
 static const char* urls[] = {
         "http://de1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s"
+        // "http://npc.k21a.mrwski.eu:8080/search"
 };
 
 static const int url_count = sizeof(urls) / sizeof(char*);
 
 void rs_raw_buf_write_cb(void* arg, unsigned int bytes) {
     // called directly from lwip callback
-    auto task = ((RadioSearch*) arg)->search_task;
-    if (!task) {
-        puts("rs: no task to notify");
-        return;
-    }
+    auto rs = (RadioSearch*) arg;
+    rs->notify();
+}
 
-    xTaskNotifyGive(task);
+void client_err_cb(void* arg, int err) {
+    // called directly from lwip callback
+    auto rs = (RadioSearch*) arg;
+    rs->notify();
 }
 
 static List* query_url(HttpClientPico& client, const char* url, volatile CircularBuffer& raw_buf, struct station* stations, int max_stations) {
     raw_buf.reset_only_data();
     int r = client.get(url);
     if (r) {
-        printf("querying url %s failed", url);
+        printf("querying url %s failed\n", url);
+        client.close();
         return nullptr;
     }
 
@@ -56,6 +59,11 @@ static List* query_url(HttpClientPico& client, const char* url, volatile Circula
         if (lr == ListError::NO_DATA) {
             // buffer underflow -> wait for more data
             ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+            if (client.is_err()) {
+                client.close();
+                puts("receive error");
+                return nullptr;
+            }
         }
 
         else if (lr == ListError::OK_ABORT) {
@@ -81,6 +89,7 @@ void rs_search_task(void* arg) {
 
     // load stations from all URLs
 
+    int errored = 0;
     for (int i=0; i<url_count; i++) {
         if (rs->should_abort)
             break;
@@ -91,8 +100,10 @@ void rs_search_task(void* arg) {
                                rs->stations + rs->stations_offset,
                                MAX_STATIONS - rs->stations_offset);
 
-        if (!list)
+        if (!list) {
+            errored++;
             continue;
+        }
 
         // printf("done loading url, loaded %d stations\n", list->stations_found);
         rs->stations_offset += list->stations_found;
@@ -103,16 +114,25 @@ void rs_search_task(void* arg) {
         }
     }
 
-    printf("done loading all, loaded %d stations\n", rs->stations_offset);
+    printf("done loading all, loaded %d stations, %d providers errored\n", rs->stations_offset, errored);
     // for (int i=0; i<rs->stations_offset; i++) {
     //     printf("uuid %s name %32s url %s\n", rs->stations[i].uuid, rs->stations[i].name, rs->stations[i].url);
     // }
 
     if (rs->all_loaded_cb && !rs->should_abort)
-        rs->all_loaded_cb(rs->cb_arg);
+        rs->all_loaded_cb(rs->cb_arg, errored);
 
     rs->search_task = nullptr;
     vTaskDelete(nullptr);
+}
+
+void RadioSearch::notify() {
+    if (!search_task) {
+        puts("rs: no task to notify");
+        return;
+    }
+
+    xTaskNotifyGive(search_task);
 }
 
 void RadioSearch::begin(const char* query_) {
@@ -122,7 +142,7 @@ void RadioSearch::begin(const char* query_) {
     cbuf.set_write_ack_callback(this, rs_raw_buf_write_cb);
 
     client.begin();
-    // TODO attach error callback
+    client.set_err_cb(client_err_cb, this);
 
     should_abort = false;
 
