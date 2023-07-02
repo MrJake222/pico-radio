@@ -254,6 +254,8 @@ void HttpClientPico::reset_state() {
     err = false;
     connected = false;
     bytes_rx_tx_since_poll = 0;
+
+    http_buf.reset_only_data();
 }
 
 void HttpClientPico::reset_state_with_cb() {
