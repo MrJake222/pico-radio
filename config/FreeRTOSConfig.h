@@ -46,8 +46,8 @@
 #define configUSE_IDLE_HOOK                     0
 #define configUSE_TICK_HOOK                     0
 #define configTICK_RATE_HZ                      ( ( TickType_t ) 1000 )
-#define configMAX_PRIORITIES                    32
-#define configMINIMAL_STACK_SIZE                ( configSTACK_DEPTH_TYPE ) 256
+#define configMAX_PRIORITIES                    5 // cyw43 task priority
+#define configMINIMAL_STACK_SIZE                ( configSTACK_DEPTH_TYPE ) 128
 #define configUSE_16_BIT_TICKS                  0
 #define configTASK_NOTIFICATION_ARRAY_ENTRIES   2
 
@@ -72,7 +72,7 @@
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         0
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
-#define configTOTAL_HEAP_SIZE                   (64*1024)
+#define configTOTAL_HEAP_SIZE                   (24*1024)
 #define configAPPLICATION_ALLOCATED_HEAP        0
 
 /* Hook function related definitions. */

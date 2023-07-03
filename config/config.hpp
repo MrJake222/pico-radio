@@ -64,6 +64,13 @@
 #define PRI_WIFI_SETUP          1
 #define PRI_INPUT               1
 
+#define MIN_FREE_STACK            100
+#define STACK_PLAYER              (220 + MIN_FREE_STACK)
+#define STACK_FIFO_QUEUE          configMINIMAL_STACK_SIZE // currently unused
+#define STACK_RADIO_SEARCH        (240 + MIN_FREE_STACK)
+#define STACK_WIFI_SETUP          (200 + MIN_FREE_STACK)
+#define STACK_INPUT               (156 + MIN_FREE_STACK)
+
 // --------------------------------- SD --------------------------------- //
 #define SD_ENABLE 1
 

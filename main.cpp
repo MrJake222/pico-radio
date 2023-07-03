@@ -143,6 +143,7 @@ void init_wifi() {
     // const char* WIFI_SSID = "NPC";
     // const char* WIFI_SSID = "MyNet";
     const char* WIFI_SSID = "BPi";
+    // const char* WIFI_SSID = "NPC";
     const char* WIFI_PASSWORD = "bequick77";
     // const char* WIFI_SSID = "NorbertAP";
     // const char* WIFI_PASSWORD = "fearofthedark";
@@ -184,8 +185,14 @@ void task_wifi_startup(void* arg) {
     // testing
     // player_start("http://stream.rcs.revma.com/an1ugyygzk8uv");
     // player_start("http://172.17.1.2:8080/audio.mp3");
+    // player_start("https://0n-classicrock.radionetz.de/0n-classicrock.mp3", nullptr, nullptr);
+    // player_start("http://www.radiorockfm.co.nz:8000/listenlive", nullptr, nullptr); // longest rtt 321 ms
+    // player_start("https://stream.rockantenne.de/alternative/stream/mp3", nullptr, nullptr);
     // player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
     // sc_search_res.begin("rmf");
+
+    uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
+    printf("wifi unused stack: %ld\n", min_free_stack);
 
     vTaskDelete(nullptr);
 }
@@ -193,7 +200,6 @@ void task_wifi_startup(void* arg) {
 [[noreturn]] void task_input_handle(void* arg) {
     ButtonEnum input;
     int r;
-    int cnt = 0;
 
     while (true) {
         r = xQueueReceive(
@@ -204,7 +210,9 @@ void task_wifi_startup(void* arg) {
         if (r != pdTRUE)
             continue;
 
-        printf("input: %d (cnt %5d)\n", input, cnt++);
+        uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
+        printf("input unused stack: %ld\n", min_free_stack);
+
         Screen* screen_new = screen->input(input);
         if (screen_new) {
             screen = screen_new;
@@ -219,7 +227,7 @@ int main() {
     xTaskCreate(
             task_wifi_startup,
             "wifi startup",
-            configMINIMAL_STACK_SIZE * 4,
+            STACK_WIFI_SETUP,
             nullptr,
             PRI_WIFI_SETUP,
             nullptr);
@@ -227,7 +235,7 @@ int main() {
     xTaskCreate(
             task_input_handle,
             "input handle",
-            configMINIMAL_STACK_SIZE * 4,
+            STACK_INPUT,
             nullptr,
             PRI_INPUT,
             nullptr);

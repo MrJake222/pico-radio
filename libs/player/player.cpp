@@ -274,7 +274,7 @@ void player_start(const char* path, fail_cb_fn fail_cb_, void* fail_cb_arg_) {
     xTaskCreate(
             player_task,
             "player",
-            1024,
+            STACK_PLAYER,
             nullptr,
             PRI_PLAYER,
             nullptr);

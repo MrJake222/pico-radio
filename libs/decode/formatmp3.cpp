@@ -53,7 +53,7 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
     bool again = false;
     do {
         if (again && raw_buf.get_read_offset() > 0) {
-            printf("decode o %ld\n", raw_buf.get_read_offset());
+            printf("decode o %5ld   health %2d%%\n", raw_buf.get_read_offset(), raw_buf.health());
         }
 
         if (raw_buf.data_left_continuous() < MP3_HEADER_SIZE) {

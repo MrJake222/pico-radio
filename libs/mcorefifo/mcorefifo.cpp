@@ -58,7 +58,7 @@ void fifo_init() {
     xTaskCreate(
             fifo_task,
             "fifo",
-            1024,
+            STACK_FIFO_QUEUE,
             nullptr,
             PRI_FIFO_QUEUE,
             nullptr);

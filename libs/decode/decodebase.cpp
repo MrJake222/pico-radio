@@ -66,6 +66,13 @@ int DecodeBase::play() {
 
         auto type = (DecodeMsgType) MSG_TYPE(msg);
 
+        uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
+
+        // printf("rtos ram used: %2d%%  max %2d%%  player unused stack: %ld\n",
+        //        (configTOTAL_HEAP_SIZE - xPortGetFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
+        //        (configTOTAL_HEAP_SIZE - xPortGetMinimumEverFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
+        //        min_free_stack);
+
         if (type == BUF_READ) {
             raw_buf_just_read(MSG_DATA(msg));
         }

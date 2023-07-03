@@ -122,6 +122,9 @@ void rs_search_task(void* arg) {
     if (rs->all_loaded_cb && !rs->should_abort)
         rs->all_loaded_cb(rs->cb_arg, errored);
 
+    uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
+    printf("radiosearch unused stack: %ld\n", min_free_stack);
+
     rs->search_task = nullptr;
     vTaskDelete(nullptr);
 }
@@ -153,7 +156,7 @@ void RadioSearch::begin(const char* query_) {
 void RadioSearch::load_stations() {
     xTaskCreate(rs_search_task,
                 "search",
-                configMINIMAL_STACK_SIZE * 4,
+                STACK_RADIO_SEARCH,
                 this,
                 PRI_RADIO_SEARCH,
                 &search_task);
