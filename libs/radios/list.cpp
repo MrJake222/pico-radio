@@ -11,8 +11,14 @@ ListError List::consume() {
     int len;
 
     len = client->recv_line(line, MAX_LINE_LEN + 1);
-    if (len < 0)
+    if (len == HttpClient::OVERRUN) {
+        // line buffer overrun, ignore
+        return ListError::OK;
+    }
+
+    if (len < 0) {
         return ListError::ERROR;
+    }
 
     if (len == 0) {
         // empty line

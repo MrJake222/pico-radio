@@ -164,7 +164,7 @@ static void dma_chain_enable(int dma_chan, int chain_to) {
 }
 
 static void dma_start() {
-    printf("dma play\n");
+    puts("dma start");
 
     // setup chaining
     dma_chain_enable(dma_channel_a, dma_channel_b);

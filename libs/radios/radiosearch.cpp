@@ -42,19 +42,19 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
         ListError lr = list->consume();
 
         if (lr == ListError::ERROR) {
-            puts("stations error");
+            puts("rs: error");
             client.close();
             return nullptr;
         }
 
         else if (lr == ListError::ABORT) {
             // buffer maxed out, don't waste more time
-            puts("maxed out stations");
+            puts("rs: maxed out stations");
             break;
         }
 
         if (client.is_err()) {
-            puts("client error in stations");
+            puts("rs: client error");
             client.close();
             return nullptr;
         }
@@ -95,7 +95,7 @@ void rs_search_task(void* arg) {
         rs->stations_offset += list->get_stations_found();
 
         if (rs->stations_offset == MAX_STATIONS) {
-            puts("maxed out stations, done");
+            puts("rs: maxed out stations, done");
             break;
         }
     }

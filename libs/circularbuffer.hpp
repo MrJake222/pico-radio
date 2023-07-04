@@ -76,9 +76,6 @@ public:
     uint8_t* read_ptr()  volatile const;
     uint8_t* write_ptr() volatile const;
 
-    uint8_t* read_ptr_of(int of)  volatile const;
-    uint8_t* write_ptr_of(int of) volatile const;
-
     void read_ack(unsigned int bytes)  volatile;
     void write_ack(unsigned int bytes) volatile;
 
@@ -112,12 +109,14 @@ public:
     // (more free space available)
     // only one callback supported
     void set_read_ack_callback(void* arg, rw_callback_fn callback) volatile;
+    bool is_read_ack_callback_set() volatile;
 
     // register a callback when data was just written
     // (more data available)
     void set_write_ack_callback(void* arg, rw_callback_fn callback) volatile;
+    bool is_write_ack_callback_set() volatile;
 
 
     // print read debug info
-    void debug_read(int bytes, int prepend) volatile;
+    void debug_read(int bytes, int reverse) volatile;
 };

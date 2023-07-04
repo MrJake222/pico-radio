@@ -1,20 +1,27 @@
 #pragma once
 
+#include <config.hpp>
 #include <httpclient.hpp>
 #include <lwip/tcp.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
 
+#define HTTP_TIMEOUT_US         (HTTP_TIMEOUT_MS * 1000)
+#define NOT_TIMEOUT_US(start)    ((((int) time_us_32()) - start) < HTTP_TIMEOUT_US)
+
 typedef void(*h_cb)(void* arg, int err);
 
 enum HttpNotificationBitEnum {
-    CONNECT,
-    ERROR,
-    DNS,
-    RECV,
-    SENT
+    BIT_CONNECT,
+    BIT_ERROR,
+    BIT_DNS,
+    BIT_RECV,
+    BIT_SENT
 };
+
+#define MAKE_NOTIF(bit)          (1 << (bit))
+#define HAS_NOTIF(val, bit)      ((val) & MAKE_NOTIF(bit))
 
 class HttpClientPico : public HttpClient {
 

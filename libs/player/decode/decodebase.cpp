@@ -26,7 +26,8 @@ void DecodeBase::begin(const char* path_, Format* format_) {
 
     format->begin();
     cbuf.reset_with_cb();
-    cbuf.set_read_ack_callback(this, cbuf_read_cb);
+    // callback set was moved to play()
+    // (it pushes to queue and nothing reads from it here)
     fifo_register(PLAYER, player_msg, this, false);
 
     decode_finished_by = FinishReason::NoFinish;
@@ -45,7 +46,9 @@ int DecodeBase::setup() {
 }
 
 int DecodeBase::play() {
-    assert(cbuf.health() >= 50);
+
+    // redirect ACKs through fifo
+    cbuf.set_read_ack_callback(this, cbuf_read_cb);
     core1_start();
 
     bool error = false;
@@ -68,6 +71,8 @@ int DecodeBase::play() {
             ack_bytes(data);
         }
         else if (type == END) {
+            puts("playback end");
+
             if (data) {
                 puts("playback error");
                 error = true;
@@ -169,6 +174,9 @@ void DecodeBase::dma_watch() {
 }
 
 void DecodeBase::dma_preload() {
+
+    while (cbuf.health() < 50);
+
     puts("dma preload");
     cbuf.debug_read(32, 0);
 

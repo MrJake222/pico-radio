@@ -59,7 +59,12 @@ protected:
 
 public:
 
-    virtual void begin() { reset_state_with_cb(); }
+    enum Error {
+        ERROR = -1,
+        OVERRUN = -2
+    };
+
+    void begin() { reset_state_with_cb(); }
 
     // one concurrent connection supported
     // this will start a connection

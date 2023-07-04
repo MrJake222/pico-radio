@@ -18,11 +18,14 @@ void gethost_callback(const char* name, const ip_addr_t* ipaddr, void* arg) {
         httpc->dns_failed = true;
     }
 
-    httpc->notify(DNS);
+    httpc->notify(BIT_DNS);
 }
 
 err_t HttpClientPico::gethostbyname(const char* host) {
     cyw43_arch_lwip_check(); // only call this with lwip lock
+
+    dns_found = false;
+    dns_failed = false;
 
     int r;
     err_t ret = dns_gethostbyname_addrtype(host, (ip_addr_t*)&dns_addr, gethost_callback, this, LWIP_DNS_ADDRTYPE_IPV4);
@@ -33,8 +36,7 @@ err_t HttpClientPico::gethostbyname(const char* host) {
 
         case ERR_INPROGRESS:
             // puts("in progress");
-            r = wait(DNS);
-
+            r = wait(BIT_DNS);
             if (r < 0) {
                 puts("wait error during dns resolve");
                 return -1;
@@ -73,7 +75,7 @@ void error_callback(void *arg, err_t err) {
     auto httpc = ((argptr)arg);
     httpc->err = true;
     httpc->pcb = nullptr;
-    httpc->notify(ERROR);
+    httpc->notify(BIT_ERROR);
 
     httpc->err_cb_call(err);
 }
@@ -85,7 +87,7 @@ err_t connected_callback(void* arg, struct tcp_pcb* tpcb, err_t err) {
 
     auto httpc = ((argptr)arg);
     httpc->connected = true;
-    httpc->notify(CONNECT);
+    httpc->notify(BIT_CONNECT);
 
     return err;
 }
@@ -124,7 +126,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
         }
 
         httpc->cbuf.write((uint8_t*)p->payload, p->len);
-        httpc->notify(RECV);
+        httpc->notify(BIT_RECV);
 
         httpc->bytes_rx_tx_since_poll += p->len;
 
@@ -142,7 +144,7 @@ err_t sent_callback(void* arg, struct tcp_pcb* tpcb, u16_t len) {
 
     auto httpc = ((argptr)arg);
     httpc->bytes_rx_tx_since_poll += len;
-    httpc->notify(SENT);
+    httpc->notify(BIT_SENT);
 
     return ERR_OK;
 }
@@ -167,78 +169,89 @@ int HttpClientPico::send(const char *buf, int buflen, bool more) {
     // printf("send %5d bytes: %p\n", buflen, buf);
     cyw43_arch_lwip_begin();
 
+    err_t ret;
+    bool senderr = false;
     int f = more ? TCP_WRITE_FLAG_MORE : 0;
 
     if (tcp_sndbuf(pcb) == 0) {
-        int r = wait(SENT);
+        int r = wait(BIT_SENT);
         if (r < 0) {
             puts("wait error in send");
-            return -1;
+            senderr = true;
+            goto end;
         }
     }
     if (err) {
         puts("error during send");
-        return -1;
+        senderr = true;
+        goto end;
     }
 
     buflen = MIN(buflen, tcp_sndbuf(pcb));
 
-    err_t ret;
     ret = tcp_write(pcb, buf, buflen, f);
-    if (ret == ERR_MEM) {
-        cyw43_arch_lwip_end();
-        return 0;
-    }
     if (ret != ERR_OK) {
         printf("tcp_write failed code %d\n", ret);
-        cyw43_arch_lwip_end();
-        return -1;
+        senderr = true;
+        goto end;
     }
 
     if (!more) {
         ret = tcp_output(pcb);
         if (ret != ERR_OK) {
             printf("tcp_output failed code %d\n", ret);
-            cyw43_arch_lwip_end();
-            return -1;
+            senderr = true;
+            goto end;
         }
     }
 
+end:
     cyw43_arch_lwip_end();
-    return buflen;
+    return senderr ? -1 : buflen;
 }
 
 int HttpClientPico::recv(char* buf, int buflen) {
     // printf("recv o %d read %d\n", stream_offset, stream_offset_read);
     cyw43_arch_lwip_begin();
 
+    bool recverr = false;
+    long len;
+
     if (cbuf.data_left() == 0) {
-        int r = wait(RECV);
+        int r = wait(BIT_RECV);
         if (r < 0) {
             puts("wait error in recv");
-            return -1;
+            recverr = true;
+            goto end;
         }
     }
     if (err) {
         puts("error during recv");
-        return -1;
+        recverr = true;
+        goto end;
     }
 
-    if (cbuf.data_left() == 0)
+    if (cbuf.data_left() == 0) {
         // no data received, timeout
-        return -1;
+        recverr = true;
+        goto end;
+    }
 
-    long len = MIN(cbuf.data_left(), buflen);
+    len = MIN(cbuf.data_left(), buflen);
 
     // printf("reading %d bytes from o_read %d\n", len, stream_offset_read);
 
     memcpy(buf, cbuf.read_ptr(), len);
     cbuf.read_ack(len);
 
-    // manual confirmation of received data not required
     // caller should confirm received data by cbuf read callback
+    // but sometimes the caller doesn't have access to cbuf
+    if (!cbuf.is_read_ack_callback_set())
+        tcp_recved(pcb, len);
 
-    return len;
+end:
+    cyw43_arch_lwip_end();
+    return recverr ? -1 : len;
 }
 
 
@@ -246,7 +259,8 @@ int HttpClientPico::wait_for_health(int min_health) {
     // use signed arithmetic (overflows handled)
     int start = (int) time_us_32();
 
-    while ((((int) time_us_32()) - start) < HTTP_TIMEOUT_MS) {
+    while (NOT_TIMEOUT_US(start)) {
+        printf("health: %2d%%\n", cbuf.health());
         cyw43_arch_lwip_begin();
 
         if (cbuf.health() >= min_health) {
@@ -254,7 +268,7 @@ int HttpClientPico::wait_for_health(int min_health) {
             return 0;
         }
 
-        int r = wait(RECV);
+        int r = wait(BIT_RECV);
         if (r < 0) {
             puts("wait error in wait_for_health");
             cyw43_arch_lwip_end();
@@ -291,19 +305,20 @@ void HttpClientPico::set_err_cb(h_cb cb_, void* arg_) {
 
 void HttpClientPico::notify(int bit) volatile {
     if (task) {
-        xTaskNotifyIndexed(task, HTTP_NOTIFY_INDEX, (1 << bit), eSetBits);
+        // printf("notify bit %d\n", bit);
+        xTaskNotifyIndexed(task, HTTP_NOTIFY_INDEX, MAKE_NOTIF(bit), eSetBits);
     }
 }
 
 int HttpClientPico::wait(int bit) {
     // check if owner of the lock
-    // the caller should've locked the lwip thread for whatever they're doing
+    // the caller should've locked the lwip thread for whatever it's doing
     cyw43_arch_lwip_check();
     // check if no task already waiting
     assert(task == nullptr);
 
+    // printf("wait bit %d\n", bit);
     task = xTaskGetCurrentTaskHandle();
-
 
     // use signed arithmetic (overflows handled)
     int start = (int) time_us_32();
@@ -313,23 +328,30 @@ int HttpClientPico::wait(int bit) {
     do {
         // on both entry & exit clear bit
         cyw43_arch_lwip_end();
-        xTaskNotifyWaitIndexed(HTTP_NOTIFY_INDEX, (1 << bit), (1 << bit), &val, HTTP_TIMEOUT_MS / portTICK_PERIOD_MS);
+
+        xTaskNotifyWaitIndexed(HTTP_NOTIFY_INDEX,
+                               0,
+                               ULONG_MAX,
+                               &val,
+                               HTTP_TIMEOUT_MS / portTICK_PERIOD_MS);
+
         cyw43_arch_lwip_begin();
-    } while (((val & (1 << bit)) == 0) && ((((int) time_us_32()) - start) < HTTP_TIMEOUT_MS));
+    } while (!HAS_NOTIF(val, bit) && NOT_TIMEOUT_US(start) && !err);
 
     if (err) {
-        puts("error waiting for notification");
+        puts("error occurred while waiting for notification");
         ret = -1;
         goto end;
     }
 
-    if ((val & (1 << bit)) == 0) {
+    if (!HAS_NOTIF(val, bit)) {
         // notification not occurred
         puts("timeout waiting for notification");
         ret = -1;
         goto end;
     }
 
+    // puts("wait end");
     // no error, notification occurred
     ret = 0;
 
@@ -345,6 +367,7 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     err_t ret;
     ret = gethostbyname(host);
     if (ret) {
+        err = true;
         puts("gethostbyname failed");
         goto clean_up_failed;
     }
@@ -354,6 +377,7 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     pcb = tcp_new();
 
     if (!pcb) {
+        err = true;
         puts("tcp_new failed");
         goto clean_up_failed;
     }
@@ -369,7 +393,7 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
         goto clean_up_failed;
     }
 
-    r = wait(CONNECT);
+    r = wait(BIT_CONNECT);
     if (r < 0) {
         puts("wait error in connect");
         goto clean_up_failed;

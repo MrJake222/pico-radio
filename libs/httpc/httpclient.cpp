@@ -61,7 +61,7 @@ int HttpClient::recv_line(char *buf, int bufsize) {
         // recv will receive at least one byte
         ret = recv(&chr, 1);
         if (ret < 0)
-            return -1;
+            return ERROR;
 
         if (chr == '\r') {
             r_seen = true;
@@ -75,7 +75,7 @@ int HttpClient::recv_line(char *buf, int bufsize) {
 
             if (overrun) {
                 puts("line buffer overrun");
-                return -1;
+                return OVERRUN;
             }
 
             if (r_seen) {
@@ -273,7 +273,6 @@ int HttpClient::connect_url(const char* url) {
     reset_state();
 
     int res = split_host_path_port(url);
-
     if (res) {
         puts("split_host_path_port failed");
         return -1;

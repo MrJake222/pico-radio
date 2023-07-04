@@ -21,9 +21,9 @@ int DecodeStream::play() {
         return -1;
 
     // wait for content
-    client.wait_for_health(min_health);
+    // client.wait_for_health(min_health);
 
-    return 0;
+    return DecodeBase::play();
 }
 
 void DecodeStream::stop() {

@@ -28,14 +28,6 @@ uint8_t* CircularBuffer::write_ptr() volatile const {
     return buffer + write_at;
 }
 
-uint8_t* CircularBuffer::read_ptr_of(int of) volatile const {
-    return buffer + (read_at + of) % size;
-}
-
-uint8_t* CircularBuffer::write_ptr_of(int of) volatile const {
-    return buffer + (write_at + of) % size;
-}
-
 void CircularBuffer::read_ack(unsigned int bytes) volatile {
     read_at += (long)bytes;
     read_at %= size;
@@ -101,27 +93,57 @@ void CircularBuffer::set_read_ack_callback(void* arg, CircularBuffer::rw_callbac
     read_ack_callback = callback;
 }
 
+bool CircularBuffer::is_read_ack_callback_set() volatile {
+    return read_ack_callback != nullptr;
+}
+
 void CircularBuffer::set_write_ack_callback(void* arg, CircularBuffer::rw_callback_fn callback) volatile {
     write_ack_arg = arg;
     write_ack_callback = callback;
 }
 
-void CircularBuffer::debug_read(int bytes, int prepend) volatile {
-
-    for (int i=0; i<MIN(bytes+prepend, data_left_continuous()); i++) {
-        if ((i % 32) == 0) {
-            if (i > 0)
-                puts("");
-
-            printf("%5ld: ", read_at - prepend + i);
-        }
-
-        printf("%02x ", buffer[read_at - prepend + i]);
-    }
-
-    printf("\n");
+bool CircularBuffer::is_write_ack_callback_set() volatile {
+    return write_ack_callback != nullptr;
 }
 
+void CircularBuffer::debug_read(int bytes, int reverse) volatile {
+
+    // for (int i=0; i<MIN(bytes+prepend, data_left_continuous()); i++) {
+    //     if ((i % 32) == 0) {
+    //         if (i > 0)
+    //             puts("");
+    //
+    //         printf("%5ld: ", read_at - prepend + i);
+    //     }
+    //
+    //     printf("%02x ", buffer[read_at - prepend + i]);
+    // }
+
+    const int width = 16;
+
+    int len = MIN(bytes+reverse, data_left_continuous());
+    int r = -reverse;
+
+    while (len > 0) {
+
+        printf("%5ld: ", read_at + r);
+
+        for (int i=0; i<MIN(width, len); i++) {
+            printf("%02x ", buffer[read_at - reverse + r + i]);
+        }
+
+        printf("   ");
+
+        for (int i=0; i<MIN(width, len); i++) {
+            char c = buffer[read_at - reverse + r + i];
+            printf("%c", c<32 ? '.' : c);
+        }
+
+        r += width;
+        len -= width;
+        printf("\n");
+    }
+}
 
 
 
