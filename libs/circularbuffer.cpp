@@ -136,7 +136,7 @@ void CircularBuffer::debug_read(int bytes, int reverse) volatile {
 
         for (int i=0; i<MIN(width, len); i++) {
             char c = buffer[read_at - reverse + r + i];
-            printf("%c", c<32 ? '.' : c);
+            printf("%c", (c<32 || c>127) ? '.' : c);
         }
 
         r += width;

@@ -92,7 +92,7 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
                 break;
 
             case ERR_MP3_INVALID_FRAMEHEADER:
-                printf("o %ld  wrong sync-word\n", raw_buf.get_read_offset());
+                printf("o %ld  wrong sync-word  health %2d%%\n", raw_buf.get_read_offset(), raw_buf.health());
 
                 orig_read = raw_buf.read_ptr();
 #if BUF_REVERSE

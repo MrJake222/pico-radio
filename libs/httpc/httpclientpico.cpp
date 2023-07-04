@@ -171,7 +171,7 @@ int HttpClientPico::send(const char *buf, int buflen, bool more) {
 
     err_t ret;
     bool senderr = false;
-    int f = more ? TCP_WRITE_FLAG_MORE : 0;
+    int f = (more ? TCP_WRITE_FLAG_MORE : 0) | TCP_WRITE_FLAG_COPY;
 
     if (tcp_sndbuf(pcb) == 0) {
         int r = wait(BIT_SENT);
@@ -252,33 +252,6 @@ int HttpClientPico::recv(char* buf, int buflen) {
 end:
     cyw43_arch_lwip_end();
     return recverr ? -1 : len;
-}
-
-
-int HttpClientPico::wait_for_health(int min_health) {
-    // use signed arithmetic (overflows handled)
-    int start = (int) time_us_32();
-
-    while (NOT_TIMEOUT_US(start)) {
-        printf("health: %2d%%\n", cbuf.health());
-        cyw43_arch_lwip_begin();
-
-        if (cbuf.health() >= min_health) {
-            cyw43_arch_lwip_end();
-            return 0;
-        }
-
-        int r = wait(BIT_RECV);
-        if (r < 0) {
-            puts("wait error in wait_for_health");
-            cyw43_arch_lwip_end();
-            return -1;
-        }
-
-        cyw43_arch_lwip_end();
-    }
-
-    return -1; // timeout
 }
 
 void HttpClientPico::reset_state() {
