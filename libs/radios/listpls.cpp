@@ -4,7 +4,7 @@
 
 ListPLS listpls;
 
-ListError ListPLS::try_consume_format(char* line) {
+ListError ListPLS::consume_format(char* line) {
 
     if (line[0] == '[') {
         // tag name

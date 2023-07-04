@@ -5,7 +5,7 @@
 
 ListM3U listm3u;
 
-ListError ListM3U::try_consume_format(char* line) {
+ListError ListM3U::consume_format(char* line) {
     if (line[0] == '#') {
         // comment (metadata)
         line++; // skip #

@@ -23,7 +23,7 @@ class List {
     int stations_len;
     int stations_found;
 
-    virtual ListError try_consume_format(char* line) = 0;
+    virtual ListError consume_format(char* line) = 0;
 
 protected:
     void set_current_uuid(const char* p);
@@ -39,7 +39,7 @@ public:
         stations_found = 0;
     }
 
-    ListError try_consume();
+    ListError consume();
 
     int get_stations_found() { return stations_found; }
     void select_random(struct station* ts);

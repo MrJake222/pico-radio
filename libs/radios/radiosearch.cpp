@@ -10,18 +10,6 @@ static const char* urls[] = {
 
 static const int url_count = sizeof(urls) / sizeof(char*);
 
-void rs_raw_buf_write_cb(void* arg, unsigned int bytes) {
-    // called directly from lwip callback
-    auto rs = (RadioSearch*) arg;
-    rs->notify();
-}
-
-void client_err_cb(void* arg, int err) {
-    // called directly from lwip callback
-    auto rs = (RadioSearch*) arg;
-    rs->notify();
-}
-
 static List* query_url(HttpClientPico& client, const char* url, struct station* stations, int max_stations) {
     int r = client.get(url);
     if (r) {
@@ -51,7 +39,7 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
     while (client.more_content()) {
         // loop until all content data has been read
         
-        ListError lr = list->try_consume();
+        ListError lr = list->consume();
 
         if (lr == ListError::ERROR) {
             puts("stations error");
@@ -63,6 +51,12 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
             // buffer maxed out, don't waste more time
             puts("maxed out stations");
             break;
+        }
+
+        if (client.is_err()) {
+            puts("client error in stations");
+            client.close();
+            return nullptr;
         }
     }
 
@@ -117,24 +111,14 @@ void rs_search_task(void* arg) {
     uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
     printf("radiosearch unused stack: %ld\n", min_free_stack);
 
-    rs->search_task = nullptr;
     vTaskDelete(nullptr);
-}
-
-void RadioSearch::notify() {
-    if (!search_task) {
-        puts("rs: no task to notify");
-        return;
-    }
-
-    xTaskNotifyGive(search_task);
 }
 
 void RadioSearch::begin(const char* query_) {
     query = query_;
 
     client.begin();
-    client.set_err_cb(client_err_cb, this);
+    // client.set_err_cb(client_err_cb, this);
 
     should_abort = false;
 
@@ -148,7 +132,7 @@ void RadioSearch::load_stations() {
                 STACK_RADIO_SEARCH,
                 this,
                 PRI_RADIO_SEARCH,
-                &search_task);
+                nullptr);
 }
 
 void RadioSearch::load_abort() {

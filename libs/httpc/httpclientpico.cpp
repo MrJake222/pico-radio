@@ -176,6 +176,10 @@ int HttpClientPico::send(const char *buf, int buflen, bool more) {
             return -1;
         }
     }
+    if (err) {
+        puts("error during send");
+        return -1;
+    }
 
     buflen = MIN(buflen, tcp_sndbuf(pcb));
 
@@ -215,7 +219,6 @@ int HttpClientPico::recv(char* buf, int buflen) {
             return -1;
         }
     }
-
     if (err) {
         puts("error during recv");
         return -1;

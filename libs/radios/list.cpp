@@ -6,7 +6,7 @@
 
 #define MAX_LINE_LEN    128
 
-ListError List::try_consume() {
+ListError List::consume() {
     char line[MAX_LINE_LEN + 1];
     int len;
 
@@ -26,7 +26,7 @@ ListError List::try_consume() {
     // not empty line
     // not maxed out stations
 
-    return try_consume_format(line);
+    return consume_format(line);
 }
 
 void List::set_current_uuid(const char* p) {
