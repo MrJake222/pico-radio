@@ -19,7 +19,7 @@ struct cb_data {
 static std::map<FifoMsgType, struct cb_data> cbs;
 
 static bool entry_check(uint32_t val) {
-    auto type = MSG_TYPE(val);
+    auto type = (FifoMsgType) MSG_TYPE(FIFO_MSG_BITS, FIFO_MSG_TYPE_BITS, val);
 
     if (cbs.count(type)) {
         return true;
@@ -30,8 +30,9 @@ static bool entry_check(uint32_t val) {
 }
 
 static void entry_handle(uint32_t val) {
-    auto data = cbs[MSG_TYPE(val)];
-    data.cb(data.arg, MSG_DATA(val));
+    auto type = (FifoMsgType) MSG_TYPE(FIFO_MSG_BITS, FIFO_MSG_TYPE_BITS, val);
+    auto cb = cbs[type];
+    cb.cb(cb.arg, MSG_DATA(FIFO_MSG_BITS, FIFO_MSG_TYPE_BITS, val));
 }
 
 // only valid entries
@@ -77,7 +78,7 @@ void fifo_register(FifoMsgType type, FifoCallback cb, void* arg, bool use_task) 
 }
 
 void fifo_send_with_data(FifoMsgType type, uint32_t data) {
-    multicore_fifo_push_blocking(MSG_MAKE(type, data));
+    multicore_fifo_push_blocking(MSG_MAKE(FIFO_MSG_BITS, FIFO_MSG_TYPE_BITS, type, data));
 }
 
 void fifo_rx_irq() {
@@ -85,8 +86,9 @@ void fifo_rx_irq() {
     uint32_t val = multicore_fifo_pop_blocking();
 
     if (entry_check(val)) {
-        auto data = cbs[MSG_TYPE(val)];
-        if (data.use_task)
+        auto type = (FifoMsgType) MSG_TYPE(FIFO_MSG_BITS, FIFO_MSG_TYPE_BITS, val);
+        auto cb = cbs[type];
+        if (cb.use_task)
             xQueueSendFromISR(fifo_queue, &val, nullptr);
         else
             entry_handle(val);

@@ -2,6 +2,7 @@
 
 #include <config.hpp>
 #include <circularbuffer.hpp>
+#include <httpclientpico.hpp>
 
 struct station {
     char uuid[ST_UUID_LEN + 1];
@@ -10,39 +11,36 @@ struct station {
 };
 
 enum class ListError {
+    ERROR,
     OK,
-    OK_IGNORE,
-    OK_ABORT,
-    NO_DATA
+    ABORT,
 };
 
 class List {
 
-protected:
-    volatile CircularBuffer* buf;
-
-public:
+    HttpClientPico* client;
     struct station* stations;
     int stations_len;
     int stations_found;
 
-    virtual void begin(volatile CircularBuffer* buf_, struct station* stations_, int stations_len_) {
-        buf = buf_;
+    virtual ListError try_consume_format(char* line) = 0;
+
+protected:
+    void set_current_uuid(const char* p);
+    void set_current_name(const char* p);
+    void set_current_url(const char* p);
+    void set_next_station() { stations_found++; }
+
+public:
+    virtual void begin(HttpClientPico* client_, struct station* stations_, int stations_len_) {
+        client = client_;
         stations = stations_;
         stations_len = stations_len_;
         stations_found = 0;
     }
 
-    // returns -1 when no data was consumed
-    virtual ListError try_consume() = 0;
-    // returns 1 when init went good, other values need to be propagated
-    ListError try_consume_pre(int& eol);
-    // always returns 0 (for now)
-    void try_consume_post(int eol);
+    ListError try_consume();
 
-    void set_current_uuid(const char* p);
-    void set_current_name(const char* p);
-    void set_current_url(const char* p);
-
+    int get_stations_found() { return stations_found; }
     void select_random(struct station* ts);
 };

@@ -5,25 +5,15 @@
 #include <cstdio>
 #include <lwip/stats.h>
 
-static void raw_buf_read_cb_static(void* arg, unsigned int bytes) {
-    // called from core1
-    // Here we need to pass a message to core0
-    // printf("[%ld us] read %d bytes\n", time_us_32(), bytes);
-    fifo_send_with_data(RAW_BUF_READ, bytes);
+void cbuf_read_cb(void* arg, unsigned int bytes) {
+    auto b16 = (uint16_t) bytes;
+    assert(b16 == bytes);
+
+    ((DecodeBase*) arg)->notify_ack(b16);
 }
 
-void raw_buf_read_msg_static(void* arg, uint32_t data) {
+void player_msg(void* arg, uint32_t msg) {
     // called from core0 fifo IRQ
-    uint32_t msg = MSG_MAKE(BUF_READ, data);
-
-    xQueueSendFromISR(((DecodeBase*) arg)->queue,
-                      &msg,
-                      nullptr);
-}
-
-void player_wake(void* arg, uint32_t error) {
-    // called from core0 fifo IRQ
-    uint32_t msg = MSG_MAKE(error ? ERROR : END, 0);
 
     xQueueSendFromISR(((DecodeBase*) arg)->queue,
                       &msg,
@@ -35,27 +25,28 @@ void DecodeBase::begin(const char* path_, Format* format_) {
     format = format_;
 
     format->begin();
-    format->raw_buf.reset_with_cb();
-    format->raw_buf.set_read_ack_callback(this, raw_buf_read_cb_static);
-    fifo_register(RAW_BUF_READ, raw_buf_read_msg_static, this, false);
-    fifo_register(PLAYER_WAKE, player_wake, this, false);
+    cbuf.reset_with_cb();
+    cbuf.set_read_ack_callback(this, cbuf_read_cb);
+    fifo_register(PLAYER, player_msg, this, false);
 
     decode_finished_by = FinishReason::NoFinish;
     sum_units_decoded = 0;
     last_seconds = -1;
 }
 
-int DecodeBase::play() {
-
+int DecodeBase::setup() {
     queue = xQueueCreate(8, sizeof(uint32_t));
     if (!queue) {
         puts("failed to create queue");
         return -1;
     }
 
-    int ret = play_();
-    if (ret < 0)
-        return -1;
+    return 0;
+}
+
+int DecodeBase::play() {
+    assert(cbuf.health() >= 50);
+    core1_start();
 
     bool error = false;
     while (true) {
@@ -64,24 +55,24 @@ int DecodeBase::play() {
                       &msg,
                       portMAX_DELAY);
 
-        auto type = (DecodeMsgType) MSG_TYPE(msg);
+        auto type = (DecodeMsgType) MSG_TYPE(DECODE_MSG_BITS, DECODE_MSG_TYPE_BITS, msg);
+        auto data = (uint16_t)      MSG_DATA(DECODE_MSG_BITS, DECODE_MSG_TYPE_BITS, msg);
 
-        uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
-
+        // uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
         // printf("rtos ram used: %2d%%  max %2d%%  player unused stack: %ld\n",
         //        (configTOTAL_HEAP_SIZE - xPortGetFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
         //        (configTOTAL_HEAP_SIZE - xPortGetMinimumEverFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
         //        min_free_stack);
 
         if (type == BUF_READ) {
-            raw_buf_just_read(MSG_DATA(msg));
-        }
-        else if (type == ERROR) {
-            puts("playback error");
-            error = true;
-            break;
+            ack_bytes(data);
         }
         else if (type == END) {
+            if (data) {
+                puts("playback error");
+                error = true;
+            }
+
             break;
         }
     }
@@ -89,20 +80,20 @@ int DecodeBase::play() {
     return error ? -1 : 0;
 }
 
-int DecodeBase::stop() {
-    vQueueDelete(queue);
-
-    return 0;
+void DecodeBase::stop() {
+    if (queue)
+        vQueueDelete(queue);
 }
 
-void DecodeBase::notify_playback_end(bool error) {
+void DecodeBase::notify(uint8_t type, uint16_t data) {
+    uint32_t msg = MSG_MAKE(DECODE_MSG_BITS, DECODE_MSG_TYPE_BITS, type, data);
+
     if (get_core_num() == 1) {
         // core1 -- non-local core for RTOS
-        fifo_send_with_data(PLAYER_WAKE, error);
+        fifo_send_with_data(PLAYER, msg);
     }
     else {
         // core0 -- notify RTOS directly
-        uint32_t msg = MSG_MAKE(error ? ERROR : END, 0);
         xQueueSend(queue, &msg, portMAX_DELAY);
     }
 }
@@ -143,7 +134,7 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
                duration/60, duration%60,
                took_ms,
                int(took_ms * 100 / format->ms_per_unit()),
-               format->raw_buf.health()
+               cbuf.health()
         );
         //
         // stats_display();
@@ -178,10 +169,7 @@ void DecodeBase::dma_watch() {
 }
 
 void DecodeBase::dma_preload() {
-    // wait for at least some data to be available
-    // can't use <data_left_*> methods because read_ptr might be equal to write_ptr (undefined behavior)
-    while (format->raw_buf.get_write_offset() == 0);
-
+    // data presence is guaranteed by <play>
     format->decode_header();
     format->decode_exactly_n(audio_pcm, format->units_to_decode_whole());
 }

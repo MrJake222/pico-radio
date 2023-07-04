@@ -9,6 +9,7 @@ class DecodeFile : public DecodeBase {
 
     FRESULT fr;
     FIL fp;
+    bool file_open;
 
     bool eof;
     int load_buffer(int bytes);
@@ -18,14 +19,14 @@ class DecodeFile : public DecodeBase {
 
 public:
     void begin(const char* path_, Format* format_) override;
-    int play_() override;
-    int stop() override;
+    int play() override;
+    void stop() override;
 
     // Do not call directly
     // used by callbacks
 
     // callback from fifo data (on core0)
-    void raw_buf_just_read(unsigned int bytes) override;
+    void ack_bytes(uint16_t bytes) override;
 
     using DecodeBase::DecodeBase;
 };

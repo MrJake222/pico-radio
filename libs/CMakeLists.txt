@@ -3,24 +3,26 @@ add_subdirectory(external)
 add_library(libs
         buttons/buttons.cpp
 
-        decode/decodebase.cpp
-        decode/decodefile.cpp
-        decode/decodestream.cpp
-        decode/formatmp3.cpp
-        decode/formatwav.cpp
-
-        display/screen.cpp
-        display/screenmng.cpp
         display/screens/scfavourites.cpp
         display/screens/scplay.cpp
         display/screens/scsearch.cpp
         display/screens/scsearchres.cpp
+        display/tft/st7735s.cpp
+        display/tft/ubuntu_mono.cpp
+        display/tft/icons.cpp
+        display/screen.cpp
+        display/screenmng.cpp
 
         httpc/httpclient.cpp
         httpc/httpclientpico.cpp
 
         mcorefifo/mcorefifo.cpp
 
+        player/decode/decodebase.cpp
+        player/decode/decodefile.cpp
+        player/decode/decodestream.cpp
+        player/decode/formatmp3.cpp
+        player/decode/formatwav.cpp
         player/i2s.pio.cpp
         player/player.cpp
         player/filetype.cpp
@@ -30,24 +32,19 @@ add_library(libs
         radios/listpls.cpp
         radios/radiosearch.cpp
 
-        tft/st7735s.cpp
-        tft/ubuntu_mono.cpp
-        tft/icons.cpp
-
         buffers.cpp
         circularbuffer.cpp
-        circularbuffertools.cpp
         )
 
 target_include_directories(libs PUBLIC
         buttons
-        decode
         httpc
         mcorefifo
+        player/decode
         player
         radios
         display
-        tft
+        display/tft
         .
         )
 

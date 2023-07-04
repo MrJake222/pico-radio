@@ -27,8 +27,6 @@
 #define BUF_REVERSE                     0
 // buffer overrun protection, can lead to loop
 #define BUF_OVERRUN_PROTECTION          0
-// target buffer health
-// #define HTTP_CONTENT_BUFFER_TARGET      70
 #define PLAYER_END_TIMEOUT_MS           1000
 
 // --------------------------------- Http --------------------------------- //
@@ -40,7 +38,7 @@
 #define HTTP_CONTENT_TYPE_HDR_SIZE      256
 
 #define HTTP_DATA_BUF_SIZE_BYTES        TCP_WND
-#define HTTP_CONNECT_TIMEOUT_MS         5000
+#define HTTP_TIMEOUT_MS                 5000
 #define HTTP_POLL_INTERVAL_MS           2000     // minimum is half a second
 #define HTTP_NOTIFY_INDEX               1
 

@@ -10,23 +10,21 @@
 class HttpClient {
 
     // these are platform-specific
-    // send as much as possible, return how many was sent
-    // or -1 on failure
+    // send/receive as much as possible, return how many was sent/received (at least one byte)
+    // returns -1 on failure
     virtual int send(const char* buf, int buflen, bool more) = 0;
     virtual int recv(char* buf, int buflen) = 0;
     virtual int connect_to(const char* host, unsigned short port) = 0;
     virtual int disconnect() = 0;
+    virtual int already_read() = 0;
 
     // returns number of bytes transferred
     // fails only on socket error
     // returns -1 on failure
     int send_all(const char* buf, int buflen, bool more);
-    int recv_all(char* buf, int buflen);
 
     // helper functions
     int send_string(const char* buf, bool more);
-    // searches for \r\n, returns line+length without \r\n (or -1 on failure)
-    int recv_line(char* buf, int maxlen);
 
     char host[HTTP_HOST_MAX_LEN];
     char path[HTTP_PATH_MAX_LEN];
@@ -41,6 +39,9 @@ class HttpClient {
     // Query/Response buffer
     char qrbuf[HTTP_QUERY_RESP_BUF_SIZE];
 
+    // how many bytes the headers occupied
+    int headers_length;
+
     int h_content_length;
     char h_content_type[HTTP_CONTENT_TYPE_HDR_SIZE];
     char h_location[HTTP_LOCATION_HDR_SIZE];
@@ -50,7 +51,7 @@ class HttpClient {
     int connect_url(const char* url);
 
 protected:
-    virtual void header_parsing_done() { }
+    virtual void header_parsing_done() { headers_length = already_read(); }
 
     // always call before starting a connection
     virtual void reset_state() { }
@@ -69,5 +70,18 @@ public:
 
     // header access methods
     int get_content_length() { return h_content_length; }
+    bool more_content() { return (already_read() - headers_length) < get_content_length(); }
+
     const char* get_content_type() { return h_content_type; }
+
+    // data access methods
+
+    // receive given number of bytes
+    // receives <buflen> bytes and returns 0
+    // or fails with return value -1
+    int recv_all(char* buf, int buflen);
+
+    // receives whole line
+    // searches for \r\n, returns line+length without \r\n (or -1 on failure)
+    int recv_line(char* buf, int bufsize);
 };

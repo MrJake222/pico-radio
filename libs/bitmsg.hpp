@@ -1,8 +1,7 @@
 #pragma once
 
-#define MSG_BITS      32
-#define MSG_TYPE_BITS  8
-#define MSG_DATA_MASK ((1 << (MSG_BITS - MSG_TYPE_BITS)) - 1)
-#define MSG_TYPE(val) ((FifoMsgType) ((val) >> (MSG_BITS - MSG_TYPE_BITS)))
-#define MSG_DATA(val) ((val) & MSG_DATA_MASK)
-#define MSG_MAKE(type, data) (((type) << (MSG_BITS - MSG_TYPE_BITS)) | ((data) & MSG_DATA_MASK))
+#define MSG_TYPE_SHIFT(msg_bits, type_bits) ((msg_bits) - (type_bits))
+#define  MSG_DATA_MASK(msg_bits, type_bits) ((1 << MSG_TYPE_SHIFT(msg_bits, type_bits)) - 1)
+#define      MSG_TYPE(msg_bits, type_bits, val) ((val) >> ((msg_bits) - (type_bits)))
+#define      MSG_DATA(msg_bits, type_bits, val) ((val) & MSG_DATA_MASK(msg_bits, type_bits))
+#define      MSG_MAKE(msg_bits, type_bits, type, data) (((type) << MSG_TYPE_SHIFT(msg_bits, type_bits)) | ((data) & MSG_DATA_MASK(msg_bits, type_bits)))

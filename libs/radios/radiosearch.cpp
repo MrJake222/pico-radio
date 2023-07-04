@@ -22,8 +22,7 @@ void client_err_cb(void* arg, int err) {
     rs->notify();
 }
 
-static List* query_url(HttpClientPico& client, const char* url, volatile CircularBuffer& raw_buf, struct station* stations, int max_stations) {
-    raw_buf.reset_only_data();
+static List* query_url(HttpClientPico& client, const char* url, struct station* stations, int max_stations) {
     int r = client.get(url);
     if (r) {
         printf("querying url %s failed\n", url);
@@ -47,31 +46,24 @@ static List* query_url(HttpClientPico& client, const char* url, volatile Circula
         return nullptr;
     }
 
-    list->begin(&raw_buf,
-                stations,
-                max_stations);
+    list->begin(&client, stations, max_stations);
 
-    while (raw_buf.read_bytes_total() < client.get_content_length()) {
+    while (client.more_content()) {
         // loop until all content data has been read
         
         ListError lr = list->try_consume();
 
-        if (lr == ListError::NO_DATA) {
-            // buffer underflow -> wait for more data
-            ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-            if (client.is_err()) {
-                client.close();
-                puts("receive error");
-                return nullptr;
-            }
+        if (lr == ListError::ERROR) {
+            puts("stations error");
+            client.close();
+            return nullptr;
         }
 
-        else if (lr == ListError::OK_ABORT) {
+        else if (lr == ListError::ABORT) {
             // buffer maxed out, don't waste more time
+            puts("maxed out stations");
             break;
         }
-
-        // rest of the values ignored (like OK and IGNORE)
     }
 
     r = client.close();
@@ -96,7 +88,7 @@ void rs_search_task(void* arg) {
 
         snprintf(rs->url_buf, SEARCH_URL_BUF_LEN, urls[i], rs->query);
         
-        List* list = query_url(rs->client, rs->url_buf, rs->cbuf,
+        List* list = query_url(rs->client, rs->url_buf,
                                rs->stations + rs->stations_offset,
                                MAX_STATIONS - rs->stations_offset);
 
@@ -106,7 +98,7 @@ void rs_search_task(void* arg) {
         }
 
         // printf("done loading url, loaded %d stations\n", list->stations_found);
-        rs->stations_offset += list->stations_found;
+        rs->stations_offset += list->get_stations_found();
 
         if (rs->stations_offset == MAX_STATIONS) {
             puts("maxed out stations, done");
@@ -140,9 +132,6 @@ void RadioSearch::notify() {
 
 void RadioSearch::begin(const char* query_) {
     query = query_;
-
-    cbuf.reset_with_cb();
-    cbuf.set_write_ack_callback(this, rs_raw_buf_write_cb);
 
     client.begin();
     client.set_err_cb(client_err_cb, this);
@@ -179,7 +168,7 @@ const char* RadioSearch::get_station_url(int i) {
     const char* url = stations[i].url;
     const char* ext = url + strlen(url) - 4;
     if (strcmp(ext, ".pls") == 0) {
-        List* list = query_url(client, url, cbuf, stations_pls, MAX_STATIONS_PLS);
+        List* list = query_url(client, url, stations_pls, MAX_STATIONS_PLS);
         if (!list)
             return nullptr;
 

@@ -5,20 +5,8 @@
 
 ListM3U listm3u;
 
-ListError ListM3U::try_consume() {
-    int eol;
-    ListError r = try_consume_pre(eol);
-    if (r != ListError::OK)
-        // propagate higher if not ok
-        return r;
-
-    // not empty line
-    // not maxed out stations
-
-    *buf->read_ptr_of(eol) = '\0';
-    auto line = (const char*)buf->read_ptr();
-
-    if (*buf->read_ptr() == '#') {
+ListError ListM3U::try_consume_format(char* line) {
+    if (line[0] == '#') {
         // comment (metadata)
         line++; // skip #
 
@@ -44,9 +32,8 @@ ListError ListM3U::try_consume() {
         set_current_url(line);
 
         // url marks the end of station definition
-        stations_found++;
+        set_next_station();
     }
 
-    try_consume_post(eol);
     return ListError::OK;
 }

@@ -4,23 +4,11 @@
 
 ListPLS listpls;
 
-ListError ListPLS::try_consume() {
-    int eol;
-    ListError r = try_consume_pre(eol);
-    if (r != ListError::OK)
-        // propagate higher if not ok
-        return r;
+ListError ListPLS::try_consume_format(char* line) {
 
-    // not empty line
-    // not maxed out stations
-
-    *buf->read_ptr_of(eol) = '\0';
-    auto line = (const char*)buf->read_ptr();
-
-    if (*buf->read_ptr() == '[') {
+    if (line[0] == '[') {
         // tag name
         // skip
-        try_consume_post(eol);
         return ListError::OK;
     }
 
@@ -31,9 +19,8 @@ ListError ListPLS::try_consume() {
         val++;
 
         set_current_url(val);
-        stations_found++;
+        set_next_station();
     }
 
-    try_consume_post(eol);
     return ListError::OK;
 }

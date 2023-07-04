@@ -13,9 +13,9 @@ protected:
     // used to abort playback as fast as possible
     bool user_abort;
 
-public:
     volatile CircularBuffer& raw_buf;
 
+public:
     Format(volatile CircularBuffer& raw_buf_)
         : raw_buf(raw_buf_)
         { }

@@ -48,22 +48,27 @@ static volatile int dma_channel_b;
 static char filepath[1024];
 
 HELIX_STATIC_DECLARE();
-static FormatMP3 format_mp3(get_raw_buf(), (HMP3Decoder)&mp3DecInfo);
-static FormatWAV format_wav(get_raw_buf());
+static FormatMP3 format_mp3(get_cbuf(), (HMP3Decoder)&mp3DecInfo);
+static FormatWAV format_wav(get_cbuf());
+
+static void core1_start();
 
 static DecodeFile dec_file(
         audio_pcm,
         BUF_PCM_SIZE_32BIT,
         a_done_irq,
-        b_done_irq);
+        b_done_irq,
+        get_cbuf(),
+        core1_start);
 
 static DecodeStream dec_stream(
         audio_pcm,
         BUF_PCM_SIZE_32BIT,
         a_done_irq,
         b_done_irq,
-        get_http_buf(),
-        get_raw_buf());
+        get_cbuf(),
+        get_http_client(),
+        core1_start);
 
 static DecodeBase* dec;
 
@@ -169,6 +174,7 @@ static void dma_start() {
     dma_channel_start(dma_channel_a);
 }
 
+// TODO move to decodebase.cpp
 static void core1_entry() {
     dec->core1_init();
 
@@ -176,6 +182,10 @@ static void core1_entry() {
     dma_start();
 
     while (dec->core1_loop());
+}
+
+static void core1_start() {
+    multicore_launch_core1(core1_entry);
 }
 
 static void player_task(void* arg) {
@@ -208,16 +218,22 @@ static void player_task(void* arg) {
             goto clean_up;
     }
 
-    multicore_launch_core1(core1_entry);
+    r = dec->setup();
+    if (r < 0) {
+        puts("setup failed");
+        failed = true;
+        // playback didn't start
+        // just clean-up
+        goto clean_up;
+    }
 
+    // this starts core1
+    // and blocks for the time of playback
     r = dec->play();
     if (r < 0) {
         puts("play failed");
         failed = true;
     }
-
-    // TODO watch for decode not starting (server not sending data)
-    // TODO watch for stream just ending (server stops sending data)
 
     multicore_reset_core1();
 
@@ -248,12 +264,12 @@ static void player_task(void* arg) {
 
     puts("dma channels stopped.");
 
+clean_up:
+    pio_sm_put_blocking(pio, sm, 0);
+
     dec->stop();
     dec = nullptr;
 
-    pio_sm_put_blocking(pio, sm, 0);
-
-clean_up:
     if (failed && fail_cb)
         fail_cb(fail_cb_arg);
 

@@ -8,6 +8,14 @@
 
 typedef void(*h_cb)(void* arg, int err);
 
+enum HttpNotificationBitEnum {
+    CONNECT,
+    ERROR,
+    DNS,
+    RECV,
+    SENT
+};
+
 class HttpClientPico : public HttpClient {
 
     int send(const char* buf, int buflen, bool more) override;
@@ -18,16 +26,8 @@ class HttpClientPico : public HttpClient {
     // lwip structure
     struct tcp_pcb* pcb;
 
-    // buffers
-    // <content> decides where incoming data goes. By default, it is written to <http_buf> (<content> = false)
-    // then after <connect_ok> remaining data is moved to <cbuf> and <content> is set to true
-    volatile bool content;
-    volatile CircularBuffer& http_buf;
+    // content buffer
     volatile CircularBuffer& cbuf;
-    volatile CircularBuffer& get_buffer() volatile { return content ? cbuf : http_buf; }
-
-    // moves all data from <http_buf> to <cbuf>
-    void http_to_content();
 
     // status variables
     volatile bool err;
@@ -46,36 +46,35 @@ class HttpClientPico : public HttpClient {
 
     // used to notify the connection task
     // on dns query/connect complete/error
-    TaskHandle_t current_task;
-    void save_current_task_handle() { current_task = xTaskGetCurrentTaskHandle(); }
-    void erase_task_handle() { current_task = nullptr; }
-    void wait(bool unlock_lwip=true);
-    void notify() volatile { if (current_task) xTaskNotifyGiveIndexed(current_task, HTTP_NOTIFY_INDEX); }
+    TaskHandle_t task;
+    // waits for notification
+    // returns -1 on error or timeout
+    int wait(int bit);
+    void notify(int bit) volatile;
 
     // polling
     // when connection is broken (no RST, but no data received/transmitted)
-    // polling callback will report an error
+    // polling callback will report an error (abort the connection, error callback gets ABRT)
     // this variable holds number of bytes communicated since last poll
     unsigned int bytes_rx_tx_since_poll;
 
 protected:
-    void header_parsing_done() override;
-
     void reset_state() override;
     void reset_state_with_cb() override;
 
 public:
 
-    HttpClientPico(volatile CircularBuffer& http_buf_, volatile CircularBuffer& cbuf_)
+    HttpClientPico(volatile CircularBuffer& cbuf_)
         : HttpClient()
-        , http_buf(http_buf_)
         , cbuf(cbuf_)
         { }
 
-    void rx_ack(unsigned int bytes);
+    void rx_ack(uint16_t bytes);
 
     void set_err_cb(h_cb cb_, void* arg_);
     bool is_err() volatile { return err; }
+
+    int already_read() override { return cbuf.read_bytes_total(); }
 
     // callbacks
     friend void gethost_callback(const char* name, const ip_addr_t* ipaddr, void* arg);

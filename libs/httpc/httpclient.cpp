@@ -1,6 +1,5 @@
 #include <cstdlib>
 #include <httpclient.hpp>
-#include <algorithm>
 
 static void str_to_lower(char* str) {
     for (int i=0; i<strlen(str); i++) {
@@ -49,38 +48,54 @@ int HttpClient::send_string(const char *buf, bool more) {
     return 0;
 }
 
-int HttpClient::recv_line(char *buf, int maxlen) {
+int HttpClient::recv_line(char *buf, int bufsize) {
 
     int line_length = 0;
     int ret;
 
-    while (line_length+1 < maxlen) {
-        ret = recv_all(buf, 2);
+    char chr;
+    bool r_seen = false;
+    bool overrun = false;
+
+    while (true) {
+        // recv will receive at least one byte
+        ret = recv(&chr, 1);
         if (ret < 0)
             return -1;
 
-        if (buf[0] == '\r' && buf[1] == '\n') {
-            buf[0] = 0;
+        if (chr == '\r') {
+            r_seen = true;
+            chr = 0;
+        }
+
+        else if (chr == '\n') {
+            // found \n
+            // it's either singular line ending (only \n)
+            // or \r\n\ if \r was seen (r_seen = true)
+
+            if (overrun) {
+                puts("line buffer overrun");
+                return -1;
+            }
+
+            if (r_seen) {
+                // string already terminated
+                return line_length - 1; // line length without \r
+            }
+
+            // \r not seen
+            // terminate string
+            buf[line_length] = 0;
             return line_length;
         }
 
-        if (buf[1] == '\r') {
-            buf += 2;
-            ret = recv_all(buf, 1);
-            if (ret < 0)
-                return -1;
-
-            if (buf[0] == '\n') {
-                buf[-1] = 0;
-                return line_length - 1;
-            }
+        if (line_length+1 < bufsize) {
+            buf[line_length++] = chr;
         }
-
-        buf += 2;
-        line_length += 2;
+        else {
+            overrun = true;
+        }
     }
-
-    return line_length;
 }
 
 int HttpClient::split_host_path_port(const char *url) {
@@ -97,12 +112,12 @@ int HttpClient::split_host_path_port(const char *url) {
     if (sep) {
         // separator found
         size_t host_len = sep - url;
-        if (host_len > HTTP_HOST_MAX_LEN) {
+        if (host_len >= HTTP_HOST_MAX_LEN) {
             return -1;
         }
 
         size_t path_len = strlen(sep);
-        if (path_len > HTTP_PATH_MAX_LEN) {
+        if (path_len >= HTTP_PATH_MAX_LEN) {
             return -1;
         }
 
@@ -114,7 +129,7 @@ int HttpClient::split_host_path_port(const char *url) {
     else {
         // no sep
         size_t host_len = strlen(url);
-        if (host_len > HTTP_HOST_MAX_LEN) {
+        if (host_len >= HTTP_HOST_MAX_LEN) {
             return -1;
         }
 

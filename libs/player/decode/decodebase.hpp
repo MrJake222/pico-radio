@@ -16,11 +16,15 @@ enum class DMAChannel {
     ChanB
 };
 
+#define DECODE_MSG_BITS         24
+#define DECODE_MSG_TYPE_BITS     8
+
 enum DecodeMsgType {
     BUF_READ,
-    ERROR,
     END
 };
+
+typedef void(*no_param_fn)();
 
 class DecodeBase {
 
@@ -47,67 +51,83 @@ class DecodeBase {
     void dma_watch();
     void dma_preload();
 
+    // called when <dma_watch> actually loads some data
+    void dma_feed_done(int decoded, int took_us, DMAChannel channel);
+
+    // TODO refactor
+    // return source medium size in bytes
+    virtual int source_size_bytes() { return 0; }
     // play stats
     int sum_units_decoded;
     int last_seconds;
 
+    // data format to decode
+    Format* format;
+
     // Main task variables
     xQueueHandle queue;
-    friend void raw_buf_read_msg_static(void* arg, uint32_t data);
-    friend void player_wake(void* arg, uint32_t error);
+    friend void cbuf_read_cb(void* arg, unsigned int bytes);
+    friend void player_msg(void* arg, uint32_t error);
+
+    // notifies RTOS task either directly (called from core0) or via fifo (called from core1)
+    void notify(uint8_t type, uint16_t data);
+
+    // notify RTOS task about buffer being read
+    inline void notify_ack(unsigned short bytes) { notify(BUF_READ, bytes); }
+
+    // Called from core 0 RTOS task after receiving a notification sent via read callback
+    virtual void ack_bytes(uint16_t bytes) = 0;
+
+    // function to be called to start core1
+    // called after filling up at least <min_health>% of buffer filled
+    no_param_fn core1_start;
 
 protected:
+    static const int min_health = 50;
+
     // generic path to resource
     // (used by implementations to connect open file/stream)
     const char* path;
 
-    // format decoder
-    // needs to be protected for data loading
-    Format* format;
+    // content buffer
+    volatile CircularBuffer& cbuf;
 
-    // called when <dma_watch> actually loads some data
-    virtual void dma_feed_done(int decoded, int took_us, DMAChannel channel);
+    // notify about natural content end occurred (dma underflow) or error
+    inline void notify_playback_end(bool error) { notify(END, error); }
 
-    // return source medium size in bytes
-    virtual int source_size_bytes() { return 0; }
-
-    // for internal usage
-    // notifies playback either directly or via fifo
-    // to be used when natural content end occurred (dma underflow)
-    // or on error on data read
-    void notify_playback_end(bool error);
-
-    // Notifies when format reads from the raw buffer
-    // Called from core0
-    virtual void raw_buf_just_read(unsigned int bytes) { }
-
-    // internal version of <play>
-    // is virtual, can be overridden
-    // when this function is called <queue> is initialized
-    virtual int play_() = 0;
+    // called when there is a data underflow
+    void set_eop() { format->set_eop(); }
 
 public:
-    DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_)
+    DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_, volatile CircularBuffer& cbuf_, no_param_fn core1_start_)
             : audio_pcm(audio_pcm_)
             , audio_pcm_size_words(audio_pcm_size_words_)
             , a_done_irq(a_done_irq_)
             , b_done_irq(b_done_irq_)
-//            , path(path_)
-//            , format(format_)
+            , cbuf(cbuf_)
+            , core1_start(core1_start_)
     { }
 
     virtual ~DecodeBase() = default;
 
-    // called before and after decoding
-    // serves as a constructor with changing parameters
-    // can't fail
+    // called before play
+    // "constructor" for changing parameters (can't fail)
     virtual void begin(const char* path_, Format* format_);
 
+    // called before play
+    // setups queue (can fail, but needs to be done before play)
+    int setup();
+
     // does the heavy work (connect/open file)
-    // can fail with non-zero return value
-    // start blocks calling task or fails
-    int play();
-    virtual int stop();
+    // blocks calling task or fails
+    // subclasses should override and call base class
+    // but not before buffer health is at least <min_buffer>%
+    virtual int play();
+
+    // called after play
+    // cleans up, runs always
+    // check what should be closed/destroyed
+    virtual void stop();
 
     // after core0_end caller needs to wait for DMA
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }

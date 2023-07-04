@@ -6,13 +6,16 @@ void lwip_err_cb(void* arg, int err) {
 }
 
 void DecodeStream::begin(const char* path_, Format* format_) {
-    DecodeBase::begin(path_, format_);
-
+    // client begin() before base class begin()
+    // this resets cbuf callbacks
     client.begin();
     client.set_err_cb(lwip_err_cb, this);
+
+    // this sets cbuf callbacks
+    DecodeBase::begin(path_, format_);
 }
 
-int DecodeStream::play_() {
+int DecodeStream::play() {
     int r = client.get(path);
     if (r)
         return -1;
@@ -20,16 +23,12 @@ int DecodeStream::play_() {
     return 0;
 }
 
-int DecodeStream::stop() {
-    int r = client.close();
-    if (r)
-        return -1;
-
-    return DecodeBase::stop();
+void DecodeStream::stop() {
+    client.close();
+    DecodeBase::stop();
 }
 
-void DecodeStream::raw_buf_just_read(unsigned int bytes) {
+void DecodeStream::ack_bytes(uint16_t bytes) {
     // TODO handle content-length
-    DecodeBase::raw_buf_just_read(bytes);
     client.rx_ack(bytes);
 }

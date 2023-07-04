@@ -11,9 +11,7 @@ typedef void(*all_ld_cb_fn)(void* arg, int errored);
 
 class RadioSearch {
 
-    volatile CircularBuffer& cbuf;
-
-    HttpClientPico client;
+    HttpClientPico& client;
     TaskHandle_t search_task;
 
     const char* query;
@@ -32,9 +30,8 @@ class RadioSearch {
     void notify();
 
 public:
-    RadioSearch(volatile CircularBuffer& http_buf, volatile CircularBuffer& cbuf_)
-        : cbuf(cbuf_)
-        , client(http_buf, cbuf_)
+    RadioSearch(HttpClientPico& client_)
+        : client(client_)
         { }
 
     void begin(const char* query_);

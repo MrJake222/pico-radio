@@ -7,7 +7,7 @@
 
 void all_loaded_cb(void* arg, int errored);
 
-static RadioSearch rs(get_http_buf(), get_raw_buf());
+static RadioSearch rs(get_http_client());
 
 #define S_RES_W     145
 #define S_RES_H      20

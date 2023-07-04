@@ -3,15 +3,12 @@
 #include <cstdint>
 #include <bitmsg.hpp>
 
-enum FifoMsgType {
-    // raw buffer just got read on core1
-    // send to core0 to confirm reception (stream) or read from file (file)
-    // data is number of bytes read
-    RAW_BUF_READ,
+#define FIFO_MSG_BITS       32
+#define FIFO_MSG_TYPE_BITS   8
 
-    // used to wake up the player thread
-    // when ending playback
-    PLAYER_WAKE
+enum FifoMsgType {
+    // used to notify player thread
+    PLAYER
 };
 
 typedef void(*FifoCallback)(void* arg, uint32_t data);

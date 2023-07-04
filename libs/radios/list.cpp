@@ -1,34 +1,32 @@
 #include "list.hpp"
 
-#include <circularbuffertools.hpp>
 #include <cstdio>
 #include <cstring>
 #include <random>
 
-ListError List::try_consume_pre(int& eol) {
-    eol = cbt_end_of_line(*buf);
-    if (eol == -1)
-        return ListError::NO_DATA;
+#define MAX_LINE_LEN    128
 
-    if (eol == 0) {
+ListError List::try_consume() {
+    char line[MAX_LINE_LEN + 1];
+    int len;
+
+    len = client->recv_line(line, MAX_LINE_LEN + 1);
+    if (len < 0)
+        return ListError::ERROR;
+
+    if (len == 0) {
         // empty line
-        try_consume_post(eol);
-        return ListError::OK_IGNORE;
+        return ListError::OK;
     }
 
     if (stations_found == stations_len) {
-        puts("maxed out stations");
-        try_consume_post(eol);
-        return ListError::OK_ABORT;
+        return ListError::ABORT;
     }
 
-    return ListError::OK;
-}
+    // not empty line
+    // not maxed out stations
 
-void List::try_consume_post(int eol) {
-    buf->read_ack(eol + 1); // ack line + (\r or \n)
-    if (*buf->read_ptr() == '\n')
-        buf->read_ack(1);   // ack remaining line delimiter
+    return try_consume_format(line);
 }
 
 void List::set_current_uuid(const char* p) {
