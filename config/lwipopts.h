@@ -24,11 +24,10 @@
 #define LWIP_ARP                    1
 #define LWIP_ETHERNET               1
 #define LWIP_ICMP                   1
-#define LWIP_RAW                    1
+#define LWIP_RAW                    0
 #define TCP_MSS                     1460
 #define TCP_WND                     (56 * 1024) // was around 11, then 24
 #define TCP_SND_BUF                 4096
-#define LWIP_DISABLE_TCP_SANITY_CHECKS 1
 #define TCP_SND_QUEUELEN            ((4 * (TCP_SND_BUF) + (TCP_MSS - 1)) / (TCP_MSS))
 // #define TCP_FAST_INTERVAL           50
 #define LWIP_NETIF_STATUS_CALLBACK  1
