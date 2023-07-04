@@ -76,6 +76,8 @@ public:
 
     int already_read() override { return cbuf.read_bytes_total(); }
 
+    int wait_for_health(int min_health);
+
     // callbacks
     friend void gethost_callback(const char* name, const ip_addr_t* ipaddr, void* arg);
     friend void error_callback(void *arg, err_t err);

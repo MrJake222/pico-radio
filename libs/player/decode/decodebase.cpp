@@ -169,6 +169,9 @@ void DecodeBase::dma_watch() {
 }
 
 void DecodeBase::dma_preload() {
+    puts("dma preload");
+    cbuf.debug_read(32, 0);
+
     // data presence is guaranteed by <play>
     format->decode_header();
     format->decode_exactly_n(audio_pcm, format->units_to_decode_whole());

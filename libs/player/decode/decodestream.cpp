@@ -20,6 +20,9 @@ int DecodeStream::play() {
     if (r)
         return -1;
 
+    // wait for content
+    client.wait_for_health(min_health);
+
     return 0;
 }
 

@@ -241,6 +241,32 @@ int HttpClientPico::recv(char* buf, int buflen) {
     return len;
 }
 
+
+int HttpClientPico::wait_for_health(int min_health) {
+    // use signed arithmetic (overflows handled)
+    int start = (int) time_us_32();
+
+    while ((((int) time_us_32()) - start) < HTTP_TIMEOUT_MS) {
+        cyw43_arch_lwip_begin();
+
+        if (cbuf.health() >= min_health) {
+            cyw43_arch_lwip_end();
+            return 0;
+        }
+
+        int r = wait(RECV);
+        if (r < 0) {
+            puts("wait error in wait_for_health");
+            cyw43_arch_lwip_end();
+            return -1;
+        }
+
+        cyw43_arch_lwip_end();
+    }
+
+    return -1; // timeout
+}
+
 void HttpClientPico::reset_state() {
     HttpClient::reset_state();
 
@@ -289,7 +315,7 @@ int HttpClientPico::wait(int bit) {
         cyw43_arch_lwip_end();
         xTaskNotifyWaitIndexed(HTTP_NOTIFY_INDEX, (1 << bit), (1 << bit), &val, HTTP_TIMEOUT_MS / portTICK_PERIOD_MS);
         cyw43_arch_lwip_begin();
-    } while ((val & (1 << bit)) == 0 && ((int) time_us_32()) - start < HTTP_TIMEOUT_MS);
+    } while (((val & (1 << bit)) == 0) && ((((int) time_us_32()) - start) < HTTP_TIMEOUT_MS));
 
     if (err) {
         puts("error waiting for notification");

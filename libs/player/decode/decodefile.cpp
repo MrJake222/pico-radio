@@ -31,6 +31,8 @@ int DecodeFile::play() {
     if (r)
         return -1;
 
+    // no wait required as we just loaded whole buffer
+
     return 0;
 }
 
