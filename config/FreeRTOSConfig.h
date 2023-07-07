@@ -46,7 +46,7 @@
 #define configUSE_IDLE_HOOK                     0
 #define configUSE_TICK_HOOK                     0
 #define configTICK_RATE_HZ                      ( ( TickType_t ) 1000 )
-#define configMAX_PRIORITIES                    5 // cyw43 task priority
+#define configMAX_PRIORITIES                    6 // cyw43 task priority is 4, lwip is 5
 #define configMINIMAL_STACK_SIZE                ( configSTACK_DEPTH_TYPE ) 128
 #define configUSE_16_BIT_TICKS                  0
 #define configTASK_NOTIFICATION_ARRAY_ENTRIES   2

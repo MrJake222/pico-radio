@@ -8,8 +8,15 @@
 #define LWIP_SOCKET                 0
 
 #define TCPIP_THREAD_NAME           "tcpip"
-#define TCPIP_THREAD_PRIO           PRI_LWIP_TCPIP
+#define TCPIP_THREAD_PRIO           (configMAX_PRIORITIES - 1)
 #define TCPIP_THREAD_STACKSIZE      2048
+
+// data needs to be received fast for this to work
+// set high tcpip task priority
+#define LWIP_DISABLE_TCP_SANITY_CHECKS  1
+#define PBUF_POOL_SIZE                  16 // unit is ~ethernet packet (1500 bytes), whole window is 43
+#define TCP_WND                         (63 * 1024) // was around 11, then 24
+                                                    // now 63 (can't be 64 because of TCP window being a 16-bit number with no scaling)
 
 #define DEFAULT_TCP_RECVMBOX_SIZE   5
 #define DEFAULT_ACCEPTMBOX_SIZE     5
@@ -18,15 +25,13 @@
 #define MEM_LIBC_MALLOC             0
 #define MEM_ALIGNMENT               4
 #define MEM_SIZE                    4000
-#define MEMP_NUM_TCP_SEG            32 // and this
+#define MEMP_NUM_TCP_SEG            32
 #define MEMP_NUM_ARP_QUEUE          10
-#define PBUF_POOL_SIZE              (60 * 1024 / 1500) // unit is ~ethernet packet
 #define LWIP_ARP                    1
 #define LWIP_ETHERNET               1
 #define LWIP_ICMP                   1
 #define LWIP_RAW                    0
 #define TCP_MSS                     1460
-#define TCP_WND                     (56 * 1024) // was around 11, then 24
 #define TCP_SND_BUF                 4096
 #define TCP_SND_QUEUELEN            ((4 * (TCP_SND_BUF) + (TCP_MSS - 1)) / (TCP_MSS))
 // #define TCP_FAST_INTERVAL           50
@@ -59,6 +64,22 @@
 #define ICMP_STATS                  0
 #define MEM_STATS                   1
 #define MEMP_STATS                  0
+#define LINK_STATS                  0
+#define IPFRAG_STATS                0
+#endif
+
+#define DEBUG_MEM                   0
+#if DEBUG_MEM
+#define LWIP_DEBUG                  1
+#define LWIP_STATS                  1
+#define LWIP_STATS_DISPLAY          1
+#define MEM_STATS                   0
+#define MEMP_STATS                  1
+#define ETHARP_STATS                0
+#define TCP_STATS                   0
+#define IP_STATS                    0
+#define UDP_STATS                   0
+#define ICMP_STATS                  0
 #define LINK_STATS                  0
 #define IPFRAG_STATS                0
 #endif

@@ -1,5 +1,4 @@
 #pragma once
-#include "lwipopts.h"
 
 // --------------------------------- Playback buffers --------------------------------- //
 // RAW buffer must be at least the size of PCM buffer
@@ -8,7 +7,7 @@
 
 // MP3 compressed data buffer
 #define BUF_HIDDEN_MP3_SIZE_FRAMES     2
-#define BUF_MP3_SIZE_FRAMES            56
+#define BUF_MP3_SIZE_FRAMES            64
 #define BUF_MP3_SIZE_BYTES_PER_FRAME   1024
 #define BUF_HIDDEN_MP3_SIZE_BYTES      (BUF_HIDDEN_MP3_SIZE_FRAMES * BUF_MP3_SIZE_BYTES_PER_FRAME)
 #define BUF_MP3_SIZE_BYTES             (BUF_MP3_SIZE_FRAMES * BUF_MP3_SIZE_BYTES_PER_FRAME)
@@ -57,7 +56,7 @@
 // --------------------------------- RTOS --------------------------------- //
 #define PRI_PLAYER              3  // handles player's buffer ack & playback stop
 #define PRI_FIFO_QUEUE          3  // handles message passing to for ex. player task
-#define PRI_LWIP_TCPIP          2
+#define PRI_LWIP_TCPIP          5
 #define PRI_RADIO_SEARCH        1
 #define PRI_WIFI_SETUP          1
 #define PRI_INPUT               1

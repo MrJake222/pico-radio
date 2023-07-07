@@ -121,6 +121,10 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
                 ? FinishReason::UnderflowChanA
                 : FinishReason::UnderflowChanB;
 
+        // TODO configure dma channel to handle less samples than full buffer (requires abstracting dma code out of player.cpp)
+        // dma_channel_set_trans_count(dma)
+        // format->units_to_bytes(decoded);
+
         notify_playback_end(false);
     }
 
@@ -143,8 +147,10 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
                int(took_ms * 100 / format->ms_per_unit()),
                cbuf.health()
         );
-        //
-        // stats_display();
+
+        // Lwip stats
+        // to enable/disable see DEBUG* in lwipopts.h
+        stats_display();
     }
 }
 
@@ -156,6 +162,7 @@ void DecodeBase::dma_preload() {
 
     puts("core1: data loaded");
     cbuf.debug_read(32, 0);
+    puts("");
 
     // TODO move decode header to core1 (along with any other metadata decoding)
     // or maybe not, it'd require reads of possibly mp3 stream if no header
@@ -169,6 +176,9 @@ void DecodeBase::dma_preload() {
 void DecodeBase::dma_watch() {
     uint64_t t_start, t_end;
     int decoded;
+
+    // TODO add wfi here (requires enabling dma irq0 on core1 -> requires abstracting dma code out of player.cpp)
+    // __wfi();
 
     if (a_done_irq) {
         a_done_irq = false;
