@@ -43,6 +43,9 @@ class DecodeBase {
     volatile bool& a_done_irq;
     volatile bool& b_done_irq;
 
+    // minimum buffer health for core1 to start decoding
+    static const int min_health = 50;
+
     // called when <dma_watch> actually loads some data
     void dma_feed_done(int decoded, int took_us, DMAChannel channel);
 
@@ -75,8 +78,6 @@ class DecodeBase {
     entry_fn core1_entry;
 
 protected:
-    static const int min_health = 50;
-
     // generic path to resource
     // (used by implementations to connect open file/stream)
     const char* path;
@@ -86,9 +87,6 @@ protected:
 
     // notify about natural content end occurred (dma underflow) or error
     inline void notify_playback_end(bool error) { notify(END, error); }
-
-    // called when there is a data underflow
-    void set_eop() { format->set_eop(); }
 
 public:
     DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_, volatile CircularBuffer& cbuf_, entry_fn core1_entry_)
@@ -119,15 +117,15 @@ public:
     // called after play
     // cleans up, runs always
     // check what should be closed/destroyed
-    virtual void stop();
+    virtual void end();
 
     // core1 should decode units of data while this is false
     bool decode_finished() { return decode_finished_by != FinishReason::NoFinish; }
     // after play() returns caller needs to wait for DMA
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
-    // called on user abort (from core0) to abort core1
-    void abort_user() { format->set_user_abort(); }
+    // caller wants to stop playback thread (from core0)
+    void stop_playback() { format->set_user_abort(); }
 
     /* ---------- DMA feed handling CORE 1 ---------- */
     // uses dma flags to load specific part of the buffer

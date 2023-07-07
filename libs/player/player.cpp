@@ -266,7 +266,7 @@ static void player_task(void* arg) {
 clean_up:
     pio_sm_put_blocking(pio, sm, 0);
 
-    dec->stop();
+    dec->end();
     dec = nullptr;
 
     if (failed && fail_cb)
@@ -299,7 +299,7 @@ void player_stop() {
     if (!player_is_started())
         return;
 
-    dec->abort_user();
+    dec->stop_playback();
 }
 
 bool player_is_started() {

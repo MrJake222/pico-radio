@@ -13,7 +13,7 @@ class DecodeStream : public DecodeBase {
 public:
     void begin(const char* path_, Format* format_) override;
     int play() override;
-    void stop() override;
+    void end() override;
 
     // callback called from core0
     void ack_bytes(uint16_t bytes) override;

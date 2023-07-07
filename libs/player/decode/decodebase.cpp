@@ -90,7 +90,7 @@ int DecodeBase::play() {
     return error ? -1 : 0;
 }
 
-void DecodeBase::stop() {
+void DecodeBase::end() {
     if (queue)
         vQueueDelete(queue);
 }
@@ -109,6 +109,12 @@ void DecodeBase::notify(uint8_t type, uint16_t data) {
 }
 
 void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
+    if (decoded < 0) {
+        // indicates an error
+        puts("dma feed failed");
+        notify_playback_end(true);
+    }
+
     if (decoded < format->units_to_decode_half()) {
         // dma channel wasn't supplied with enough data -> ending playback
         decode_finished_by = channel == DMAChannel::ChanA

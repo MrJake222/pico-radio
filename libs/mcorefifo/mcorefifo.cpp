@@ -16,6 +16,7 @@ struct cb_data {
     bool use_task;
 };
 
+// TODO use zero-alloc
 static std::map<FifoMsgType, struct cb_data> cbs;
 
 static bool entry_check(uint32_t val) {

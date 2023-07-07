@@ -22,7 +22,7 @@ class FormatMP3 : public Format {
     bool stats_print;
     void calculate_stats();
 
-    void align_buffer(uint8_t *orig_read_ptr);
+    int align_buffer(uint8_t *orig_read_ptr);
     int decode_up_to_one_frame(uint32_t* audio_pcm_buf);
 
 public:

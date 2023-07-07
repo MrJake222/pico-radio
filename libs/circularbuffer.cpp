@@ -56,14 +56,30 @@ bool CircularBuffer::can_wrap_buffer() volatile const {
 }
 
 bool CircularBuffer::should_wrap_buffer() volatile const {
-    return (size - read_at) <= size_hidden;
+    return data_left_continuous() < data_left();
 }
 
-void CircularBuffer::wrap_buffer() volatile {
+int CircularBuffer::wrap_buffer() volatile {
     long buf_left = data_left_continuous();
 
     memcpy(buffer - buf_left, read_ptr(), buf_left);
     read_at = -buf_left;
+
+    return buf_left;
+}
+
+int CircularBuffer::try_wrap_buffer() volatile {
+    if (!should_wrap_buffer())
+        // wrapping the buffer won't provide more data
+        return 0;
+
+    if (!can_wrap_buffer()) {
+        // can't wrap buffer, not enough space
+        puts("can't wrap buffer, hidden space too small");
+        return -1;
+    }
+
+    return wrap_buffer();
 }
 
 void CircularBuffer::move_to(volatile CircularBuffer &other) volatile {

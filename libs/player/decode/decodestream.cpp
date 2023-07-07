@@ -26,9 +26,9 @@ int DecodeStream::play() {
     return DecodeBase::play();
 }
 
-void DecodeStream::stop() {
+void DecodeStream::end() {
     client.close();
-    DecodeBase::stop();
+    DecodeBase::end();
 }
 
 void DecodeStream::ack_bytes(uint16_t bytes) {

@@ -7,12 +7,17 @@
 
 class DecodeFile : public DecodeBase {
 
+    // maximum buffer health when the load will take place
+    static const int load_max_health = 80;
+
     FRESULT fr;
     FIL fp;
     bool file_open;
 
-    bool eof;
+    // returns number of bytes loaded or -1 on error
     int load_buffer(int bytes);
+
+    bool eof;
     int check_buffer();
 
     int source_size_bytes() override { return f_size(&fp); }
@@ -20,7 +25,7 @@ class DecodeFile : public DecodeBase {
 public:
     void begin(const char* path_, Format* format_) override;
     int play() override;
-    void stop() override;
+    void end() override;
 
     // Do not call directly
     // used by callbacks

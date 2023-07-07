@@ -25,18 +25,16 @@ int DecodeFile::play() {
     file_open = true;
 
     // preload with file data
-    // this must load less than whole buffer
-    // because read == write is undefined behavior
     int r = load_buffer(cbuf.size);
-    if (r)
+    if (r < 0)
         return -1;
 
     // no wait required as we just loaded whole buffer
 
-    return 0;
+    return DecodeBase::play();
 }
 
-void DecodeFile::stop() {
+void DecodeFile::end() {
     if (file_open) {
         fr = f_close(&fp);
         if (fr != FR_OK) {
@@ -44,11 +42,11 @@ void DecodeFile::stop() {
         }
     }
 
-    DecodeBase::stop();
+    DecodeBase::end();
 }
 
 int DecodeFile::load_buffer(int bytes) {
-//     printf("loading, offset %ld  load_at %ld\n", format->raw_buf.get_read_offset(), format->raw_buf.get_write_offset());
+    // printf("loading %d bytes, offset %ld  load_at %ld\n", bytes, cbuf.get_read_offset(), cbuf.get_write_offset());
 
     uint read;
     fr = f_read(&fp, cbuf.write_ptr(), bytes, &read);
@@ -64,28 +62,37 @@ int DecodeFile::load_buffer(int bytes) {
 
     cbuf.write_ack(read);
 
-    // printf("loaded,  offset %ld  load_at %ld\n", format->raw_buf.get_read_offset(), format->raw_buf.get_write_offset());
-    return 0;
+    // printf("loaded,  offset %ld  load_at %ld\n", cbuf.get_read_offset(), cbuf.get_write_offset());
+    return read;
 }
 
 int DecodeFile::check_buffer() {
-    if (cbuf.data_left() < cbuf.size / 2) {
-        if (eof) {
-            // eof, after wrap, set end-of-playback
-            set_eop();
-        }
+    if (eof)
+        // no more data to read
+        return 0;
 
-        else {
-            // no eof -> just load more
-            return load_buffer(cbuf.size / 2);
-        }
+    if (cbuf.health() > load_max_health)
+        // data chunk too small
+        return 0;
+
+
+    int data_len = cbuf.space_left();
+
+    // this is kind of thread-safe because space_left_continuous is either
+    // constant or only growing (then its limited by data_len)
+    for (int i=0; i<2 && data_len>0; i++) {
+        long write = MIN(data_len, cbuf.space_left_continuous());
+        int r = load_buffer(write);
+        if (r < 0)
+            return -1; // load_buffer errored
+
+        data_len -= write;
     }
 
-    return 0;
+    return data_len;
 }
 
 void DecodeFile::ack_bytes(uint16_t bytes) {
-    // TODO maybe load exactly how many was consumed?
     int r = check_buffer();
     if (r) {
         printf("check_buffer failed, ending playback");

@@ -50,7 +50,7 @@
 #define DHCP_DOES_ARP_CHECK         0
 #define LWIP_DHCP_DOES_ACD_CHECK    0
 
-#define DEBUG                       1
+#define DEBUG                       0
 #if DEBUG
 #define LWIP_DEBUG                  1
 #define LWIP_STATS                  1
