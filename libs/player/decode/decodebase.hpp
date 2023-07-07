@@ -24,18 +24,13 @@ enum DecodeMsgType {
     END
 };
 
-typedef void(*no_param_fn)();
+typedef void(*entry_fn)();
 
 class DecodeBase {
 
     // set on feeding DMA partially filled data
     // (or on user abort)
     FinishReason decode_finished_by;
-
-    /* ------------ Private helpers ------------ */
-    // called to gracefully finish core0 thread
-    // gates core0 not to exit before DMA decodes latest unit of information
-    bool decode_finished() { return decode_finished_by != FinishReason::NoFinish; }
 
     // raw PCM data buffer & size
     uint32_t* const audio_pcm;
@@ -47,9 +42,6 @@ class DecodeBase {
     // B done -> reload 2nd half of audio_pcm
     volatile bool& a_done_irq;
     volatile bool& b_done_irq;
-    // uses dma flags to load specific part of the buffer
-    void dma_watch();
-    void dma_preload();
 
     // called when <dma_watch> actually loads some data
     void dma_feed_done(int decoded, int took_us, DMAChannel channel);
@@ -80,7 +72,7 @@ class DecodeBase {
 
     // function to be called to start core1
     // called after filling up at least <min_health>% of buffer filled
-    no_param_fn core1_start;
+    entry_fn core1_entry;
 
 protected:
     static const int min_health = 50;
@@ -99,13 +91,13 @@ protected:
     void set_eop() { format->set_eop(); }
 
 public:
-    DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_, volatile CircularBuffer& cbuf_, no_param_fn core1_start_)
+    DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_, volatile CircularBuffer& cbuf_, entry_fn core1_entry_)
             : audio_pcm(audio_pcm_)
             , audio_pcm_size_words(audio_pcm_size_words_)
             , a_done_irq(a_done_irq_)
             , b_done_irq(b_done_irq_)
             , cbuf(cbuf_)
-            , core1_start(core1_start_)
+            , core1_entry(core1_entry_)
     { }
 
     virtual ~DecodeBase() = default;
@@ -129,15 +121,19 @@ public:
     // check what should be closed/destroyed
     virtual void stop();
 
-    // after core0_end caller needs to wait for DMA
+    // core1 should decode units of data while this is false
+    bool decode_finished() { return decode_finished_by != FinishReason::NoFinish; }
+    // after play() returns caller needs to wait for DMA
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
     // called on user abort (from core0) to abort core1
     void abort_user() { format->set_user_abort(); }
 
-    // functions called from core1
-    void core1_init();
-    bool core1_loop();
+    /* ---------- DMA feed handling CORE 1 ---------- */
+    // uses dma flags to load specific part of the buffer
+    void dma_preload();
+    void dma_watch();
 
+    // this becomes valid after <dma_preload>
     long bit_freq() { return format->bit_freq(); }
 };

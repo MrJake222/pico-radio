@@ -51,7 +51,7 @@ HELIX_STATIC_DECLARE();
 static FormatMP3 format_mp3(get_cbuf(), (HMP3Decoder)&mp3DecInfo);
 static FormatWAV format_wav(get_cbuf());
 
-static void core1_start();
+[[noreturn]] static void core1_entry();
 
 static DecodeFile dec_file(
         audio_pcm,
@@ -59,7 +59,7 @@ static DecodeFile dec_file(
         a_done_irq,
         b_done_irq,
         get_cbuf(),
-        core1_start);
+        core1_entry);
 
 static DecodeStream dec_stream(
         audio_pcm,
@@ -68,7 +68,7 @@ static DecodeStream dec_stream(
         b_done_irq,
         get_cbuf(),
         get_http_client(),
-        core1_start);
+        core1_entry);
 
 static DecodeBase* dec;
 
@@ -174,18 +174,19 @@ static void dma_start() {
     dma_channel_start(dma_channel_a);
 }
 
-// TODO move to decodebase.cpp
-static void core1_entry() {
-    dec->core1_init();
+[[noreturn]] static void core1_entry() {
+    dec->dma_preload();
 
     i2s_program_set_bit_freq(pio, sm, dec->bit_freq());
     dma_start();
 
-    while (dec->core1_loop());
-}
+    while (!dec->decode_finished()) {
+        dec->dma_watch();
+    }
 
-static void core1_start() {
-    multicore_launch_core1(core1_entry);
+    // core1 never returns
+    // terminated by <multicore_reset_core1>
+    while(true);
 }
 
 static void player_task(void* arg) {
@@ -234,8 +235,6 @@ static void player_task(void* arg) {
         puts("play failed");
         failed = true;
     }
-
-    multicore_reset_core1();
 
     printf("\nfinished decode.\n");
 

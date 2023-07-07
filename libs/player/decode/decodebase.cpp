@@ -4,6 +4,7 @@
 
 #include <cstdio>
 #include <lwip/stats.h>
+#include <pico/multicore.h>
 
 void cbuf_read_cb(void* arg, unsigned int bytes) {
     auto b16 = (uint16_t) bytes;
@@ -49,8 +50,10 @@ int DecodeBase::play() {
 
     // redirect ACKs through fifo
     cbuf.set_read_ack_callback(this, cbuf_read_cb);
-    core1_start();
+    // start decoding on core1
+    multicore_launch_core1(core1_entry);
 
+    // handle messages
     bool error = false;
     while (true) {
         uint32_t msg;
@@ -82,6 +85,8 @@ int DecodeBase::play() {
         }
     }
 
+    multicore_reset_core1();
+
     return error ? -1 : 0;
 }
 
@@ -101,15 +106,6 @@ void DecodeBase::notify(uint8_t type, uint16_t data) {
         // core0 -- notify RTOS directly
         xQueueSend(queue, &msg, portMAX_DELAY);
     }
-}
-
-void DecodeBase::core1_init() {
-    dma_preload();
-}
-
-bool DecodeBase::core1_loop() {
-    dma_watch();
-    return !decode_finished();
 }
 
 void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
@@ -146,6 +142,24 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
     }
 }
 
+void DecodeBase::dma_preload() {
+
+    // wait for data in buffer
+    puts("core1: waiting for data");
+    while (cbuf.health() < min_health);
+
+    puts("core1: data loaded");
+    cbuf.debug_read(32, 0);
+
+    // TODO move decode header to core1 (along with any other metadata decoding)
+    // or maybe not, it'd require reads of possibly mp3 stream if no header
+    // or implement peek() function
+    format->decode_header();
+    // TODO remove "exactly_n" functions
+    // they were used before while health
+    format->decode_exactly_n(audio_pcm, format->units_to_decode_whole());
+}
+
 void DecodeBase::dma_watch() {
     uint64_t t_start, t_end;
     int decoded;
@@ -171,21 +185,4 @@ void DecodeBase::dma_watch() {
         t_end = time_us_64();
         dma_feed_done(decoded, (int) (t_end - t_start), DMAChannel::ChanB);
     }
-}
-
-void DecodeBase::dma_preload() {
-
-    // wait for data in buffer
-    while (cbuf.health() < 50);
-
-    puts("dma preload");
-    cbuf.debug_read(32, 0);
-
-    // TODO move decode header to core1 (along with any other metadata decoding)
-    // or maybe not, it'd require reads of possibly mp3 stream if no header
-    // or implement peek() function
-    format->decode_header();
-    // TODO remove "exactly_n" functions
-    // they were used before while health
-    format->decode_exactly_n(audio_pcm, format->units_to_decode_whole());
 }
