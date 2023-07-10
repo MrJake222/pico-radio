@@ -4,19 +4,19 @@
 #include <pico/platform.h>
 #include <cstdio>
 
-long CircularBuffer::data_left() volatile const {
-    return (long) (written_bytes - read_bytes);
+int CircularBuffer::data_left() volatile const {
+    return (int) (written_bytes - read_bytes);
 }
 
-long CircularBuffer::data_left_continuous() volatile const {
+int CircularBuffer::data_left_continuous() volatile const {
     return MIN(data_left(), size - read_at);
 }
 
-long CircularBuffer::space_left() volatile const {
+int CircularBuffer::space_left() volatile const {
     return size - data_left();
 }
 
-long CircularBuffer::space_left_continuous() const volatile {
+int CircularBuffer::space_left_continuous() const volatile {
     return MIN(space_left(), size - write_at);
 }
 
@@ -29,8 +29,8 @@ uint8_t* CircularBuffer::write_ptr() volatile const {
 }
 
 void CircularBuffer::read_ack(unsigned int bytes) volatile {
-    read_at += (long)bytes;
-    read_at %= size;
+    read_at += (int)bytes;
+    while (read_at >= size) read_at -= size; // faster than modulo (%)
     read_bytes += (b_type)bytes;
 
     if (read_ack_callback)
@@ -38,8 +38,8 @@ void CircularBuffer::read_ack(unsigned int bytes) volatile {
 }
 
 void CircularBuffer::write_ack(unsigned int bytes) volatile {
-    write_at += (long)bytes;
-    write_at %= size;
+    write_at += (int)bytes;
+    while (write_at >= size) write_at -= size;
     written_bytes += (b_type)bytes;
 
     if (write_ack_callback)
@@ -47,7 +47,7 @@ void CircularBuffer::write_ack(unsigned int bytes) volatile {
 }
 
 void CircularBuffer::read_reverse(unsigned int bytes) volatile {
-    read_at -= (long)bytes;
+    read_at -= (int)bytes;
     read_bytes -= (b_type) bytes;
 }
 
@@ -60,7 +60,7 @@ bool CircularBuffer::should_wrap_buffer() volatile const {
 }
 
 int CircularBuffer::wrap_buffer() volatile {
-    long buf_left = data_left_continuous();
+    int buf_left = data_left_continuous();
 
     memcpy(buffer - buf_left, read_ptr(), buf_left);
     read_at = -buf_left;
@@ -91,11 +91,11 @@ void CircularBuffer::move_to(volatile CircularBuffer &other) volatile {
     }
 }
 
-void CircularBuffer::write(const uint8_t* data, long data_len) volatile {
+void CircularBuffer::write(const uint8_t* data, int data_len) volatile {
     // data may be too big to write at once (wrapping)
     // write 2 times to wrap
     for (int i=0; i<2 && data_len>0; i++) {
-        long write = MIN(data_len, space_left_continuous());
+        int write = MIN(data_len, space_left_continuous());
         memcpy(write_ptr(), data, write);
         write_ack(write);
 
@@ -123,17 +123,6 @@ bool CircularBuffer::is_write_ack_callback_set() volatile {
 }
 
 void CircularBuffer::debug_read(int bytes, int reverse) volatile {
-
-    // for (int i=0; i<MIN(bytes+prepend, data_left_continuous()); i++) {
-    //     if ((i % 32) == 0) {
-    //         if (i > 0)
-    //             puts("");
-    //
-    //         printf("%5ld: ", read_at - prepend + i);
-    //     }
-    //
-    //     printf("%02x ", buffer[read_at - prepend + i]);
-    // }
 
     const int width = 16;
 

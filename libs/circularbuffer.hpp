@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-typedef unsigned int b_type;
+typedef unsigned long long b_type;
 
 class CircularBuffer {
 
@@ -15,11 +15,12 @@ class CircularBuffer {
 
     // where to read/write data from/to
     // used to calculate effective addresses (must be signed for wrapping)
-    long read_at;
-    long write_at;
+    int read_at;
+    int write_at;
 
     // how many bytes was read from/written to this buffer
-    // used to calculate bytes in the buffer
+    // used to calculate bytes currently in the buffer
+    // solves issues with undefined behavior with read_at == write_at
     b_type read_bytes;
     b_type written_bytes;
 
@@ -32,7 +33,7 @@ class CircularBuffer {
 
     // wraps buffer unconditionally
     // returns number of bytes copied
-    int wrap_buffer()         volatile;
+    int wrap_buffer() volatile;
 
 public:
     const int size_hidden;
@@ -66,13 +67,13 @@ public:
         write_ack_callback = nullptr;
     }
 
-    long get_read_offset()  volatile const { return read_at; }
-    long get_write_offset() volatile const { return write_at; }
+    int get_read_offset()  volatile const { return read_at; }
+    int get_write_offset() volatile const { return write_at; }
 
-    long data_left()                volatile const;
-    long data_left_continuous()     volatile const;
-    long space_left()               volatile const;
-    long space_left_continuous()    volatile const;
+    int data_left()                volatile const;
+    int data_left_continuous()     volatile const;
+    int space_left()               volatile const;
+    int space_left_continuous()    volatile const;
 
     int health() volatile const { return data_left() * 100 / size; }
 
@@ -110,7 +111,7 @@ public:
     void move_to(volatile CircularBuffer& other) volatile;
 
     // write at write_ptr and ack
-    void write(const uint8_t* data, long data_len) volatile;
+    void write(const uint8_t* data, int data_len) volatile;
 
 
     // register a callback when data was just consumed
