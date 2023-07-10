@@ -43,6 +43,5 @@ public:
 
     virtual long bit_freq() = 0;
     virtual float ms_per_unit() = 0;
-    virtual int units_to_sec(int units) = 0;
-    virtual int duration_sec(int file_size_bytes) = 0;
+    virtual int bytes_to_sec(b_type bytes) = 0;
 };

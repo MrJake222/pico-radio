@@ -18,8 +18,8 @@ void FormatWAV::decode_header() {
     printf("data size:   %u\n", header.data_size);
     puts("");
 
-    printf("duration:    %02u:%02u\n", duration_sec(0)/60, duration_sec(0)%60);
-    puts("");
+    // printf("duration:    %02u:%02u\n", duration_sec(0)/60, duration_sec(0)%60);
+    // puts("");
 }
 
 int FormatWAV::decode_up_to_n(uint32_t *audio_pcm_buf, int n) {
@@ -58,10 +58,6 @@ float FormatWAV::ms_per_unit() {
     return 1000.0f / header.bytes_per_second;
 }
 
-int FormatWAV::units_to_sec(int units) {
-    return units / header.bytes_per_second;
-}
-
-int FormatWAV::duration_sec(int file_size_bytes) {
-    return header.data_size / header.bytes_per_second;
+int FormatWAV::bytes_to_sec(b_type bytes) {
+    return (int)(bytes / header.bytes_per_second);
 }

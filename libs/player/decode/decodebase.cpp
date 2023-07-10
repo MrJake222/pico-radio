@@ -32,8 +32,6 @@ void DecodeBase::begin(const char* path_, Format* format_) {
     fifo_register(PLAYER, player_msg, this, false);
 
     decode_finished_by = FinishReason::NoFinish;
-    sum_units_decoded = 0;
-    last_seconds = -1;
 }
 
 int DecodeBase::setup() {
@@ -63,12 +61,6 @@ int DecodeBase::play() {
 
         auto type = (DecodeMsgType) MSG_TYPE(DECODE_MSG_BITS, DECODE_MSG_TYPE_BITS, msg);
         auto data = (uint16_t)      MSG_DATA(DECODE_MSG_BITS, DECODE_MSG_TYPE_BITS, msg);
-
-        // uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
-        // printf("rtos ram used: %2d%%  max %2d%%  player unused stack: %ld\n",
-        //        (configTOTAL_HEAP_SIZE - xPortGetFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
-        //        (configTOTAL_HEAP_SIZE - xPortGetMinimumEverFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
-        //        min_free_stack);
 
         if (type == BUF_READ) {
             ack_bytes(data);
@@ -113,6 +105,7 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
         // indicates an error
         puts("dma feed failed");
         notify_playback_end(true);
+        return;
     }
 
     if (decoded < format->units_to_decode_half()) {
@@ -128,30 +121,7 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
         notify_playback_end(false);
     }
 
-    sum_units_decoded += decoded; // TODO try to use raw_buf->read_bytes_total();
-    int seconds = format->units_to_sec(sum_units_decoded);
-
-    if (seconds != last_seconds) {
-        last_seconds = seconds;
-
-        int duration = format->duration_sec(source_size_bytes());
-        float took_ms = (float)took_us / 1000.f / (float)format->units_to_decode_half();
-
-        // TODO move this to a callback/task
-        // this is on core1, probably easier to just create a task with interval of 1 sec
-        // printf("\n\n\n-------------------------------------------------------------------------------------------------------- ");
-        printf("%02d:%02d / %02d:%02d   decode %5.2fms %2d%%   health %2d%%\n",
-               seconds/60, seconds%60,
-               duration/60, duration%60,
-               took_ms,
-               int(took_ms * 100 / format->ms_per_unit()),
-               cbuf.health()
-        );
-
-        // Lwip stats
-        // to enable/disable see DEBUG* in lwipopts.h
-        stats_display();
-    }
+    frame_decode_time_ms = (float)took_us / 1000.f / decoded;
 }
 
 void DecodeBase::dma_preload() {

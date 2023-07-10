@@ -213,12 +213,6 @@ float FormatMP3::ms_per_unit() {
     return (float)frame_info.outputSamps * 1000 / frame_info.nChans / frame_info.samprate;
 }
 
-int FormatMP3::units_to_sec(int units) {
-    return units * ms_per_unit() / 1000;
-}
-
-int FormatMP3::duration_sec(int file_size_bytes) {
-    // raw_buf.get_read_offset()
-    //   for a 128kbps file and 20kB buffer it gives a difference of 1.28s
-    return (file_size_bytes - raw_buf.get_read_offset()) * 8 / avg_bitrate();
+int FormatMP3::bytes_to_sec(b_type bytes) {
+    return (int)(bytes * 8 / avg_bitrate());
 }

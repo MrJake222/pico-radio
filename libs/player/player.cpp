@@ -72,6 +72,10 @@ static DecodeStream dec_stream(
 
 static DecodeBase* dec;
 
+// player tasks
+xTaskHandle player_task_h;
+xTaskHandle player_stat_task_h;
+
 // failure callback
 static fail_cb_fn fail_cb;
 static void* fail_cb_arg;
@@ -228,6 +232,10 @@ static void player_task(void* arg) {
         goto clean_up;
     }
 
+    if (player_stat_task_h)
+        // start displaying stats
+        xTaskNotifyGive(player_stat_task_h);
+
     // this starts core1
     // and blocks for the time of playback
     r = dec->play();
@@ -278,6 +286,55 @@ clean_up:
     vTaskDelete(nullptr);
 }
 
+static void player_update_stats() {
+    const int current = dec->current_time();
+    const int duration = dec->duration();
+
+    printf("%02d:%02d / %02d:%02d   decode %2d%%   health %2d%%  ",
+           current/60, current%60,
+           duration/60, duration%60,
+           dec->core1_usage(),
+           dec->buf_health()
+    );
+
+    printf("rtos ram used: %2d%%  max %2d%%  player stat unused stack: %ld  ",
+           (configTOTAL_HEAP_SIZE - xPortGetFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
+           (configTOTAL_HEAP_SIZE - xPortGetMinimumEverFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
+           uxTaskGetStackHighWaterMark(nullptr));
+
+    puts("");
+
+    // Lwip stats
+    // to enable/disable see DEBUG* in lwipopts.h
+    stats_display();
+}
+
+static void player_stat_task(void* arg) {
+
+    while (!player_is_started())
+        // wait for playback to start
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    TickType_t last_wake;
+    last_wake = xTaskGetTickCount();
+
+    int last_current = -1;
+
+    while (player_is_started()) {
+        const int current = dec->current_time();
+
+        if (current != last_current) {
+            player_update_stats();
+            last_current = current;
+        }
+
+        xTaskDelayUntil(&last_wake,
+                        500 / portTICK_PERIOD_MS);
+    }
+
+    vTaskDelete(nullptr);
+}
+
 void player_start(const char* path, fail_cb_fn fail_cb_, void* fail_cb_arg_) {
     printf("\nplaying: %s as %s file\n", path, filetype_from_name_string(path));
 
@@ -292,7 +349,15 @@ void player_start(const char* path, fail_cb_fn fail_cb_, void* fail_cb_arg_) {
             STACK_PLAYER,
             nullptr,
             PRI_PLAYER,
-            nullptr);
+            &player_task_h);
+
+    xTaskCreate(
+            player_stat_task,
+            "player stat",
+            STACK_PLAYER_STAT,
+            nullptr,
+            PRI_PLAYER_STAT,
+            &player_stat_task_h);
 }
 
 void player_stop() {

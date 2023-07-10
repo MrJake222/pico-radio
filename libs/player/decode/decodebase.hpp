@@ -49,15 +49,11 @@ class DecodeBase {
     // called when <dma_watch> actually loads some data
     void dma_feed_done(int decoded, int took_us, DMAChannel channel);
 
-    // TODO refactor
-    // return source medium size in bytes
-    virtual int source_size_bytes() { return 0; }
-    // play stats
-    int sum_units_decoded;
-    int last_seconds;
-
     // data format to decode
     Format* format;
+
+    // how much last dma feed took to decode 1 frame on average
+    float frame_decode_time_ms;
 
     // Main task variables
     xQueueHandle queue;
@@ -126,6 +122,14 @@ public:
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
     // caller wants to stop playback thread (from core0)
     void stop_playback() { format->set_user_abort(); }
+
+    // Media information
+    // return source medium size in bytes
+    virtual int source_size_bytes() { return 0; }
+    int current_time() { return format->bytes_to_sec(cbuf.read_bytes_total()); }
+    int duration() { return format->bytes_to_sec(source_size_bytes()); }
+    int core1_usage() { return int(frame_decode_time_ms * 100 / format->ms_per_unit()); }
+    int buf_health() { return cbuf.health(); }
 
     /* ---------- DMA feed handling CORE 1 ---------- */
     // uses dma flags to load specific part of the buffer

@@ -37,6 +37,5 @@ public:
 
     long bit_freq() override;
     float ms_per_unit() override;
-    int units_to_sec(int units) override;
-    int duration_sec(int file_size_bytes) override;
+    int bytes_to_sec(b_type bytes) override;
 };

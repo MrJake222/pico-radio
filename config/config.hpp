@@ -55,6 +55,7 @@
 
 // --------------------------------- RTOS --------------------------------- //
 #define PRI_PLAYER              3  // handles player's buffer ack & playback stop
+#define PRI_PLAYER_STAT         2  // handles player's statistics updates
 #define PRI_FIFO_QUEUE          3  // handles message passing to for ex. player task
 #define PRI_LWIP_TCPIP          5
 #define PRI_RADIO_SEARCH        1
@@ -63,6 +64,7 @@
 
 #define MIN_FREE_STACK            100
 #define STACK_PLAYER              (220 + MIN_FREE_STACK)
+#define STACK_PLAYER_STAT         (164 + MIN_FREE_STACK)
 #define STACK_FIFO_QUEUE          configMINIMAL_STACK_SIZE // currently unused
 #define STACK_RADIO_SEARCH        (240 + MIN_FREE_STACK)
 #define STACK_WIFI_SETUP          (200 + MIN_FREE_STACK)
