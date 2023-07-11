@@ -92,7 +92,7 @@ void Screen::begin() {
 void Screen::show() {
     display.set_bg_fg(COLOR_BG, COLOR_FG);
     display.clear_screen();
-    display.write_text(2, 0, get_title(), 1);
+    display.write_text(2, 0, get_title(), ubuntu_font_get_size(UbuntuFontSize::FONT_16));
 
     draw_buttons();
 }
@@ -100,7 +100,7 @@ void Screen::show() {
 void Screen::show_error(const char* err) {
     display.set_bg_fg(COLOR_BG_ERR, COLOR_FG);
     display.clear_screen();
-    display.write_text_wrap(2, 0, err, 1);
+    display.write_text_wrap(2, 0, err, ubuntu_font_get_size(UbuntuFontSize::FONT_16));
 
     is_err_displayed = true;
 }

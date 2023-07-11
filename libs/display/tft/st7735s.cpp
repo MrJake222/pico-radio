@@ -1,8 +1,8 @@
 #include <st7735s.hpp>
 #include <st7735_init.h>
 
-#include <ubuntu_mono.hpp>
 #include <icons.hpp>
+#include <font.hpp>
 
 #include <hardware/gpio.h>
 #include <pico/time.h>
@@ -142,63 +142,47 @@ static int rgb_blend(unsigned int fg, unsigned int bg, unsigned int fg_alpha) {
                 ((((fg & 0x0000FF) * fg_alpha + (bg & 0x0000FF) * bg_alpha) >> 8) & 0x0000FF));
 }
 
-int ST7735S::write_char(int text_x, int text_y, const char* chr, int scale) {
-    const uint8_t* chr_ptr;
+int ST7735S::write_char(int text_x, int text_y, const char* str, const struct font* font) {
 
     int bytes_consumed;
-    int index = try_map_utf8(chr);
-    if (index != -1) {
-        // utf character
-        chr_ptr = get_font_data_ptr(utf8_data, index);
-        bytes_consumed = 2;
-    }
-    else {
-        // ascii character (probably)
-        index = try_map_ascii(chr);
-        chr_ptr = get_font_data_ptr(ascii_data, index);
-        bytes_consumed = 1;
-    }
+    const uint8_t* chr_ptr = get_font_data_ptr(font, str, &bytes_consumed);
 
     setup_write(text_x, text_y,
-                text_x + FONT_W*scale,
-                text_y + FONT_H*scale);
+                text_x + font->W,
+                text_y + font->H);
 
-    for (int y=0; y<FONT_H; y++) {
-        for (int i=0; i<scale; i++) {
-            for (int x=0; x<FONT_W; x++) {
-                unsigned int alpha = *(chr_ptr + y*FONT_W + x);
-                uint16_t color = from_rgb(rgb_blend(fg, bg, alpha));
+    for (int y=0; y<font->H; y++) {
+        for (int x=0; x<font->W; x++) {
+            unsigned int alpha = *(chr_ptr + y*font->W + x);
+            uint16_t color = from_rgb(rgb_blend(fg, bg, alpha));
 
-                for (int j=0; j<scale; j++) {
-                    spi_write16_blocking(spi, &color, 1);
-                }
-            }
+            spi_write16_blocking(spi, &color, 1);
         }
     }
 
     return bytes_consumed;
 }
 
-const char* ST7735S::write_text(int text_x, int text_y, const char *str, int scale) {
+const char* ST7735S::write_text(int text_x, int text_y, const char *str, const struct font* font) {
     while (*str) {
-        str += write_char(text_x, text_y, str, scale);
-        text_x += FONT_W * scale;
+        str += write_char(text_x, text_y, str, font);
+        text_x += font->W;
     }
 
     return str;
 }
 
-const char* ST7735S::write_text_maxlen(int text_x, int text_y, const char* str, int scale, int maxlen) {
+const char* ST7735S::write_text_maxlen(int text_x, int text_y, const char* str, const struct font* font, int maxlen) {
     while (*str && maxlen--) {
-        str += write_char(text_x, text_y, str, scale);
-        text_x += FONT_W * scale;
+        str += write_char(text_x, text_y, str, font);
+        text_x += font->W;
     }
 
     return str;
 }
 
-const char* ST7735S::write_text_wrap(int text_x, int text_y, const char* str, int scale) {
-    const int chars_fitting = (W - text_x) / FONT_W;
+const char* ST7735S::write_text_wrap(int text_x, int text_y, const char* str, const struct font* font) {
+    const int chars_fitting = (W - text_x) / font->W;
     int len = strlen(str);
 
     while (*str) {
@@ -207,8 +191,8 @@ const char* ST7735S::write_text_wrap(int text_x, int text_y, const char* str, in
             len--;
         }
 
-        str = write_text_maxlen(text_x, text_y, str, scale, chars_fitting);
-        text_y += FONT_H; // newline
+        str = write_text_maxlen(text_x, text_y, str, font, chars_fitting);
+        text_y += font->H; // newline
     }
 
     return str;

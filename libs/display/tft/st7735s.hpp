@@ -1,6 +1,7 @@
 #pragma once
 
 #include <hardware/spi.h>
+#include <ubuntu_mono.hpp>
 
 class ST7735S {
 
@@ -82,12 +83,12 @@ public:
 
     // may try to access 2 bytes (for unicode)
     // returns number of bytes consumed
-    int write_char(int text_x, int text_y, const char *chr, int scale);
+    int write_char(int text_x, int text_y, const char* str, const struct font* font);
 
     // returns the pointer to byte after the text displayed
-    const char* write_text(int text_x, int text_y, const char *str, int scale);
-    const char* write_text_maxlen(int text_x, int text_y, const char *str, int scale, int maxlen);
-    const char* write_text_wrap(int text_x, int text_y, const char *str, int scale);
+    const char* write_text(int text_x, int text_y, const char *str, const struct font* font);
+    const char* write_text_maxlen(int text_x, int text_y, const char *str, const struct font* font, int maxlen);
+    const char* write_text_wrap(int text_x, int text_y, const char *str, const struct font* font);
 
     void draw_icon(int icon_x, int icon_y, struct icon icon);
 };

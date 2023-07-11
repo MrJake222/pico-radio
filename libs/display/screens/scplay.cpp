@@ -66,7 +66,7 @@ void ScPlay::show() {
     Screen::show();
 
     display.set_bg_fg(COLOR_BG, COLOR_BG_DARK_ACC2);
-    display.write_text_maxlen(15, 24, radio_name, 1, 17);
+    display.write_text_maxlen(15, 24, radio_name, ubuntu_font_get_size(UbuntuFontSize::FONT_16), 17);
 
     if (!is_err_displayed) {
         player_start(radio_url, this, player_failed_callback, player_update_callback);

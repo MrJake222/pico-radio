@@ -9,6 +9,7 @@ add_library(libs
         display/screens/scsearchres.cpp
         display/tft/st7735s.cpp
         display/tft/ubuntu_mono.cpp
+        display/tft/font.cpp
         display/tft/icons.cpp
         display/screen.cpp
         display/screenmng.cpp

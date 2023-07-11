@@ -139,7 +139,7 @@ void ScSearchRes::draw_button(int x, int y, bool selected) {
             name = rs.get_station_name(base_y + y);
 
             display.fill_rect(xs, ys, S_RES_W, S_RES_H, true);
-            display.write_text_maxlen(xs+3, ys, name, 1, 17); // TODO do scrolling
+            display.write_text_maxlen(xs+3, ys, name, ubuntu_font_get_size(UbuntuFontSize::FONT_16), 17); // TODO do scrolling
             break;
 
         case BACK:
@@ -179,10 +179,10 @@ void ScSearchRes::show() {
 
     display.set_bg(COLOR_BG);
     sprintf(subtitle, "\"%s\"", prompt);
-    display.write_text(8, 15, subtitle, 1);
+    display.write_text(8, 15, subtitle, ubuntu_font_get_size(UbuntuFontSize::FONT_16));
 
     if (first) {
-        display.write_text(10, 40, "Ładowanie", 2);
+        display.write_text(10, 40, "Ładowanie", ubuntu_font_get_size(UbuntuFontSize::FONT_24));
 
         first = false;
         rs.load_stations();

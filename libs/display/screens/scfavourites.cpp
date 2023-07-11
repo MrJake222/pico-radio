@@ -18,6 +18,6 @@ void ScFavourites::show() {
             display.set_bg(COLOR_BG_DARK);
 
         display.fill_rect(5, 23 + 23*i, 150, 20, true);
-        display.write_text(9, 25 + 23*i, tests[i], 1);
+        display.write_text(9, 25 + 23*i, tests[i], ubuntu_font_get_size(UbuntuFontSize::FONT_16));
     }
 }

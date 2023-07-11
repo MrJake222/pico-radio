@@ -207,7 +207,7 @@ void ScSearch::draw_button(int x, int y, bool selected) {
             letter = letters[y][x];
 
             display.fill_rect(xs, ys, KB_BNT_W, KB_BNT_H, true);
-            display.write_char(xs + 3, ys, &letter, 1);
+            display.write_char(xs + 3, ys, &letter, ubuntu_font_get_size(UbuntuFontSize::FONT_16));
             break;
     }
 }
@@ -215,7 +215,7 @@ void ScSearch::draw_button(int x, int y, bool selected) {
 void ScSearch::draw_prompt_field() {
     display.set_bg(COLOR_BG_DARK);
     display.fill_rect(5, 18, 131, 20, true);
-    display.write_text_maxlen(5 + 3, 18, prompt, 1, MAX_PROMPT_LEN);
+    display.write_text_maxlen(5 + 3, 18, prompt, ubuntu_font_get_size(UbuntuFontSize::FONT_16), MAX_PROMPT_LEN);
 
     set_btn_bg(get_action(current_x, current_y) == BACKSPACE, false);
 }
