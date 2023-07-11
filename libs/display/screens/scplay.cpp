@@ -56,6 +56,12 @@ void player_failed_callback(void* arg) {
     sc->show_error("odtwarzanie zakończyło się błędem");
 }
 
+void player_update_callback(void* arg) {
+    // called from player stat task
+
+    auto sc = (ScPlay*) arg;
+}
+
 void ScPlay::show() {
     Screen::show();
 
@@ -63,7 +69,7 @@ void ScPlay::show() {
     display.write_text_maxlen(15, 24, radio_name, 1, 17);
 
     if (!is_err_displayed) {
-        player_start(radio_url, player_failed_callback, this);
+        player_start(radio_url, this, player_failed_callback, player_update_callback);
     }
 }
 
