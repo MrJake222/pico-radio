@@ -12,10 +12,6 @@ class FormatMP3 : public Format {
 
     HMP3Decoder hMP3Decoder;
 
-    // set by decode
-    // used to limit buffer reversing
-    int bytes_consumed_last;
-
     // set by <calculate_stats>
     // used to calculate all the info about the file
     MP3FrameInfo frame_info;
@@ -35,7 +31,6 @@ public:
         Format::begin();
 
         MP3ClearBuffers(hMP3Decoder);
-        bytes_consumed_last = 0;
         stats_print = true;
         bitrate_sum = 0;
         bitrate_count = 0;

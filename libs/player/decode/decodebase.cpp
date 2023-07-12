@@ -134,12 +134,9 @@ void DecodeBase::dma_preload() {
     cbuf.debug_read(32, 0);
     puts("");
 
-    // TODO move decode header to core1 (along with any other metadata decoding)
-    // or maybe not, it'd require reads of possibly mp3 stream if no header
-    // or implement peek() function
     format->decode_header();
     // TODO remove "exactly_n" functions
-    // they were used before while health
+    // they were used before while (health < min)
     format->decode_exactly_n(audio_pcm, format->units_to_decode_whole());
 }
 

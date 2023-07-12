@@ -206,6 +206,9 @@ int HttpClient::parse_headers() {
 
         else if (strcmp(qrbuf, "content-length") == 0)
             h_content_length = atoi(val);
+
+        else if (strcmp(qrbuf, "icy-metaint") == 0)
+            h_icy_metaint = atoi(val);
     }
 
     return 0;

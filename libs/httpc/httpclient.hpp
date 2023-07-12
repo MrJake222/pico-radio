@@ -44,11 +44,13 @@ class HttpClient {
 
     // response headers
     // how many bytes the headers occupied
+    // set after get() finishes
     int headers_length;
 
     int h_content_length;
     char h_content_type[HTTP_CONTENT_TYPE_HDR_SIZE];
     char h_location[HTTP_LOCATION_HDR_SIZE];
+    int h_icy_metaint;
     int parse_headers();
     int parse_http();
 
@@ -81,10 +83,14 @@ public:
     int close();
 
     // header access methods
+    // raw headers length in bytes
+    int get_headers_length() { return headers_length; }
+
     int get_content_length() { return h_content_length; }
     bool more_content() { return (already_read() - headers_length) < get_content_length(); }
 
     const char* get_content_type() { return h_content_type; }
+    int get_icy_metaint() { return h_icy_metaint; }
 
     // data access methods
 

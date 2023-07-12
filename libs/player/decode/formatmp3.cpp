@@ -31,7 +31,7 @@ int FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
             // success after <sync_word_offset> bytes
             raw_buf.read_ack(sync_word_offset);
 
-            printf("offset %5ld (%4d)  avail %ld  ", raw_buf.get_read_offset(), raw_buf.read_ptr() - orig_read_ptr, raw_buf.data_left());
+            printf("offset %5d (%4d)  avail %d  ", raw_buf.get_read_offset(), raw_buf.read_ptr() - orig_read_ptr, raw_buf.data_left());
 
             matched = MP3CheckSyncWordRepeated(hMP3Decoder, raw_buf.read_ptr(), raw_buf.data_left_continuous());
             if (matched == 0) {
@@ -64,7 +64,7 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
     do {
         if (again && raw_buf.get_read_offset() > 0) {
             // again & not after wrap
-            printf("decode o %5ld   health %2d%%\n", raw_buf.get_read_offset(), raw_buf.health());
+            printf("decode o %5d   health %2d%%\n", raw_buf.get_read_offset(), raw_buf.health());
         }
 
         if (raw_buf.data_left_continuous() < MP3_HEADER_SIZE) {
@@ -87,7 +87,6 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
 
         bytes_consumed = dptr - dptr_orig;
 
-        int rev;
         uint8_t* orig_read;
 
         again = false;
@@ -110,7 +109,7 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
                 break;
 
             case ERR_MP3_INVALID_FRAMEHEADER:
-                printf("o %ld  wrong sync-word  health %2d%%\n", raw_buf.get_read_offset(), raw_buf.health());
+                printf("o %d  wrong sync-word  health %2d%%\n", raw_buf.get_read_offset(), raw_buf.health());
 
                 orig_read = raw_buf.read_ptr();
 #if BUF_REVERSE
@@ -139,9 +138,8 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
             case ERR_MP3_INVALID_DEQUANTIZE:
             case ERR_MP3_INVALID_IMDCT:
             case ERR_MP3_INVALID_SUBBAND:
-                printf("o %ld  frame didn't decode properly (code=%d), trying again\n", raw_buf.get_read_offset(), res);
+                printf("o %d  frame didn't decode properly (code=%d), trying again\n", raw_buf.get_read_offset(), res);
                 raw_buf.read_ack(bytes_consumed);
-                bytes_consumed_last = bytes_consumed;
                 again = true;
                 break;
 
@@ -152,7 +150,6 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
     } while (again);
 
     raw_buf.read_ack(bytes_consumed);
-    bytes_consumed_last = bytes_consumed;
 
     return 1;
 }
