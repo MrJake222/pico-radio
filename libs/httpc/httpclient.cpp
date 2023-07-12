@@ -298,27 +298,35 @@ int HttpClient::get(const char* url) {
     snprintf(qrbuf, HTTP_QUERY_RESP_BUF_SIZE, "GET %s HTTP/1.0\r\n", path);
     res = send_string(qrbuf, true);
     if (res < 0) {
-        puts("send string GET failed");
+        puts("send GET failed");
         return -1;
     }
 
     snprintf(qrbuf, HTTP_QUERY_RESP_BUF_SIZE, "Host: %s\r\n", host);
     res = send_string(qrbuf, true);
     if (res < 0) {
-        puts("send string Host failed");
+        puts("send header Host failed");
         return -1;
     }
 
     res = send_string("User-agent: PicoRadio/0.1\r\n", true);
     if (res < 0) {
-        puts("send string User-agent failed");
+        puts("send header User-agent failed");
         return -1;
+    }
+
+    if (send_icy_metadata) {
+        res = send_string("Icy-MetaData: 1\r\n", true);
+        if (res < 0) {
+            puts("send header Icy-MetaData failed");
+            return -1;
+        }
     }
 
     // TODO use cookies
     res = send_string("\r\n", false);
     if (res < 0) {
-        puts("send string <empty-line> failed");
+        puts("send <empty-line> failed");
         return -1;
     }
 

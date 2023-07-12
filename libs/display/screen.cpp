@@ -158,6 +158,8 @@ void Screen::show() {
 }
 
 void Screen::show_error(const char* err) {
+    reset_scrolled_texts();
+
     display.clear_screen(COLOR_BG_ERR);
     display.write_text_wrap(2, 0, err,
                             ubuntu_font_get_size(UbuntuFontSize::FONT_16),

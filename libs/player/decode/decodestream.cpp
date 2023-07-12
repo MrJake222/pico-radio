@@ -10,6 +10,7 @@ void DecodeStream::begin(const char* path_, Format* format_) {
     // this resets cbuf callbacks
     client.begin();
     client.set_err_cb(lwip_err_cb, this);
+    client.enable_icy_metadata();
 
     // this sets cbuf callbacks
     DecodeBase::begin(path_, format_);
@@ -19,9 +20,6 @@ int DecodeStream::play() {
     int r = client.get(path);
     if (r)
         return -1;
-
-    // wait for content
-    // client.wait_for_health(min_health);
 
     return DecodeBase::play();
 }

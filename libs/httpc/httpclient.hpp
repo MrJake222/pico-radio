@@ -39,6 +39,10 @@ class HttpClient {
     // Query/Response buffer
     char qrbuf[HTTP_QUERY_RESP_BUF_SIZE];
 
+    // request headers
+    bool send_icy_metadata;
+
+    // response headers
     // how many bytes the headers occupied
     int headers_length;
 
@@ -53,9 +57,9 @@ class HttpClient {
 protected:
     virtual void header_parsing_done() { headers_length = already_read(); }
 
-    // always call before starting a connection
+    // always called before starting a connection
     virtual void reset_state() { }
-    virtual void reset_state_with_cb() { reset_state(); }
+    virtual void reset_state_with_cb() { reset_state(); send_icy_metadata = false; }
 
 public:
 
@@ -65,6 +69,9 @@ public:
     };
 
     void begin() { reset_state_with_cb(); }
+
+    // request headers
+    void enable_icy_metadata() { send_icy_metadata = true; }
 
     // one concurrent connection supported
     // this will start a connection
