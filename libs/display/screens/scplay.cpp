@@ -2,6 +2,7 @@
 
 #include <screenmng.hpp>
 #include <icons.hpp>
+#include <ubuntu_mono.hpp>
 #include <player.hpp>
 
 int ScPlay::size_x(int y) {
@@ -19,17 +20,19 @@ enum Action {
 void ScPlay::draw_button(int x, int y, bool selected) {
 
     auto action = (Action) get_action(x, y);
+    int bg;
+    const int fg = COLOR_FG;
 
     switch (action) {
         case BACK:
-            set_btn_bg(selected, false);
+            bg = get_btn_bg(selected, false);
             break;
     }
 
     switch (action) {
         case BACK:
-            display.fill_rect(1, 114, 13, 13, true);
-            display.draw_icon(2, 115, icon_back);
+            display.fill_rect(1, 114, 13, 13, bg);
+            display.draw_icon(2, 115, icon_back, bg, fg);
             break;
     }
 }
@@ -65,8 +68,10 @@ void player_update_callback(void* arg) {
 void ScPlay::show() {
     Screen::show();
 
-    display.set_bg_fg(COLOR_BG, COLOR_BG_DARK_ACC2);
-    display.write_text_maxlen(15, 24, radio_name, ubuntu_font_get_size(UbuntuFontSize::FONT_16), 17);
+    add_scrolled_text_or_normal(0, 24, radio_name,
+                                ubuntu_font_get_size(UbuntuFontSize::FONT_24),
+                                COLOR_BG, COLOR_ACC2,
+                                display.W);
 
     if (!is_err_displayed) {
         player_start(radio_url, this, player_failed_callback, player_update_callback);

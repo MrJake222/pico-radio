@@ -27,6 +27,21 @@ static int try_map_utf8(const char* str) {
     return -1;
 }
 
+bool is_known_unicode(const char* str) {
+    return try_map_utf8(str) != -1;
+}
+
+int strlen_utf8(const char* str) {
+    int displayed = 0;
+
+    while (*str) {
+        str += is_known_unicode(str) ? 2 : 1;
+        displayed += 1;
+    }
+
+    return displayed;
+}
+
 const uint8_t* get_font_data_ptr(const struct font* font, const char* str, int* bytes_consumed) {
     int index = try_map_utf8(str);
     if (index != -1) {

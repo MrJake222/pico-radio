@@ -10,4 +10,4 @@ extern ScSearchRes sc_search_res;
 extern ScPlay sc_play;
 
 void screenmng_init();
-Screen* screenmng_get_default();
+void screenmng_input(ButtonEnum input);

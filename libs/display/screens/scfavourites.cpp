@@ -1,5 +1,7 @@
 #include "scfavourites.hpp"
 
+#include <ubuntu_mono.hpp>
+
 void ScFavourites::show() {
     Screen::show();
 
@@ -12,12 +14,17 @@ void ScFavourites::show() {
     };
 
     for (int i=0; i<5; i++) {
-        if (i == 2)
-            display.set_bg(COLOR_BG_SEL);
-        else
-            display.set_bg(COLOR_BG_DARK);
+        int bg;
 
-        display.fill_rect(5, 23 + 23*i, 150, 20, true);
-        display.write_text(9, 25 + 23*i, tests[i], ubuntu_font_get_size(UbuntuFontSize::FONT_16));
+        if (i == 2)
+            bg = COLOR_BG_SEL;
+        else
+            bg = COLOR_BG_DARK;
+
+        display.fill_rect(5, 23 + 23*i, 150, 20, bg);
+        add_scrolled_text_or_normal(9, 25 + 23*i, tests[i],
+                                    ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+                                    bg, COLOR_FG,
+                                    145 - 4*2);
     }
 }

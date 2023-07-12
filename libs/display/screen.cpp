@@ -1,5 +1,8 @@
 #include "screen.hpp"
 
+#include <ubuntu_mono.hpp>
+#include <cstdio>
+
 void Screen::inx() {
     current_x++;
     current_x %= size_x(current_y);
@@ -43,6 +46,8 @@ Screen* Screen::input(ButtonEnum btn) {
         return run_action(get_action(current_x, current_y));
     }
 
+    button_pre_selection_change();
+
     draw_button(current_x, current_y, false);
 
     switch (btn) {
@@ -67,11 +72,11 @@ Screen* Screen::input(ButtonEnum btn) {
     return nullptr;
 }
 
-void Screen::set_btn_bg(bool selected, bool dark) {
+int Screen::get_btn_bg(bool selected, bool dark) {
     if (dark)
-        display.set_bg(selected ? COLOR_BG_DARK_SEL : COLOR_BG_DARK);
+        return selected ? COLOR_BG_DARK_SEL : COLOR_BG_DARK;
     else
-        display.set_bg(selected ? COLOR_BG_SEL : COLOR_BG);
+        return selected ? COLOR_BG_SEL : COLOR_BG;
 }
 
 void Screen::draw_buttons() {
@@ -83,6 +88,57 @@ void Screen::draw_buttons() {
     }
 }
 
+void Screen::add_normal_text(int text_x, int text_y, const char* str, const struct font* font, int bg, int fg,
+                             int max_width) {
+    display.write_text(text_x, text_y, str, font, bg, fg,
+                       text_x, text_x + max_width);
+}
+
+void Screen::add_scrolled_text(int text_x, int text_y, const char* str, const struct font* font, int bg, int fg, int max_width) {
+    assert(texts_index < LCD_SCROLLED_TEXTS_MAX);
+
+    xSemaphoreTake(mutex_ticker, portMAX_DELAY);
+    texts[texts_index].begin(text_x, text_y, str, font, bg, fg, max_width);
+    texts[texts_index].draw();
+
+    texts_index++;
+    xSemaphoreGive(mutex_ticker);
+}
+
+void Screen::reset_scrolled_texts() {
+    xSemaphoreTake(mutex_ticker, portMAX_DELAY);
+    texts_index = 0;
+    xSemaphoreGive(mutex_ticker);
+}
+
+
+void Screen::tick() {
+    xSemaphoreTake(mutex_ticker, portMAX_DELAY);
+
+    for (int i=0; i<texts_index; i++) {
+        texts[i].update(LCD_TICK_INTERVAL_MS);
+        texts[i].draw();
+    }
+
+    xSemaphoreGive(mutex_ticker);
+}
+
+void Screen::add_scrolled_text_or_normal(int text_x, int text_y, const char* str, const struct font* font,
+                                         int bg, int fg, int max_width, bool allow_scroll) {
+
+    if (strlen_utf8(str) * font->W > max_width && allow_scroll) {
+        // display can't fit name -> do scrolling
+        add_scrolled_text(text_x, text_y, str, font,
+                          bg, fg, max_width);
+    }
+
+    else {
+        // can fit -> do normal text
+        add_normal_text(text_x, text_y, str, font,
+                        bg, fg, max_width);
+    }
+}
+
 void Screen::begin() {
     current_x = default_x();
     current_y = default_y();
@@ -90,17 +146,22 @@ void Screen::begin() {
 }
 
 void Screen::show() {
-    display.set_bg_fg(COLOR_BG, COLOR_FG);
-    display.clear_screen();
-    display.write_text(2, 0, get_title(), ubuntu_font_get_size(UbuntuFontSize::FONT_16));
+    reset_scrolled_texts();
+
+    display.clear_screen(COLOR_BG);
+    add_normal_text(2, 0, get_title(),
+                    ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+                    COLOR_BG, COLOR_FG,
+                    display.W - 2*2);
 
     draw_buttons();
 }
 
 void Screen::show_error(const char* err) {
-    display.set_bg_fg(COLOR_BG_ERR, COLOR_FG);
-    display.clear_screen();
-    display.write_text_wrap(2, 0, err, ubuntu_font_get_size(UbuntuFontSize::FONT_16));
+    display.clear_screen(COLOR_BG_ERR);
+    display.write_text_wrap(2, 0, err,
+                            ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+                            COLOR_BG_ERR, COLOR_FG);
 
     is_err_displayed = true;
 }

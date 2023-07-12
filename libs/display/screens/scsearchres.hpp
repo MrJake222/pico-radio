@@ -13,6 +13,7 @@ class ScSearchRes : public Screen {
     void iny() override;
     void dey() override;
 
+    void button_pre_selection_change() override;
     void draw_button(int x, int y, bool selected) override;
     void draw_top_buttons();
     void draw_bottom_buttons();

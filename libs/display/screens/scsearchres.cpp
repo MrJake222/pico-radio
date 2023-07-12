@@ -4,6 +4,7 @@
 #include <radiosearch.hpp>
 #include <buffers.hpp>
 #include <icons.hpp>
+#include <ubuntu_mono.hpp>
 
 void all_loaded_cb(void* arg, int errored);
 
@@ -48,8 +49,7 @@ void ScSearchRes::draw_scroll_bar() {
     if (station_count == 0)
         return;
 
-    display.set_bg(COLOR_BG_DARK);
-    display.fill_rect(152, 31, 5, 83, true);
+    display.fill_rect(152, 31, 5, 83, COLOR_BG_DARK);
 
     const int y = 31;
     const int h = 83;
@@ -57,8 +57,7 @@ void ScSearchRes::draw_scroll_bar() {
     const float start   = y + segment * (float)base_y;         // skip base_y segments
     const float height  =     segment * (float)kb_buttons();   // display 4 segments high bar
 
-    display.set_bg(COLOR_BG_DARK_ACC1);
-    display.fill_rect(152, (int)start, 5, (int)height, true);
+    display.fill_rect(152, (int)start, 5, (int)height, COLOR_ACC1);
 }
 
 void ScSearchRes::iny() {
@@ -115,22 +114,18 @@ int ScSearchRes::get_action(int x, int y) {
     return PLAY;
 }
 
+void ScSearchRes::button_pre_selection_change() {
+    reset_scrolled_texts();
+}
+
 void ScSearchRes::draw_button(int x, int y, bool selected) {
 
     auto action = (Action) get_action(x, y);
 
-    switch (action) {
-        case BACK:
-            set_btn_bg(selected, false);
-            break;
-
-        default:
-            set_btn_bg(selected, true);
-    }
-
     unsigned char xs;
     unsigned char ys;
     const char* name;
+    int bg;
 
     switch (action) {
         case PLAY:
@@ -138,13 +133,20 @@ void ScSearchRes::draw_button(int x, int y, bool selected) {
             ys = 31 + (S_RES_H + 1)*y;
             name = rs.get_station_name(base_y + y);
 
-            display.fill_rect(xs, ys, S_RES_W, S_RES_H, true);
-            display.write_text_maxlen(xs+3, ys, name, ubuntu_font_get_size(UbuntuFontSize::FONT_16), 17); // TODO do scrolling
+
+            bg = get_btn_bg(selected, true);
+            display.fill_rect(xs, ys, S_RES_W, S_RES_H,bg);
+            add_scrolled_text_or_normal(xs + 3, ys, name,
+                                        ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+                                        bg, COLOR_FG,
+                                        S_RES_W - 3*2, selected);
+
             break;
 
         case BACK:
-            display.fill_rect(1, 114, 13, 13, true);
-            display.draw_icon(2, 115, icon_back);
+            bg = get_btn_bg(selected, false);
+            display.fill_rect(1, 114, 13, 13, bg);
+            display.draw_icon(2, 115, icon_back, bg, COLOR_FG);
             break;
     }
 }
@@ -177,12 +179,17 @@ void ScSearchRes::show() {
     // called from input
     Screen::show();
 
-    display.set_bg(COLOR_BG);
     sprintf(subtitle, "\"%s\"", prompt);
-    display.write_text(8, 15, subtitle, ubuntu_font_get_size(UbuntuFontSize::FONT_16));
+    add_normal_text(8, 15, subtitle,
+                    ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+                    COLOR_BG, COLOR_FG,
+                    display.W);
 
     if (first) {
-        display.write_text(10, 40, "Ładowanie", ubuntu_font_get_size(UbuntuFontSize::FONT_24));
+        add_normal_text(10, 40, "Ładowanie",
+                        ubuntu_font_get_size(UbuntuFontSize::FONT_24),
+                        COLOR_BG, COLOR_FG,
+                        display.W);
 
         first = false;
         rs.load_stations();
@@ -214,11 +221,14 @@ void all_loaded_cb(void* arg, int errored) {
     // set station count
     sc->station_count = rs.get_station_count();
 
-    // re-draw the screen
-    sc->show();
     if (errored > 0) {
+        // show error
         char c[80];
         snprintf(c, 80, "Błąd: nie udało się załadować %d dostawców stacji.", errored);
         sc->show_error(c);
+    }
+    else {
+        // re-draw the screen
+        sc->show();
     }
 }

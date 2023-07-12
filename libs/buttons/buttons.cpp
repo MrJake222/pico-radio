@@ -52,4 +52,5 @@ void buttons_init() {
     }
 
     input_queue = xQueueCreate(5, 1);
+    assert(input_queue != nullptr);
 }

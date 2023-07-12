@@ -42,6 +42,9 @@ void List::set_current_uuid(const char* p) {
 }
 
 void List::set_current_name(const char* p) {
+    // skip spaces
+    while (*p == ' ') p++;
+
     //printf("name: '%s'\n", p);
     strncpy(stations[stations_found].name, p, ST_NAME_LEN);
     stations[stations_found].name[ST_NAME_LEN] = '\0';

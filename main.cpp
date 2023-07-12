@@ -29,9 +29,6 @@
 #include <screen.hpp>
 #include <screenmng.hpp>
 
-static Screen* screen;
-
-
 void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
 }
@@ -81,7 +78,7 @@ FRESULT scan_files(char* path, std::vector<std::string>& files) {
     // files.emplace_back("http://stream.streambase.ch/radio32/mp3-192/direct");   // Radio 32 Switzerland
 }
 
-void init_hardware() {
+void init_lowlevel() {
     // set_sys_clock_khz(140000, true);
     set_sys_clock_khz(180000, true);
 
@@ -92,21 +89,26 @@ void init_hardware() {
 
     // sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
-    printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys)/1000000);
+    printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys) / 1000000);
     puts("");
+
+    buttons_init();
+    puts("buttons init ok");
+
+    fifo_init();
+    puts("mcorefifo init ok");
+}
+
+void init_hardware() {
+    // Display config
+    screenmng_init();
+    puts("Display configuration done");
 
     player_init();
     puts("player done");
 
-    // Display config
-    screenmng_init();
-    screen = screenmng_get_default();
-    screen->begin();
-    screen->show();
-
-    puts("Display configuration & begin done");
-
     // FS configuration
+    // TODO move mounting to a task (and different file)
 #if SD_ENABLE
     FRESULT fr;
 
@@ -119,12 +121,15 @@ void init_hardware() {
 
     puts("mount ok");
 #endif
+}
 
-    buttons_init();
-    puts("buttons begin ok");
+void task_hardware_startup(void* arg) {
+    init_hardware();
 
-    fifo_init();
-    puts("mcorefifo begin ok");
+    uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
+    printf("hardware unused stack: %ld\n", min_free_stack);
+
+    vTaskDelete(nullptr);
 }
 
 void init_wifi() {
@@ -213,16 +218,20 @@ void task_wifi_startup(void* arg) {
         uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
         printf("input unused stack: %ld\n", min_free_stack);
 
-        Screen* screen_new = screen->input(input);
-        if (screen_new) {
-            screen = screen_new;
-            screen->show();
-        }
+        screenmng_input(input);
     }
 }
 
 int main() {
-    init_hardware();
+    init_lowlevel();
+
+    xTaskCreate(
+            task_hardware_startup,
+            "hw startup",
+            STACK_HW_SETUP,
+            nullptr,
+            PRI_HW_SETUP,
+            nullptr);
 
     xTaskCreate(
             task_wifi_startup,

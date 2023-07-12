@@ -95,6 +95,7 @@ void ST7735S::module_init() {
 }
 
 void ST7735S::setup_write(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end) {
+    xSemaphoreTake(mutex_display, portMAX_DELAY);
     write_command8(ST7735_CASET); // Column addr set
     write_data16(x_start + x_skip);   // XSTART
     write_data16(x_end   + x_skip - 1);   // XEND (no idea why only here -1 applies)
@@ -103,6 +104,10 @@ void ST7735S::setup_write(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8
     write_data16(y_end   + y_skip);   // YEND
     write_command8(ST7735_RAMWR); // write to RAM
     write_data16_prepare();
+}
+
+void ST7735S::end_write() {
+    xSemaphoreGive(mutex_display);
 }
 
 void ST7735S::init() {
@@ -118,19 +123,20 @@ uint16_t ST7735S::from_rgb(int rgb) {
     int g = (rgb >> ( 8+(8-G_BITS))) & G_MAX;
     int b = (rgb >> (   (8-B_BITS))) & B_MAX;
 
-    return (r << 11) | (g << 5) | b;
+    return (r << (G_BITS + B_BITS)) | (g << B_BITS) | b;
 }
 
-void ST7735S::fill_rect(int x, int y, int w, int h, bool fill_with_bg) {
-    uint16_t color = fill_with_bg ? from_rgb(bg) : from_rgb(fg);
+void ST7735S::fill_rect(int x, int y, int w, int h, int bg) {
+    uint16_t color = from_rgb(bg);
     setup_write(x, y, x+w, y+h);
     for (int i=0; i<h*w; i++) {
         spi_write16_blocking(spi, &color, 1);
     }
+    end_write();
 }
 
-void ST7735S::clear_screen() {
-    fill_rect(0, 0, W, H, true);
+void ST7735S::clear_screen(int bg) {
+    fill_rect(0, 0, W, H, bg);
 }
 
 static int rgb_blend(unsigned int fg, unsigned int bg, unsigned int fg_alpha) {
@@ -142,17 +148,18 @@ static int rgb_blend(unsigned int fg, unsigned int bg, unsigned int fg_alpha) {
                 ((((fg & 0x0000FF) * fg_alpha + (bg & 0x0000FF) * bg_alpha) >> 8) & 0x0000FF));
 }
 
-int ST7735S::write_char(int text_x, int text_y, const char* str, const struct font* font) {
+int ST7735S::write_char(int text_x, int text_y, const char* str, const struct font* font, int bg, int fg, int clip_left, int clip_right) {
 
     int bytes_consumed;
     const uint8_t* chr_ptr = get_font_data_ptr(font, str, &bytes_consumed);
 
-    setup_write(text_x, text_y,
-                text_x + font->W,
+    setup_write(text_x + clip_left,
+                text_y,
+                text_x + font->W - clip_right,
                 text_y + font->H);
 
     for (int y=0; y<font->H; y++) {
-        for (int x=0; x<font->W; x++) {
+        for (int x=clip_left; x<(font->W - clip_right); x++) {
             unsigned int alpha = *(chr_ptr + y*font->W + x);
             uint16_t color = from_rgb(rgb_blend(fg, bg, alpha));
 
@@ -160,45 +167,64 @@ int ST7735S::write_char(int text_x, int text_y, const char* str, const struct fo
         }
     }
 
+    end_write();
     return bytes_consumed;
 }
 
-const char* ST7735S::write_text(int text_x, int text_y, const char *str, const struct font* font) {
+void ST7735S::write_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int min_x, int max_x) {
     while (*str) {
-        str += write_char(text_x, text_y, str, font);
+        const int  left_x = text_x;
+        const int right_x = text_x + font->W;
+
+        if (right_x < min_x) {
+            // out of window on the left -> keep going
+            // skip 2 (unicode) or 1 (non-unicode) bytes
+            str += is_known_unicode(str) ? 2 : 1;
+        }
+
+        else if (left_x > max_x) {
+            // out of window on the right
+            // as we're only going forward, it's pointless to go further
+            break;
+
+        }
+
+        else {
+            // at least one corner in window
+
+            const int clip_left  = MAX(0, min_x - left_x);
+            const int clip_right = MAX(0, right_x - max_x);
+
+            str += write_char(text_x, text_y, str, font, bg, fg, clip_left, clip_right);
+        }
+
         text_x += font->W;
     }
-
-    return str;
 }
 
-const char* ST7735S::write_text_maxlen(int text_x, int text_y, const char* str, const struct font* font, int maxlen) {
+const char* ST7735S::write_text_maxlen(int text_x, int text_y, const char* str, const struct font* font, int bg, int fg, int maxlen) {
     while (*str && maxlen--) {
-        str += write_char(text_x, text_y, str, font);
+        str += write_char(text_x, text_y, str, font, bg, fg, 0, 0);
         text_x += font->W;
     }
 
     return str;
 }
 
-const char* ST7735S::write_text_wrap(int text_x, int text_y, const char* str, const struct font* font) {
+void ST7735S::write_text_wrap(int text_x, int text_y, const char* str, const struct font* font, int bg, int fg) {
     const int chars_fitting = (W - text_x) / font->W;
-    int len = strlen(str);
 
     while (*str) {
         while (*str == ' ') {
             str++; // skip all beginning spaces
-            len--;
         }
 
-        str = write_text_maxlen(text_x, text_y, str, font, chars_fitting);
+        str = write_text_maxlen(text_x, text_y, str, font, bg, fg, chars_fitting);
         text_y += font->H; // newline
     }
-
-    return str;
 }
 
-void ST7735S::draw_icon(int icon_x, int icon_y, struct icon icon) {
+void ST7735S::draw_icon(int icon_x, int icon_y, struct icon icon, int bg, int fg) {
     setup_write(icon_x, icon_y,
                 icon_x + icon.w,
                 icon_y + icon.h);
@@ -211,6 +237,8 @@ void ST7735S::draw_icon(int icon_x, int icon_y, struct icon icon) {
             spi_write16_blocking(spi, &color, 1);
         }
     }
+
+    end_write();
 }
 
 

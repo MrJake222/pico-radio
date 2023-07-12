@@ -2,14 +2,20 @@
 
 #include <st7735s.hpp>
 #include <buttons.hpp>
+#include <textscrolled.hpp>
+
+#include <FreeRTOS.h>
+#include <semphr.h>
 
 #define COLOR_BG             0xCCCCCC
-#define COLOR_BG_ERR         0xCC7A7A
 #define COLOR_BG_SEL         0x66CC66
 #define COLOR_BG_DARK        0xa1af9f
 #define COLOR_BG_DARK_SEL    0x55AA55
-#define COLOR_BG_DARK_ACC1   0x0077AC
-#define COLOR_BG_DARK_ACC2   0x803E33
+
+#define COLOR_BG_ERR         0xCC7A7A
+
+#define COLOR_ACC1           0x0077AC
+#define COLOR_ACC2           0x803E33
 #define COLOR_FG             0x0
 
 class Screen {
@@ -18,6 +24,16 @@ class Screen {
 
     // called on input (CENTER button)
     virtual Screen* run_action(int action) = 0;
+
+    // Scrollable texts
+    // some texts need to be scrolled across the screen
+    // need to support multiple text scrolled
+    TextScrolled texts[LCD_SCROLLED_TEXTS_MAX];
+    // first free index in <texts> array
+    int texts_index;
+
+    // see screenmng.cpp for details
+    SemaphoreHandle_t& mutex_ticker;
 
 protected:
     ST7735S& display;
@@ -49,6 +65,7 @@ protected:
     // passed to <run_action> but can be used by subclasses for other purposes
     virtual int get_action(int x, int y) = 0;
 
+    virtual void button_pre_selection_change() { }
     virtual void draw_button(int x, int y, bool selected) = 0;
     void draw_buttons();
 
@@ -57,11 +74,21 @@ protected:
     virtual int adjust_x(int old_x, int old_y, int new_y);
     virtual void x_changed() { }
 
-    void set_btn_bg(bool selected, bool default_dark);
+    static int get_btn_bg(bool selected, bool dark);
+
+    void add_normal_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width);
+    void add_scrolled_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width);
+    void reset_scrolled_texts();
+    // this adds scrolling text if the text won't fit in max_width
+    // can attach additional check (scrolling will only occur when allow_scroll is true)
+    void add_scrolled_text_or_normal(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width, bool allow_scroll=true);
+
 
 public:
-    Screen(ST7735S& display_)
+    Screen(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_)
         : display(display_)
+        , mutex_ticker(mutex_ticker_)
+        , texts{display_, display_, display_, display_}
         { }
 
     // called when the screen is entered the first time
@@ -74,6 +101,10 @@ public:
 
     // called after show on some error
     void show_error(const char* err);
+
+    // should be called periodically
+    // to update scrollable texts
+    void tick();
 
     // called on input button pressed
     Screen* input(ButtonEnum btn);

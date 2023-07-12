@@ -11,6 +11,7 @@ add_library(libs
         display/tft/ubuntu_mono.cpp
         display/tft/font.cpp
         display/tft/icons.cpp
+        display/textscrolled.cpp
         display/screen.cpp
         display/screenmng.cpp
 

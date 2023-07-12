@@ -2,6 +2,7 @@
 #include <screenmng.hpp>
 
 #include <icons.hpp>
+#include <ubuntu_mono.hpp>
 
 #define KB_BNT_H   18
 #define KB_BNT_W   14
@@ -166,36 +167,38 @@ void ScSearch::draw_button(int x, int y, bool selected) {
     auto action = (Action) get_action(x, y);
     unsigned char xs, ys;
     char letter;
+    int bg;
+    const int fg = COLOR_FG;
 
     switch (action) {
         case BACKSPACE:
         case BACK:
         case SEARCH:
-            set_btn_bg(selected, false);
+            bg = get_btn_bg(selected, false);
             break;
 
         default:
-            set_btn_bg(selected, true);
+            bg = get_btn_bg(selected, true);
     }
 
     switch (action) {
         case BACKSPACE:
-            display.fill_rect(138, 18, 20, 20, true);
-            display.draw_icon(140, 20, icon_backspace);
+            display.fill_rect(138, 18, 20, 20, bg);
+            display.draw_icon(140, 20, icon_backspace, bg, fg);
             break;
 
         case SPACE:
-            display.fill_rect(41, 120, 75, 6, true);
+            display.fill_rect(41, 120, 75, 6, bg);
             break;
 
         case BACK:
-            display.fill_rect(1, 114, 13, 13, true);
-            display.draw_icon(2, 115, icon_back);
+            display.fill_rect(1, 114, 13, 13, bg);
+            display.draw_icon(2, 115, icon_back, bg, fg);
             break;
 
         case SEARCH:
-            display.fill_rect(143, 111, 15, 15, true);
-            display.draw_icon(144, 112, icon_search);
+            display.fill_rect(143, 111, 15, 15, bg);
+            display.draw_icon(144, 112, icon_search, bg, fg);
             break;
 
         case KB:
@@ -206,18 +209,20 @@ void ScSearch::draw_button(int x, int y, bool selected) {
             ys = 42 + (KB_BNT_H + 1)*y;
             letter = letters[y][x];
 
-            display.fill_rect(xs, ys, KB_BNT_W, KB_BNT_H, true);
-            display.write_char(xs + 3, ys, &letter, ubuntu_font_get_size(UbuntuFontSize::FONT_16));
+            display.fill_rect(xs, ys, KB_BNT_W, KB_BNT_H, bg);
+            display.write_char(xs + 3, ys, &letter,
+                               ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+                               bg, fg, 0, 0);
             break;
     }
 }
 
 void ScSearch::draw_prompt_field() {
-    display.set_bg(COLOR_BG_DARK);
-    display.fill_rect(5, 18, 131, 20, true);
-    display.write_text_maxlen(5 + 3, 18, prompt, ubuntu_font_get_size(UbuntuFontSize::FONT_16), MAX_PROMPT_LEN);
-
-    set_btn_bg(get_action(current_x, current_y) == BACKSPACE, false);
+    display.fill_rect(5, 18, 131, 20, COLOR_BG_DARK);
+    add_normal_text(5 + 3, 18, prompt,
+                    ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+                    COLOR_BG_DARK, COLOR_FG,
+                    131 - 3*2);
 }
 
 void ScSearch::show() {

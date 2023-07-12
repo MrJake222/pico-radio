@@ -13,7 +13,7 @@ static const int url_count = sizeof(urls) / sizeof(char*);
 static List* query_url(HttpClientPico& client, const char* url, struct station* stations, int max_stations) {
     int r = client.get(url);
     if (r) {
-        printf("querying url %s failed\n", url);
+        printf("querying failed for url %s\n", url);
         client.close();
         return nullptr;
     }
