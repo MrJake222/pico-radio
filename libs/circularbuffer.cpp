@@ -133,15 +133,22 @@ void CircularBuffer::debug_read(int bytes, int reverse) volatile {
 
         printf("%5ld: ", read_at + r);
 
-        for (int i=0; i<MIN(width, len); i++) {
-            printf("%02x ", buffer[read_at - reverse + r + i]);
+        for (int i=0; i<width; i++) {
+            if (i < len)
+                printf("%02x ", buffer[read_at - reverse + r + i]);
+            else
+                printf("   ");
         }
 
         printf("   ");
 
-        for (int i=0; i<MIN(width, len); i++) {
-            char c = buffer[read_at - reverse + r + i];
-            printf("%c", (c<32 || c>127) ? '.' : c);
+        for (int i=0; i<width; i++) {
+            if (i < len) {
+                char c = buffer[read_at - reverse + r + i];
+                printf("%c", (c<32 || c>127) ? '.' : c);
+            }
+            else
+                printf(" ");
         }
 
         r += width;
