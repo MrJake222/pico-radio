@@ -21,8 +21,8 @@ class FormatMP3 : public Format {
     int align_buffer(uint8_t *orig_read_ptr);
     int decode_up_to_one_frame(uint32_t* audio_pcm_buf);
 
-    int bitrate_sum;
-    int bitrate_count;
+    unsigned long long bitrate_sum;
+    unsigned long long bitrate_count;
 
 public:
     FormatMP3(volatile CircularBuffer& raw_buf_, HMP3Decoder hMP3Decoder_)
@@ -48,6 +48,7 @@ public:
     float ms_per_unit() override;
     int bytes_to_sec(b_type bytes) override;
 
-    int avg_bitrate() { return bitrate_sum / bitrate_count; }
+    int avg_bitrate() { return (int)(bitrate_sum / bitrate_count); }
+    int avg_byterate() { return avg_bitrate() / 8; }
 };
 

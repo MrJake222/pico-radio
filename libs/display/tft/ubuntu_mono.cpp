@@ -268,7 +268,7 @@ const struct font* ubuntu_font_get_size(UbuntuFontSize size) {
             return &font24;
     }
 
-    assert(false);
+    return nullptr;
 }
 
 

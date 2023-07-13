@@ -4,14 +4,12 @@
 #include <cstdint>
 #include <circularbuffer.hpp>
 
-typedef unsigned long long int ull;
-
 class ICY {
 
     char buf[ICY_BUF_LEN];
 
     // holds how many bytes should be read to hit next icy
-    ull next;
+    b_type next;
     // meta-int, how separated are icy fragments
     int step;
 
