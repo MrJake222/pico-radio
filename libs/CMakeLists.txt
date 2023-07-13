@@ -28,6 +28,7 @@ add_library(libs
         player/i2s.pio.cpp
         player/player.cpp
         player/filetype.cpp
+        player/icy.cpp
 
         radios/list.cpp
         radios/listm3u.cpp
@@ -36,6 +37,7 @@ add_library(libs
 
         buffers.cpp
         circularbuffer.cpp
+        util.cpp
         )
 
 target_include_directories(libs PUBLIC

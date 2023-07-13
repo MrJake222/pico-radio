@@ -3,12 +3,16 @@
 
 #include <decodebase.hpp>
 #include <httpclientpico.hpp>
+#include <icy.hpp>
 
 class DecodeStream : public DecodeBase {
 
     HttpClientPico& client;
 
     friend void lwip_err_cb(void* arg, int err);
+    friend void cbuf_write_cb(void* arg, unsigned int bytes);
+
+    ICY metadata_icy;
 
 public:
     void begin(const char* path_, Format* format_) override;

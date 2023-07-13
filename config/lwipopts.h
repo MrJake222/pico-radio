@@ -14,7 +14,9 @@
 // data needs to be received fast for this to work
 // set high tcpip task priority
 #define LWIP_DISABLE_TCP_SANITY_CHECKS  1
-#define PBUF_POOL_SIZE                  16 // unit is ~ethernet packet (1500 bytes), whole window is 43
+#define PBUF_POOL_SIZE                  30 // unit is ~ethernet packet (1500 bytes)
+                                           // whole window is 43
+                                           // max registered usage is 25
 #define TCP_WND                         (63 * 1024) // was around 11, then 24
                                                     // now 63 (can't be 64 because of TCP window being a 16-bit number with no scaling)
 
@@ -68,7 +70,7 @@
 #define IPFRAG_STATS                0
 #endif
 
-#define DEBUG_MEM                   0
+#define DEBUG_MEM                   1
 #if DEBUG_MEM
 #define LWIP_DEBUG                  1
 #define LWIP_STATS                  1

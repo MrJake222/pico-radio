@@ -3,6 +3,7 @@
 #include <cstdint>
 
 typedef unsigned long long b_type;
+using rw_callback_fn = void(*)(void*, unsigned int);
 
 class CircularBuffer {
 
@@ -25,7 +26,6 @@ class CircularBuffer {
     b_type written_bytes;
 
     // callbacks
-    using rw_callback_fn = void(*)(void*, unsigned int);
     void* read_ack_arg;
     volatile rw_callback_fn read_ack_callback;
     void* write_ack_arg;
@@ -81,6 +81,8 @@ public:
     uint8_t* read_ptr()  volatile const;
     uint8_t* write_ptr() volatile const;
 
+    uint8_t* ptr_at(int o)  volatile const;
+
     void read_ack(unsigned int bytes)  volatile;
     void write_ack(unsigned int bytes) volatile;
 
@@ -113,7 +115,17 @@ public:
     // write at write_ptr and ack
     void write(const uint8_t* data, int data_len) volatile;
 
+    // read at arbitrary offset, used for example to extract metadata
+    // no ack of any kind, unsafe, doesn't check data availability
+    void read_arb(int o, uint8_t* data, int data_len) volatile const;
 
+    // cut out bytes at arbitrary offset (close behind the write_ptr)
+    // moves remaining bytes in <o, write_ptr> to the left
+    // modifies write_ptr and written_bytes
+    void remove_written(int o, int len) volatile;
+
+
+    // callbacks
     // register a callback when data was just consumed
     // (more free space available)
     // only one callback supported

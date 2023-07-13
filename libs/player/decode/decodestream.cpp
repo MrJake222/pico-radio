@@ -1,8 +1,16 @@
 #include <decodestream.hpp>
+#include <pico/cyw43_arch.h>
 
 void lwip_err_cb(void* arg, int err) {
     // called from lwip callback
     ((DecodeStream*) arg)->notify_playback_end(true);
+}
+
+void cbuf_write_cb(void* arg, unsigned int bytes) {
+    // called from lwip callback
+    auto dec = (DecodeStream*) arg;
+
+    dec->metadata_icy.read(dec->cbuf);
 }
 
 void DecodeStream::begin(const char* path_, Format* format_) {
@@ -12,7 +20,7 @@ void DecodeStream::begin(const char* path_, Format* format_) {
     client.set_err_cb(lwip_err_cb, this);
     client.enable_icy_metadata();
 
-    // this sets cbuf callbacks
+    // this resets cbuf and sets callbacks
     DecodeBase::begin(path_, format_);
 }
 
@@ -20,6 +28,22 @@ int DecodeStream::play() {
     int r = client.get(path);
     if (r)
         return -1;
+
+    if (client.has_icy_metaint()) {
+        metadata_icy.begin(client.get_headers_length(),
+                           client.get_icy_metaint());
+
+        // lock lwip to cleanly sanitize already received data and set
+        // callback for further checks atomically
+        cyw43_arch_lwip_begin();
+
+        // read all ICY metadata chunks that have been already read
+        while (metadata_icy.read(cbuf) == 0);
+        // set callback for further readings
+        cbuf.set_write_ack_callback(this, cbuf_write_cb);
+
+        cyw43_arch_lwip_end();
+    }
 
     return DecodeBase::play();
 }

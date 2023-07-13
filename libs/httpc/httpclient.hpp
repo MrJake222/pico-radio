@@ -60,7 +60,7 @@ protected:
     virtual void header_parsing_done() { headers_length = already_read(); }
 
     // always called before starting a connection
-    virtual void reset_state() { }
+    virtual void reset_state() { h_icy_metaint = -1; }
     virtual void reset_state_with_cb() { reset_state(); send_icy_metadata = false; }
 
 public:
@@ -90,6 +90,7 @@ public:
     bool more_content() { return (already_read() - headers_length) < get_content_length(); }
 
     const char* get_content_type() { return h_content_type; }
+    bool has_icy_metaint() { return h_icy_metaint != -1; }
     int get_icy_metaint() { return h_icy_metaint; }
 
     // data access methods

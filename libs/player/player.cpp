@@ -298,16 +298,22 @@ static void player_update_stats() {
            dec->buf_health()
     );
 
-    printf("rtos ram used: %2d%%  max %2d%%  player stat unused stack: %ld  ",
+    printf("rtos ram used: %2d%%  max %2d%%  player free stack: %ld  ",
            (configTOTAL_HEAP_SIZE - xPortGetFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
            (configTOTAL_HEAP_SIZE - xPortGetMinimumEverFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
            uxTaskGetStackHighWaterMark(nullptr));
 
-    puts("");
-
-    // Lwip stats
+    // Lwip stats (all)
     // to enable/disable see DEBUG* in lwipopts.h
-    stats_display();
+    // stats_display();
+    // pbuf stats only
+    printf("pbuf max used %2d avail %2d err %2d  ",
+           STATS_GET(memp)[MEMP_PBUF_POOL]->max,
+           PBUF_POOL_SIZE,
+           STATS_GET(memp)[MEMP_PBUF_POOL]->err);
+
+
+    puts("");
 
     // external stats
     upd_cb(cb_arg);

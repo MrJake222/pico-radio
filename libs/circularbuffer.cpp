@@ -3,6 +3,7 @@
 #include <cstring>
 #include <pico/platform.h>
 #include <cstdio>
+#include "util.hpp"
 
 int CircularBuffer::data_left() volatile const {
     return (int) (written_bytes - read_bytes);
@@ -26,6 +27,10 @@ uint8_t* CircularBuffer::read_ptr() volatile const {
 
 uint8_t* CircularBuffer::write_ptr() volatile const {
     return buffer + write_at;
+}
+
+uint8_t* CircularBuffer::ptr_at(int o) const volatile {
+    return buffer + o;
 }
 
 void CircularBuffer::read_ack(unsigned int bytes) volatile {
@@ -87,24 +92,65 @@ void CircularBuffer::move_to(volatile CircularBuffer &other) volatile {
     // read 2 times, each time to a continuous limit
     for (int i=0; i<2 && data_left_continuous()>0; i++) {
         other.write(read_ptr(), data_left_continuous());
-        read_ack(data_left_continuous());
+        read_ack(data_left_continuous()); // implicit wrap
     }
 }
 
 void CircularBuffer::write(const uint8_t* data, int data_len) volatile {
     // data may be too big to write at once (wrapping)
-    // write 2 times to wrap
-    for (int i=0; i<2 && data_len>0; i++) {
+    // write 3 times to wrap and adjust for the write callback reversing buffer
+    for (int i=0; i<3 && data_len>0; i++) {
         int write = MIN(data_len, space_left_continuous());
         memcpy(write_ptr(), data, write);
-        write_ack(write);
+        write_ack(write); // implicit wrap
 
         data += write;
         data_len -= write;
     }
 }
 
-void CircularBuffer::set_read_ack_callback(void* arg, CircularBuffer::rw_callback_fn callback) volatile {
+void CircularBuffer::read_arb(int o, uint8_t* data, int data_len) volatile const {
+    for (int i=0; i<2 && data_len>0; i++) {
+        // minimum of data length and data to end
+        int read = MIN(data_len, size - o);
+        memcpy(data, ptr_at(o), read);
+
+        o += read;
+        while (o >= size) o -= size;
+
+        data += read;
+        data_len -= read;
+    }
+}
+
+void CircularBuffer::remove_written(int o, const int len) volatile {
+
+    // move buffer to the left
+    // copying data from +len to 0
+    // across entire buffer space (to write_at pointer)
+
+    int o_src = o + len;
+    int copy_len = write_at - o_src;
+    if (copy_len < 0)
+        copy_len += size;
+
+    while (copy_len--) {
+        *ptr_at(o) = *ptr_at(o_src);
+        if (++o == size)
+            o = 0;
+        if (++o_src == size)
+            o_src = 0;
+    }
+
+    // adjust variables
+    // done after copying since the loop depends on write_at
+    write_at -= len;
+    if (write_at < 0)
+        write_at += size;
+    written_bytes -= len;
+}
+
+void CircularBuffer::set_read_ack_callback(void* arg, rw_callback_fn callback) volatile {
     read_ack_arg = arg;
     read_ack_callback = callback;
 }
@@ -113,7 +159,7 @@ bool CircularBuffer::is_read_ack_callback_set() volatile {
     return read_ack_callback != nullptr;
 }
 
-void CircularBuffer::set_write_ack_callback(void* arg, CircularBuffer::rw_callback_fn callback) volatile {
+void CircularBuffer::set_write_ack_callback(void* arg, rw_callback_fn callback) volatile {
     write_ack_arg = arg;
     write_ack_callback = callback;
 }
@@ -123,38 +169,7 @@ bool CircularBuffer::is_write_ack_callback_set() volatile {
 }
 
 void CircularBuffer::debug_read(int bytes, int reverse) volatile {
-
-    const int width = 16;
-
-    int len = MIN(bytes+reverse, data_left_continuous());
-    int r = -reverse;
-
-    while (len > 0) {
-
-        printf("%5ld: ", read_at + r);
-
-        for (int i=0; i<width; i++) {
-            if (i < len)
-                printf("%02x ", buffer[read_at - reverse + r + i]);
-            else
-                printf("   ");
-        }
-
-        printf("   ");
-
-        for (int i=0; i<width; i++) {
-            if (i < len) {
-                char c = buffer[read_at - reverse + r + i];
-                printf("%c", (c<32 || c>127) ? '.' : c);
-            }
-            else
-                printf(" ");
-        }
-
-        r += width;
-        len -= width;
-        printf("\n");
-    }
+    debug_print(buffer, read_at, bytes, reverse);
 }
 
 
