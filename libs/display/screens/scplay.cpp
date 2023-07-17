@@ -9,7 +9,7 @@
 #define STATS_Y     80
 
 int ScPlay::size_x(int y) {
-    return 1;
+    return 2;
 }
 
 int ScPlay::size_y() {
@@ -17,6 +17,7 @@ int ScPlay::size_y() {
 }
 
 enum Action {
+    FAV,
     BACK
 };
 
@@ -27,12 +28,18 @@ void ScPlay::draw_button(int x, int y, bool selected) {
     const int fg = COLOR_FG;
 
     switch (action) {
+        case FAV:
         case BACK:
             bg = get_btn_bg(selected, false);
             break;
     }
 
     switch (action) {
+        case FAV:
+            display.fill_rect(14, 111, 17, 17, bg);
+            display.draw_icon(15, 112, icon_star_empty, bg, fg);
+            break;
+
         case BACK:
             display.fill_rect(1, 114, 13, 13, bg);
             display.draw_icon(2, 115, icon_back, bg, fg);
@@ -41,11 +48,14 @@ void ScPlay::draw_button(int x, int y, bool selected) {
 }
 
 int ScPlay::get_action(int x, int y) {
-    return BACK;
+    return x == 1 ? FAV : BACK;
 }
 
 Screen* ScPlay::run_action(int action) {
     switch ((Action) action) {
+        case FAV:
+            return nullptr;
+
         case BACK:
             player_stop();
             player_wait_for_end();
@@ -119,7 +129,7 @@ void ScPlay::show() {
     add_normal_text_ljust(71, STATS_Y + 11, "Bufor",
                           ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                           COLOR_BG, COLOR_FG);
-    
+
     if (!is_err_displayed) {
         player_start(radio_url,
                      this,

@@ -338,7 +338,7 @@ static void player_stat_task(void* arg) {
     while (player_is_started()) {
         const int current = dec->current_time();
 
-        if (current != last_current) {
+        if (current != last_current || current < 1) {
             player_update_stats();
             last_current = current;
         }

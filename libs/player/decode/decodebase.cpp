@@ -33,6 +33,7 @@ void DecodeBase::begin(const char* path_, Format* format_) {
     fifo_register(PLAYER, player_msg, this, false);
 
     decode_finished_by = FinishReason::NoFinish;
+    frame_decode_time_ms = 0;
 }
 
 int DecodeBase::setup() {
