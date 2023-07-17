@@ -214,5 +214,12 @@ int FormatMP3::bytes_to_sec(b_type bytes) {
     if (bitrate_count == 0)
         return 0;
 
-    return (int)(bytes / avg_byterate());
+    return (int)(bytes / byterate_in());
+}
+
+int FormatMP3::bitrate_in() {
+    if (bitrate_count == 0)
+        return 0;
+
+    return (int)(bitrate_sum / bitrate_count);
 }

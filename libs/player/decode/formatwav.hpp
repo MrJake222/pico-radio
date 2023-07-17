@@ -38,4 +38,6 @@ public:
     long bit_freq() override;
     float ms_per_unit() override;
     int bytes_to_sec(b_type bytes) override;
+
+    int bitrate_in() override;
 };

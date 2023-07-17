@@ -48,7 +48,7 @@ public:
     float ms_per_unit() override;
     int bytes_to_sec(b_type bytes) override;
 
-    int avg_bitrate() { return (int)(bitrate_sum / bitrate_count); }
-    int avg_byterate() { return avg_bitrate() / 8; }
+    int bitrate_in() override;
+    int byterate_in() { return bitrate_in() / 8; }
 };
 

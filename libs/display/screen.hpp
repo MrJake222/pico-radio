@@ -16,6 +16,7 @@
 
 #define COLOR_ACC1           0x0077AC
 #define COLOR_ACC2           0x803E33
+#define COLOR_ACC3           0xD29ED2
 #define COLOR_FG             0x0
 
 class Screen {
@@ -86,6 +87,8 @@ protected:
     // can attach additional check (scrolling will only occur when allow_scroll is true)
     // returns index of scrolled text or -1 if normal text
     int add_scrolled_text_or_normal(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width, bool allow_scroll=true);
+
+    void draw_progress_bar(int x, int y, int percent, int bg, int fg);
 
     // slow ticks (500 ms)
     // virtual void tick_slow() { }

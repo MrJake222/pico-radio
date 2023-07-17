@@ -61,3 +61,7 @@ float FormatWAV::ms_per_unit() {
 int FormatWAV::bytes_to_sec(b_type bytes) {
     return (int)(bytes / header.bytes_per_second);
 }
+
+int FormatWAV::bitrate_in() {
+    return bit_freq();
+}

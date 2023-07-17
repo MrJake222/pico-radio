@@ -131,6 +131,7 @@ public:
     int duration() { return format->bytes_to_sec(source_size_bytes()); }
     int core1_usage() { return int(frame_decode_time_ms * 100 / format->ms_per_unit()); }
     int buf_health() { return cbuf.health(); }
+    virtual int bitrate() { return format->bitrate_in(); }
     // can fail with return value -1
     virtual int get_meta_str(char* meta, int meta_len) = 0;
 

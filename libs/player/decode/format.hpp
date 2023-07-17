@@ -44,4 +44,6 @@ public:
     virtual long bit_freq() = 0;
     virtual float ms_per_unit() = 0;
     virtual int bytes_to_sec(b_type bytes) = 0;
+
+    virtual int bitrate_in() = 0;
 };
