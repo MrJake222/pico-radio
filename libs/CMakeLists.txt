@@ -7,10 +7,10 @@ add_library(libs
         display/screens/scplay.cpp
         display/screens/scsearch.cpp
         display/screens/scsearchres.cpp
+        display/assets/ubuntu_mono.cpp
+        display/assets/font.cpp
+        display/assets/icons.cpp
         display/tft/st7735s.cpp
-        display/tft/ubuntu_mono.cpp
-        display/tft/font.cpp
-        display/tft/icons.cpp
         display/textscrolled.cpp
         display/screen.cpp
         display/screenmng.cpp
@@ -48,6 +48,7 @@ target_include_directories(libs PUBLIC
         player
         radios
         display
+        display/assets
         display/tft
         .
         )
