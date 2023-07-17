@@ -20,6 +20,8 @@ void DecodeStream::begin(const char* path_, Format* format_) {
     client.set_err_cb(lwip_err_cb, this);
     client.enable_icy_metadata();
 
+    metadata_icy.begin();
+
     // this resets cbuf and sets callbacks
     DecodeBase::begin(path_, format_);
 }
@@ -30,8 +32,12 @@ int DecodeStream::play() {
         return -1;
 
     if (client.has_icy_metaint()) {
-        metadata_icy.begin(client.get_headers_length(),
-                           client.get_icy_metaint());
+
+        r = metadata_icy.start(client.get_headers_length(),
+                               client.get_icy_metaint());
+
+        if (r < 0)
+            return -1;
 
         // lock lwip to cleanly sanitize already received data and set
         // callback for further checks atomically
@@ -56,4 +62,8 @@ void DecodeStream::end() {
 void DecodeStream::ack_bytes(uint16_t bytes) {
     // TODO handle content-length
     client.rx_ack(bytes);
+}
+
+int DecodeStream::get_meta_str(char* meta, int meta_len) {
+    return metadata_icy.get_stream_title(meta, meta_len);
 }

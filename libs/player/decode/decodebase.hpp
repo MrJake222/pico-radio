@@ -4,6 +4,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <queue.h>
+#include <config.hpp>
 
 enum class FinishReason {
     NoFinish,
@@ -130,6 +131,8 @@ public:
     int duration() { return format->bytes_to_sec(source_size_bytes()); }
     int core1_usage() { return int(frame_decode_time_ms * 100 / format->ms_per_unit()); }
     int buf_health() { return cbuf.health(); }
+    // can fail with return value -1
+    virtual int get_meta_str(char* meta, int meta_len) = 0;
 
     /* ---------- DMA feed handling CORE 1 ---------- */
     // uses dma flags to load specific part of the buffer

@@ -26,4 +26,6 @@ public:
         : DecodeBase(audio_pcm_, audio_pcm_size_words_, a_done_irq_, b_done_irq_, cbuf, core1_start_)
         , client(client_)
         { }
+
+    int get_meta_str(char *meta, int meta_len) override;
 };

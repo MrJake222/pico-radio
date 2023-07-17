@@ -79,7 +79,7 @@ xTaskHandle player_stat_task_h;
 // callbacks
 static void* cb_arg;
 static player_cb_fn fail_cb;
-static player_cb_fn upd_cb;
+static player_cb_fn_dec upd_cb;
 
 // task to notify when playback really ends
 xTaskHandle task_to_notify_end;
@@ -315,8 +315,13 @@ static void player_update_stats() {
 
     puts("");
 
+    // char stats[512];
+    // vTaskGetRunTimeStats(stats);
+    // puts(stats);
+    // puts("");
+
     // external stats
-    upd_cb(cb_arg);
+    upd_cb(cb_arg, dec);
 }
 
 static void player_stat_task(void* arg) {
@@ -345,7 +350,7 @@ static void player_stat_task(void* arg) {
     vTaskDelete(nullptr);
 }
 
-void player_start(const char* path, void* cb_arg_, player_cb_fn fail_cb_, player_cb_fn upd_cb_) {
+void player_start(const char* path, void* cb_arg_, player_cb_fn fail_cb_, player_cb_fn_dec upd_cb_) {
     printf("\nplaying: %s as %s file\n", path, filetype_from_name_string(path));
 
     strcpy(filepath, path);

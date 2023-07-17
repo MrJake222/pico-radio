@@ -4,6 +4,7 @@
 #include <icons.hpp>
 #include <ubuntu_mono.hpp>
 #include <player.hpp>
+#include <cstdio>
 
 int ScPlay::size_x(int y) {
     return 1;
@@ -59,22 +60,49 @@ void player_failed_callback(void* arg) {
     sc->show_error("odtwarzanie zakończyło się błędem");
 }
 
-void player_update_callback(void* arg) {
+void player_update_callback(void* arg, DecodeBase* dec) {
     // called from player stat task
-
+    // each call is a new current time value
     auto sc = (ScPlay*) arg;
+
+    char buf[PLAYER_META_BUF_LEN];
+
+    // current playback time
+    int c = dec->current_time();
+    sprintf(buf, "%02d:%02d", c/60, c%60);
+    sc->add_normal_text_ljust(
+            159, 53, buf,
+            ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+            COLOR_BG, COLOR_ACC1);
+
+    // currently playing song (from metadata)
+    int r = dec->get_meta_str(buf, PLAYER_META_BUF_LEN);
+    sc->update_scrolled_text(sc->meta_idx,
+                             r < 0 ? "brak danych" : buf);
+
+
 }
 
 void ScPlay::show() {
     Screen::show();
 
-    add_scrolled_text_or_normal(0, 24, radio_name,
-                                ubuntu_font_get_size(UbuntuFontSize::FONT_24),
-                                COLOR_BG, COLOR_ACC2,
-                                display.W);
+    add_scrolled_text_or_normal(
+            2, 13, radio_name,
+            ubuntu_font_get_size(UbuntuFontSize::FONT_24),
+            COLOR_BG, COLOR_ACC2,
+            display.W - 2*2);
+
+    meta_idx = add_scrolled_text(
+            2, 39, "brak danych",
+            ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+            COLOR_BG, COLOR_ACC1,
+            display.W - 2*2);
 
     if (!is_err_displayed) {
-        player_start(radio_url, this, player_failed_callback, player_update_callback);
+        player_start(radio_url,
+                     this,
+                     player_failed_callback,
+                     player_update_callback);
     }
 }
 

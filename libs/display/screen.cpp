@@ -94,15 +94,31 @@ void Screen::add_normal_text(int text_x, int text_y, const char* str, const stru
                        text_x, text_x + max_width);
 }
 
-void Screen::add_scrolled_text(int text_x, int text_y, const char* str, const struct font* font, int bg, int fg, int max_width) {
+void Screen::add_normal_text_ljust(int text_x_r, int text_y, const char* str, const struct font* font, int bg, int fg) {
+
+    const int text_x = text_x_r - strlen_utf8(str) * font->W;
+
+    display.write_text(text_x, text_y, str, font, bg, fg,
+                       text_x, text_x + display.W);
+}
+
+int Screen::add_scrolled_text(int text_x, int text_y, const char* str, const struct font* font, int bg, int fg, int max_width) {
     assert(texts_index < LCD_SCROLLED_TEXTS_MAX);
 
     xSemaphoreTake(mutex_ticker, portMAX_DELAY);
     texts[texts_index].begin(text_x, text_y, str, font, bg, fg, max_width);
     texts[texts_index].draw();
-
-    texts_index++;
     xSemaphoreGive(mutex_ticker);
+
+    return texts_index++;
+}
+
+void Screen::update_scrolled_text(int idx, const char *str) {
+    if (idx < texts_index) {
+        xSemaphoreTake(mutex_ticker, portMAX_DELAY);
+        texts[idx].set_str(str);
+        xSemaphoreGive(mutex_ticker);
+    }
 }
 
 void Screen::reset_scrolled_texts() {
@@ -123,12 +139,12 @@ void Screen::tick() {
     xSemaphoreGive(mutex_ticker);
 }
 
-void Screen::add_scrolled_text_or_normal(int text_x, int text_y, const char* str, const struct font* font,
+int Screen::add_scrolled_text_or_normal(int text_x, int text_y, const char* str, const struct font* font,
                                          int bg, int fg, int max_width, bool allow_scroll) {
 
     if (strlen_utf8(str) * font->W > max_width && allow_scroll) {
         // display can't fit name -> do scrolling
-        add_scrolled_text(text_x, text_y, str, font,
+        return add_scrolled_text(text_x, text_y, str, font,
                           bg, fg, max_width);
     }
 
@@ -136,6 +152,8 @@ void Screen::add_scrolled_text_or_normal(int text_x, int text_y, const char* str
         // can fit -> do normal text
         add_normal_text(text_x, text_y, str, font,
                         bg, fg, max_width);
+
+        return -1;
     }
 }
 
@@ -155,6 +173,10 @@ void Screen::show() {
                     display.W - 2*2);
 
     draw_buttons();
+}
+
+void Screen::hide() {
+    reset_scrolled_texts();
 }
 
 void Screen::show_error(const char* err) {

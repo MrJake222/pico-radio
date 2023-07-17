@@ -3,6 +3,7 @@
 #include <config.hpp>
 #include <screen.hpp>
 #include <cstring>
+#include <decodebase.hpp>
 
 class ScPlay : public Screen {
 
@@ -18,6 +19,12 @@ class ScPlay : public Screen {
 
     const char* radio_name;
     const char* radio_url;
+
+    // metadata text index
+    int meta_idx;
+
+    friend void player_failed_callback(void* arg);
+    friend void player_update_callback(void* arg, DecodeBase* dec);
 
 public:
     using Screen::Screen;

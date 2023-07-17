@@ -4,6 +4,11 @@
 #include <cstdint>
 #include <circularbuffer.hpp>
 
+#include <FreeRTOS.h>
+#include <semphr.h>
+
+typedef void(*icy_new_cb)();
+
 class ICY {
 
     char buf[ICY_BUF_LEN];
@@ -13,12 +18,18 @@ class ICY {
     // meta-int, how separated are icy fragments
     int step;
 
-    void handle_icy(int len);
+    SemaphoreHandle_t buf_mutex;
+
+    bool started;
 
 public:
-    void begin(int hdr_len, int metaint);
+    void begin();
+
+    int start(int hdr_len, int metaint);
 
     // returns 0 when read of ICY chunk successful
     // -1 on no chunk detected
     int read(volatile CircularBuffer& cbuf);
+
+    int get_stream_title(char* title, int title_len) const;
 };

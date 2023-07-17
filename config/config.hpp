@@ -27,6 +27,7 @@
 // buffer overrun protection, can lead to loop
 #define BUF_OVERRUN_PROTECTION          0
 #define PLAYER_END_TIMEOUT_MS           1000
+#define PLAYER_META_BUF_LEN             128
 
 // --------------------------------- Http --------------------------------- //
 #define HTTP_HOST_MAX_LEN               128

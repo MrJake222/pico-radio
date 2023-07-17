@@ -137,5 +137,9 @@ to exclude the API function. */
 
 /* A header file that defines trace macro can be included here. */
 
+// extern uint32_t time_us_32();
+// #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()
+// #define portGET_RUN_TIME_COUNTER_VALUE() time_us_32()
+
 #endif /* FREERTOS_CONFIG_H */
 

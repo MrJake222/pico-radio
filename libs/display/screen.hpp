@@ -32,11 +32,11 @@ class Screen {
     // first free index in <texts> array
     int texts_index;
 
-    // see screenmng.cpp for details
-    SemaphoreHandle_t& mutex_ticker;
-
 protected:
     ST7735S& display;
+
+    // see screenmng.cpp for details
+    SemaphoreHandle_t& mutex_ticker;
 
     // grid is (0, f(y)) x (0, y)
     // can be irregular
@@ -77,12 +77,18 @@ protected:
     static int get_btn_bg(bool selected, bool dark);
 
     void add_normal_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width);
-    void add_scrolled_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width);
+    // adds left justified text, takes <text_x_r> (right corner), calculates <str> length
+    void add_normal_text_ljust(int text_x_r, int text_y, const char *str, const struct font* font, int bg, int fg);
+    int add_scrolled_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width);
+    void update_scrolled_text(int idx, const char *str);
     void reset_scrolled_texts();
     // this adds scrolling text if the text won't fit in max_width
     // can attach additional check (scrolling will only occur when allow_scroll is true)
-    void add_scrolled_text_or_normal(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width, bool allow_scroll=true);
+    // returns index of scrolled text or -1 if normal text
+    int add_scrolled_text_or_normal(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width, bool allow_scroll=true);
 
+    // slow ticks (500 ms)
+    // virtual void tick_slow() { }
 
 public:
     Screen(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_)
@@ -91,19 +97,24 @@ public:
         , texts{display_, display_, display_, display_}
         { }
 
-    // called when the screen is entered the first time
+    // called when the screen is entered the first time (from previous screen usually)
     // don't call on "back" button enter
     virtual void begin();
 
-    // called every time the screen is shown
-    // replaces standard <start> method
+    // called every time the screen is shown (before enabling ticking)
+    // called by screen manager
     virtual void show();
+
+    // called every time the screen is hidden (before disabling ticking)
+    // called by screen manager
+    virtual void hide();
 
     // called after show on some error
     void show_error(const char* err);
 
-    // should be called periodically
-    // to update scrollable texts
+    // should be called periodically to update screen content
+    // default implementation updates scrollable texts
+    // called each LCD_TICK_INTERVAL_MS ms
     void tick();
 
     // called on input button pressed

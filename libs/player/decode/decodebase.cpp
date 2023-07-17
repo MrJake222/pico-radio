@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <lwip/stats.h>
 #include <pico/multicore.h>
+#include <cstring>
 
 void cbuf_read_cb(void* arg, unsigned int bytes) {
     auto b16 = (uint16_t) bytes;

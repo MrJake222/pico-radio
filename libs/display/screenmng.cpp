@@ -20,8 +20,8 @@ static ST7735S display(
 
 static Screen* current_screen;
 
-// protects ticker from running when we add/remove a text
-// important when we want to remove a text and redraw something in its place
+// protects ticker from running when we add/remove/modify anything a ticker can access
+// important for ex. when we want to remove a text and redraw something in its place
 // (ticker can preempt the input task)
 static SemaphoreHandle_t mutex_ticker;
 
@@ -71,9 +71,12 @@ void screenmng_init() {
 }
 
 void screenmng_input(ButtonEnum input) {
-    Screen* screen_new = current_screen->input(input);
-    if (screen_new) {
-        current_screen = screen_new;
-        current_screen->show();
+    Screen* new_screen = current_screen->input(input);
+    if (new_screen) {
+        current_screen->hide();
+        new_screen->show();
+
+        // this moves ticker from current to new screen
+        current_screen = new_screen;
     }
 }

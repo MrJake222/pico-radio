@@ -211,5 +211,8 @@ float FormatMP3::ms_per_unit() {
 }
 
 int FormatMP3::bytes_to_sec(b_type bytes) {
+    if (bitrate_count == 0)
+        return 0;
+
     return (int)(bytes / avg_byterate());
 }

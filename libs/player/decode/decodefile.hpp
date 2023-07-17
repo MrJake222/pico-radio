@@ -34,4 +34,7 @@ public:
     void ack_bytes(uint16_t bytes) override;
 
     using DecodeBase::DecodeBase;
+
+    // TODO implement ID3
+    int get_meta_str(char *meta, int meta_len) override { return -1; }
 };

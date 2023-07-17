@@ -1,12 +1,24 @@
 #include "icy.hpp"
 
 #include <cstdio>
-#include <util.hpp>
+#include <cstring>
 
-void ICY::begin(int hdr_len, int metaint) {
+void ICY::begin() {
+    started = false;
+    strcpy(buf, "");
+}
+
+int ICY::start(int hdr_len, int metaint) {
     printf("ICY: hdr len %d metaint %d\n", hdr_len, metaint);
     next = hdr_len + metaint;
     step = metaint;
+
+    buf_mutex = xSemaphoreCreateMutex();
+    if (!buf_mutex)
+        return -1;
+
+    started = true;
+    return 0;
 }
 
 int ICY::read(volatile CircularBuffer& cbuf) {
@@ -27,8 +39,17 @@ int ICY::read(volatile CircularBuffer& cbuf) {
     }
 
     if (icy_len <= ICY_BUF_LEN) {
-        cbuf.read_arb(o, (uint8_t*)buf, icy_len);
-        handle_icy(icy_len);
+        if (icy_len > 1) {
+            // copy only content
+            xSemaphoreTake(buf_mutex,
+                           1000 / portTICK_PERIOD_MS);
+
+            cbuf.read_arb(o + 1, (uint8_t*) buf, icy_len - 1);
+
+            xSemaphoreGive(buf_mutex);
+        }
+
+        // silently ignore 0-len ICY tags (but still consume them below)
     }
     else {
         puts("ICY: too big");
@@ -39,10 +60,43 @@ int ICY::read(volatile CircularBuffer& cbuf) {
     return 0;
 }
 
-void ICY::handle_icy(int len) {
-    if (len > 0) {
-        puts("\nICY:");
-        debug_print((uint8_t*) buf, 0, len, 0);
-        puts("");
+int ICY::get_stream_title(char* title, int title_len) const {
+    char buf_priv[ICY_BUF_LEN];
+
+    if (!started)
+        return -1;
+
+    xSemaphoreTake(buf_mutex, portMAX_DELAY);
+    memcpy(buf_priv, buf, ICY_BUF_LEN);
+    xSemaphoreGive(buf_mutex);
+
+    // parse
+    char* name = buf_priv;
+    char* val;
+
+    // search for StreamTitle tag
+    while (true) {
+        val = strchr(name, '=');
+        if (!*val)
+            return -1;
+
+        *val++ = '\0'; // replace = with \0 and skip
+
+        if (strcmp(name, "StreamTitle") == 0)
+            break;
+
+        name = strchr(val, ';');
+        if (!*name)
+            return -1;
     }
+
+    // beginning of the tag
+    val = strchr(val, '\'');
+
+    // strip val of ''
+    val += 1;                     // skip first '
+    *strchr(val, '\'') = '\0';    // trim last '
+
+    strncpy(title, val, title_len);
+    return 0;
 }

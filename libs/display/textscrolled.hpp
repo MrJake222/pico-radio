@@ -25,6 +25,9 @@ public:
         : display(display_)
         { }
 
+    // set text to be displayed
+    void set_str(const char* str_);
+
     // set parameters
     void begin(int text_x_, int text_y_, const char* str_, const struct font* font_, int bg_, int fg_, int max_width_);
 
