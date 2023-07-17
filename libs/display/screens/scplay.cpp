@@ -72,7 +72,7 @@ void player_update_callback(void* arg, DecodeBase* dec) {
     sprintf(buf, "%02d:%02d", c/60, c%60);
     sc->add_normal_text_ljust(
             159, 53, buf,
-            ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+            ubuntu_font_get_size(UbuntuFontSize::FONT_12),
             COLOR_BG, COLOR_ACC1);
 
     // currently playing song (from metadata)

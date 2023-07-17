@@ -3,6 +3,7 @@
 #include <cstdint>
 
 enum class UbuntuFontSize {
+    FONT_12,
     FONT_16,
     FONT_24
 };
