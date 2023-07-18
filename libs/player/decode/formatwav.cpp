@@ -44,12 +44,6 @@ int FormatWAV::decode_up_to_n(uint32_t *audio_pcm_buf, int n) {
     return copied;
 }
 
-void FormatWAV::decode_exactly_n(uint32_t *audio_pcm_buf, int n) {
-    for (int bytes_read=0; bytes_read < n;) {
-        bytes_read += decode_up_to_n(audio_pcm_buf + bytes_read/4, n - bytes_read);
-    }
-}
-
 long FormatWAV::bit_freq() {
     return header.sample_rate * header.bits_per_sample * header.channels;
 }

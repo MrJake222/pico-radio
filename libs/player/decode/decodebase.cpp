@@ -34,6 +34,7 @@ void DecodeBase::begin(const char* path_, Format* format_) {
 
     decode_finished_by = FinishReason::NoFinish;
     frame_decode_time_ms = 0;
+    user_abort = false;
 }
 
 int DecodeBase::setup() {
@@ -126,20 +127,35 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
     frame_decode_time_ms = (float)took_us / 1000.f / decoded;
 }
 
-void DecodeBase::dma_preload() {
+int DecodeBase::dma_preload() {
+
+    int decoded;
 
     // wait for data in buffer
     puts("core1: waiting for data");
-    while (cbuf.health() < min_health);
+    while (cbuf.health() < min_health) {
+        if (user_abort)
+            goto fail;
+    }
 
     puts("core1: data loaded");
     cbuf.debug_read(32, 0);
     puts("");
 
     format->decode_header();
-    // TODO remove "exactly_n" functions
-    // they were used before while (health < min)
-    format->decode_exactly_n(audio_pcm, format->units_to_decode_whole());
+
+    decoded = format->decode_up_to_n(audio_pcm, format->units_to_decode_whole());
+    if (decoded < format->units_to_decode_whole()) {
+        // failure, couldn't decode enough frames
+        // probably a user abort (buffer has enough data because of loop above)
+        goto fail;
+    }
+
+    return 0;
+
+fail:
+    notify_playback_end(false);
+    return -1;
 }
 
 void DecodeBase::dma_watch() {

@@ -57,8 +57,7 @@ Screen* ScPlay::run_action(int action) {
             return nullptr;
 
         case BACK:
-            player_stop();
-            player_wait_for_end();
+            player_stop(); // handles wait
             return &sc_search_res;
     }
 

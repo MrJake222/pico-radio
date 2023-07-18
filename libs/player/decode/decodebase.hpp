@@ -55,6 +55,7 @@ class DecodeBase {
 
     // how much last dma feed took to decode 1 frame on average
     float frame_decode_time_ms;
+    bool user_abort;
 
     // Main task variables
     xQueueHandle queue;
@@ -122,7 +123,7 @@ public:
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
     // caller wants to stop playback thread (from core0)
-    void stop_playback() { format->set_user_abort(); }
+    void stop_playback() { user_abort = true; format->set_user_abort(); }
 
     // Media information
     // return source medium size in bytes
@@ -136,8 +137,10 @@ public:
     virtual int get_meta_str(char* meta, int meta_len) = 0;
 
     /* ---------- DMA feed handling CORE 1 ---------- */
+    // run on core1 startup, waits for <min_health> buffer data,
+    // preloads pcm buffer, can fail on user abort
+    int dma_preload();
     // uses dma flags to load specific part of the buffer
-    void dma_preload();
     void dma_watch();
 
     // this becomes valid after <dma_preload>

@@ -42,7 +42,6 @@ public:
     int units_to_decode_whole() override { return BUF_PCM_SIZE_FRAMES; }
 
     int decode_up_to_n(uint32_t *audio_pcm_buf, int n) override;
-    void decode_exactly_n(uint32_t *audio_pcm_buf, int n) override;
 
     long bit_freq() override;
     float ms_per_unit() override;

@@ -172,16 +172,6 @@ int FormatMP3::decode_up_to_n(uint32_t* audio_pcm_buf, int n) {
     return frames_read;
 }
 
-void FormatMP3::decode_exactly_n(uint32_t* audio_pcm_buf, int n) {
-    long frame_offset = 0;
-    int frames_read;
-
-    for (frames_read=0; frames_read < n;) {
-        frames_read += decode_up_to_one_frame(audio_pcm_buf + frame_offset);
-        frame_offset += MP3_SAMPLES_PER_FRAME;
-    }
-}
-
 void FormatMP3::calculate_stats() {
     MP3GetLastFrameInfo(hMP3Decoder, &frame_info);
 

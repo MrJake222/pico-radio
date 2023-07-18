@@ -38,8 +38,6 @@ public:
     // "decode" means move from <this->raw_buf> to <audio_pcm_buf> (possibly doing some work)
     // audio_pcm_buf can't be in class because it changes over time (first/second half of the buffer)
     virtual int decode_up_to_n(uint32_t* audio_pcm_buf, int n) = 0;
-    // won't return before decoding <n> units exactly
-    virtual void decode_exactly_n(uint32_t* audio_pcm_buf, int n) = 0;
 
     virtual long bit_freq() = 0;
     virtual float ms_per_unit() = 0;

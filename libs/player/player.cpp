@@ -180,13 +180,15 @@ static void dma_start() {
 }
 
 [[noreturn]] static void core1_entry() {
-    dec->dma_preload();
+    int r = dec->dma_preload();
+    if (r == 0) {
+        // all good
+        i2s_program_set_bit_freq(pio, sm, dec->bit_freq());
+        dma_start();
 
-    i2s_program_set_bit_freq(pio, sm, dec->bit_freq());
-    dma_start();
-
-    while (!dec->decode_finished()) {
-        dec->dma_watch();
+        while (!dec->decode_finished()) {
+            dec->dma_watch();
+        }
     }
 
     // core1 never returns
@@ -380,21 +382,29 @@ void player_stop() {
     if (!player_is_started())
         return;
 
+    // disable any errors (returning from here means a new screen is displayed)
+    fail_cb = nullptr;
+
+    // only one task can wait for end
+    assert(task_to_notify_end == nullptr);
+
+    // setup waiting
+    task_to_notify_end = xTaskGetCurrentTaskHandle();
+
+    // initialize playback stopping
     dec->stop_playback();
+
+    // wait for stop
+    int ret = ulTaskNotifyTake(pdTRUE, PLAYER_END_TIMEOUT_MS / portTICK_PERIOD_MS);
+    if (ret == pdFALSE) {
+        // timeout
+        puts("player: timeout waiting for stop");
+    }
+
+    // discard waiting
+    task_to_notify_end = nullptr;
 }
 
 bool player_is_started() {
     return dec;
-}
-
-void player_wait_for_end() {
-    if (!player_is_started())
-        return;
-
-    // TODO player closing too fast errors
-    // player calls error callback -13 when stopped too early
-    // see player_stop
-    task_to_notify_end = xTaskGetCurrentTaskHandle();
-    ulTaskNotifyTake(pdTRUE, PLAYER_END_TIMEOUT_MS / portTICK_PERIOD_MS);
-    task_to_notify_end = nullptr;
 }
