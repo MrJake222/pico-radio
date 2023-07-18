@@ -59,6 +59,11 @@ void DecodeStream::end() {
     DecodeBase::end();
 }
 
+void DecodeStream::stop() {
+    client.try_abort();
+    DecodeBase::stop();
+}
+
 void DecodeStream::ack_bytes(uint16_t bytes) {
     // TODO handle content-length
     client.rx_ack(bytes);

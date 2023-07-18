@@ -122,8 +122,9 @@ public:
     // after play() returns caller needs to wait for DMA
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
-    // caller wants to stop playback thread (from core0)
-    void stop_playback() { user_abort = true; format->set_user_abort(); }
+
+    // caller wants to stop playback thread (from core0, ex. user aborts)
+    virtual void stop() { user_abort = true; format->set_user_abort(); }
 
     // Media information
     // return source medium size in bytes

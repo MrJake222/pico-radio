@@ -86,7 +86,6 @@ err_t connected_callback(void* arg, struct tcp_pcb* tpcb, err_t err) {
     // puts("connected callback");
 
     auto httpc = ((argptr)arg);
-    httpc->connected = true;
     httpc->notify(BIT_CONNECT);
 
     return err;
@@ -108,6 +107,7 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
         // some error occurred
         printf("recv callback error code %d\n", err);
         httpc->err = true;
+        httpc->notify(BIT_ERROR);
         pbuf_free(p_head);
         return err;
     }
@@ -258,7 +258,6 @@ void HttpClientPico::reset_state() {
     HttpClient::reset_state();
 
     err = false;
-    connected = false;
     bytes_rx_tx_since_poll = 0;
 
     cbuf.reset_only_data();

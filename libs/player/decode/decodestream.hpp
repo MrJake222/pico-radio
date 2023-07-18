@@ -18,6 +18,7 @@ public:
     void begin(const char* path_, Format* format_) override;
     int play() override;
     void end() override;
+    void stop() override;
 
     // callback called from core0
     void ack_bytes(uint16_t bytes) override;

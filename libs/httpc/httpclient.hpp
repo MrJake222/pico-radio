@@ -16,7 +16,7 @@ class HttpClient {
     virtual int recv(char* buf, int buflen) = 0;
     virtual int connect_to(const char* host, unsigned short port) = 0;
     virtual int disconnect() = 0;
-    virtual int already_read() = 0;
+    virtual b_type already_read() = 0;
 
     // returns number of bytes transferred
     // fails only on socket error
@@ -57,7 +57,7 @@ class HttpClient {
     int connect_url(const char* url);
 
 protected:
-    virtual void header_parsing_done() { headers_length = already_read(); }
+    virtual void header_parsing_done() { headers_length = (int) already_read(); }
 
     // always called before starting a connection
     virtual void reset_state() { h_icy_metaint = -1; }

@@ -10,7 +10,8 @@ static const char* urls[] = {
 
 static const int url_count = sizeof(urls) / sizeof(char*);
 
-static List* query_url(HttpClientPico& client, const char* url, struct station* stations, int max_stations) {
+static List* query_url(HttpClientPico& client, const char* url, struct station* stations, int max_stations,
+        volatile bool& should_abort) {
     int r = client.get(url);
     if (r) {
         printf("querying failed for url %s\n", url);
@@ -37,8 +38,12 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
     list->begin(&client, stations, max_stations);
 
     while (client.more_content()) {
-        // loop until all content data has been read
-        
+        // loop until all content data has been read or aborted
+        if (should_abort) {
+            puts("rs: abort");
+            break;
+        }
+
         ListError lr = list->consume();
 
         if (lr == ListError::ERROR) {
@@ -84,7 +89,8 @@ void rs_search_task(void* arg) {
         
         List* list = query_url(rs->client, rs->url_buf,
                                rs->stations + rs->stations_offset,
-                               MAX_STATIONS - rs->stations_offset);
+                               MAX_STATIONS - rs->stations_offset,
+                               rs->should_abort);
 
         if (!list) {
             errored++;
@@ -137,6 +143,7 @@ void RadioSearch::load_stations() {
 
 void RadioSearch::load_abort() {
     should_abort = true;
+    client.try_abort();
 }
 
 void RadioSearch::set_all_loaded_cb(void* arg, all_ld_cb_fn cb) {
@@ -152,7 +159,7 @@ const char* RadioSearch::get_station_url(int i) {
     const char* url = stations[i].url;
     const char* ext = url + strlen(url) - 4;
     if (strcmp(ext, ".pls") == 0) {
-        List* list = query_url(client, url, stations_pls, MAX_STATIONS_PLS);
+        List* list = query_url(client, url, stations_pls, MAX_STATIONS_PLS, should_abort);
         if (!list)
             return nullptr;
 

@@ -29,6 +29,7 @@ class HttpClientPico : public HttpClient {
     int recv(char* buf, int buflen) override;
     int connect_to(const char* host, unsigned short port) override;
     int disconnect() override;
+    b_type already_read() override { return cbuf.read_bytes_total(); }
 
     // lwip structure
     struct tcp_pcb* pcb;
@@ -38,7 +39,6 @@ class HttpClientPico : public HttpClient {
 
     // status variables
     volatile bool err;
-    volatile bool connected;
     // dns
     volatile bool dns_found;
     volatile bool dns_failed;
@@ -51,6 +51,7 @@ class HttpClientPico : public HttpClient {
     h_cb err_cb;
     void err_cb_call(err_t err_code) volatile { if (err_cb) err_cb(err_cb_arg, err_code); }
 
+    // TODO cleanup: factor out to separate class
     // used to notify the connection task
     // on dns query/connect complete/error
     TaskHandle_t task;
@@ -81,7 +82,7 @@ public:
     void set_err_cb(h_cb cb_, void* arg_);
     bool is_err() volatile { return err; }
 
-    int already_read() override { return cbuf.read_bytes_total(); }
+    void try_abort() { notify(BIT_ERROR); }
 
     // callbacks
     friend void gethost_callback(const char* name, const ip_addr_t* ipaddr, void* arg);
