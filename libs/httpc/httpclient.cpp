@@ -48,56 +48,6 @@ int HttpClient::send_string(const char *buf, bool more) {
     return 0;
 }
 
-int HttpClient::recv_line(char *buf, int bufsize) {
-
-    int line_length = 0;
-    int ret;
-
-    char chr;
-    bool r_seen = false;
-    bool overrun = false;
-
-    while (true) {
-        // recv will receive at least one byte
-        ret = recv(&chr, 1);
-        if (ret < 0)
-            return ERROR;
-
-        if (chr == '\r') {
-            r_seen = true;
-            chr = 0;
-        }
-
-        else if (chr == '\n') {
-            // found \n
-            // it's either singular line ending (only \n)
-            // or \r\n\ if \r was seen (r_seen = true)
-
-            if (overrun) {
-                puts("line buffer overrun");
-                return OVERRUN;
-            }
-
-            if (r_seen) {
-                // string already terminated
-                return line_length - 1; // line length without \r
-            }
-
-            // \r not seen
-            // terminate string
-            buf[line_length] = 0;
-            return line_length;
-        }
-
-        if (line_length+1 < bufsize) {
-            buf[line_length++] = chr;
-        }
-        else {
-            overrun = true;
-        }
-    }
-}
-
 int HttpClient::split_host_path_port(const char *url) {
 
     if (strncmp(url, "http://", 7) == 0) {
@@ -177,7 +127,7 @@ int HttpClient::test_for_http() {
 
 int HttpClient::parse_headers() {
     while (1) {
-        int len = recv_line(qrbuf, HTTP_QUERY_RESP_BUF_SIZE);
+        int len = read_line(this, qrbuf, HTTP_QUERY_RESP_BUF_SIZE);
         if (len < 0)
             return -1;
         if (len == 0)
@@ -217,7 +167,7 @@ int HttpClient::parse_headers() {
 int HttpClient::parse_http() {
     memcpy(qrbuf, buf_http, 4);
 
-    int len = recv_line(qrbuf + 4, HTTP_QUERY_RESP_BUF_SIZE - 4);
+    int len = read_line(this, qrbuf + 4, HTTP_QUERY_RESP_BUF_SIZE - 4);
     if (len < 0)
         return -1;
 

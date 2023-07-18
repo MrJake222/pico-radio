@@ -1,6 +1,5 @@
 #include "list.hpp"
 
-#include <cstdio>
 #include <cstring>
 #include <random>
 
@@ -10,13 +9,13 @@ ListError List::consume() {
     char line[MAX_LINE_LEN + 1];
     int len;
 
-    len = client->recv_line(line, MAX_LINE_LEN + 1);
-    if (len == HttpClient::OVERRUN) {
+    len = read_line(ds, line, MAX_LINE_LEN + 1);
+    if (len == RL_OVERRUN) {
         // line buffer overrun, ignore
         return ListError::OK;
     }
 
-    if (len < 0) {
+    if (len == RL_ERROR) {
         return ListError::ERROR;
     }
 

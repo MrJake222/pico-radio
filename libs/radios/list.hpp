@@ -2,7 +2,7 @@
 
 #include <config.hpp>
 #include <circularbuffer.hpp>
-#include <httpclientpico.hpp>
+#include <util.hpp>
 
 struct station {
     char uuid[ST_UUID_LEN + 1];
@@ -18,7 +18,7 @@ enum class ListError {
 
 class List {
 
-    HttpClientPico* client;
+    DataSource* ds;
     struct station* stations;
     int stations_len;
     int stations_found;
@@ -32,8 +32,8 @@ protected:
     void set_next_station() { stations_found++; }
 
 public:
-    virtual void begin(HttpClientPico* client_, struct station* stations_, int stations_len_) {
-        client = client_;
+    virtual void begin(DataSource* ds_, struct station* stations_, int stations_len_) {
+        ds = ds_;
         stations = stations_;
         stations_len = stations_len_;
         stations_found = 0;

@@ -6,8 +6,9 @@
 #include <map>
 #include <circularbuffer.hpp>
 #include <config.hpp>
+#include <util.hpp>
 
-class HttpClient {
+class HttpClient : public DataSource {
 
     // these are platform-specific
     // send/receive as much as possible, return how many was sent/received (at least one byte)
@@ -100,7 +101,6 @@ public:
     // or fails with return value -1
     int recv_all(char* buf, int buflen);
 
-    // receives whole line
-    // searches for \r\n, returns line+length without \r\n (or -1 on failure)
-    int recv_line(char* buf, int bufsize);
+    // read exactly one character or fail with return code -1
+    int read_char(char *chr) override { return recv(chr, 1); }
 };
