@@ -38,7 +38,7 @@ class HttpClientPico : public HttpClient {
     volatile CircularBuffer& cbuf;
 
     // status variables
-    volatile bool err;
+    // volatile bool err;
     // dns
     volatile bool dns_found;
     volatile bool dns_failed;
@@ -80,7 +80,6 @@ public:
     void rx_ack(uint16_t bytes);
 
     void set_err_cb(h_cb cb_, void* arg_);
-    bool is_err() volatile { return err; }
 
     void try_abort() { notify(BIT_ERROR); }
 

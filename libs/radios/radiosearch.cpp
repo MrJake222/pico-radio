@@ -57,12 +57,6 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
             puts("rs: maxed out stations");
             break;
         }
-
-        if (client.is_err()) {
-            puts("rs: client error");
-            client.close();
-            return nullptr;
-        }
     }
 
     r = client.close();

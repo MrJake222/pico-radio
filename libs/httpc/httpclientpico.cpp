@@ -73,7 +73,6 @@ void error_callback(void *arg, err_t err) {
     printf("error callback code %d\n", err);
 
     auto httpc = ((argptr)arg);
-    httpc->err = true;
     httpc->pcb = nullptr;
     httpc->notify(BIT_ERROR);
 
@@ -106,7 +105,6 @@ err_t recv_callback(void* arg, struct tcp_pcb* tpcb, struct pbuf* p_head, err_t 
     if (err != ERR_OK) {
         // some error occurred
         printf("recv callback error code %d\n", err);
-        httpc->err = true;
         httpc->notify(BIT_ERROR);
         pbuf_free(p_head);
         return err;
@@ -181,11 +179,6 @@ int HttpClientPico::send(const char *buf, int buflen, bool more) {
             goto end;
         }
     }
-    if (err) {
-        puts("error during send");
-        senderr = true;
-        goto end;
-    }
 
     buflen = MIN(buflen, tcp_sndbuf(pcb));
 
@@ -225,11 +218,6 @@ int HttpClientPico::recv(char* buf, int buflen) {
             goto end;
         }
     }
-    if (err) {
-        puts("error during recv");
-        recverr = true;
-        goto end;
-    }
 
     if (cbuf.data_left() == 0) {
         // no data received, timeout
@@ -257,7 +245,6 @@ end:
 void HttpClientPico::reset_state() {
     HttpClient::reset_state();
 
-    err = false;
     bytes_rx_tx_since_poll = 0;
 
     cbuf.reset_only_data();
@@ -308,9 +295,10 @@ int HttpClientPico::wait(int bit) {
                                HTTP_TIMEOUT_MS / portTICK_PERIOD_MS);
 
         cyw43_arch_lwip_begin();
-    } while (!HAS_NOTIF(val, bit) && NOT_TIMEOUT_US(start) && !err);
+    } while (!HAS_NOTIF(val, bit) && !HAS_NOTIF(val, BIT_ERROR) && NOT_TIMEOUT_US(start));
 
-    if (err) {
+    if (HAS_NOTIF(val, BIT_ERROR)) {
+        // error notification occurred
         puts("error occurred while waiting for notification");
         ret = -1;
         goto end;
@@ -339,7 +327,6 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     err_t ret;
     ret = gethostbyname(host);
     if (ret) {
-        err = true;
         puts("gethostbyname failed");
         goto clean_up_failed;
     }
@@ -349,7 +336,6 @@ int HttpClientPico::connect_to(const char *host, unsigned short port) {
     pcb = tcp_new();
 
     if (!pcb) {
-        err = true;
         puts("tcp_new failed");
         goto clean_up_failed;
     }
@@ -388,7 +374,7 @@ int HttpClientPico::disconnect() {
     cyw43_arch_lwip_begin();
 
     // pcb can be null after tcp_err fires
-    if (!err) {
+    if (pcb) {
         err_t ret = tcp_close(pcb);
 
         if (ret != ERR_OK) {
