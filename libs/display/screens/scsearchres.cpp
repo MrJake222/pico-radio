@@ -10,8 +10,16 @@ void all_loaded_cb(void* arg, int errored);
 
 static RadioSearch rs(get_http_client());
 
-#define S_RES_W     145
+#define S_BASE_X      3
+#define S_BASE_Y     31
+
+#define S_RES_W     147
 #define S_RES_H      20
+#define S_RES_MAR     1
+#define S_RES_PAD     2
+
+#define S_SCROLL_W    5
+#define S_SCROLL_MAR  2
 
 #define KB_BUTTONS_MAX    4
 
@@ -20,7 +28,7 @@ int ScSearchRes::size_x(int y) {
 }
 
 int ScSearchRes::size_y() {
-    return MIN(station_count, 4) + 1;
+    return kb_buttons() + 1;
 }
 
 int ScSearchRes::max_base_y() {
@@ -49,15 +57,17 @@ void ScSearchRes::draw_scroll_bar() {
     if (station_count == 0)
         return;
 
-    display.fill_rect(152, 31, 5, 83, COLOR_BG_DARK);
+    const int x = S_BASE_X + S_RES_W + S_SCROLL_MAR;
+    const int y = S_BASE_Y;
+    const int h = (S_RES_H + S_RES_MAR) * 3 + S_RES_H;
 
-    const int y = 31;
-    const int h = 83;
+    display.fill_rect(x, y, S_SCROLL_W, h, COLOR_BG_DARK);
+
     const float segment = h / (float)station_count;
     const float start   = y + segment * (float)base_y;         // skip base_y segments
     const float height  =     segment * (float)kb_buttons();   // display 4 segments high bar
 
-    display.fill_rect(152, (int)start, 5, (int)height, COLOR_ACC1);
+    display.fill_rect(x, (int)start, S_SCROLL_W, (int)height, COLOR_ACC1);
 }
 
 void ScSearchRes::iny() {
@@ -129,17 +139,17 @@ void ScSearchRes::draw_button(int x, int y, bool selected) {
 
     switch (action) {
         case PLAY:
-            xs = 5;
-            ys = 31 + (S_RES_H + 1)*y;
+            xs = S_BASE_X;
+            ys = S_BASE_Y + (S_RES_H + S_RES_MAR)*y;
             name = rs.get_station_name(base_y + y);
 
 
             bg = get_btn_bg(selected, true);
             display.fill_rect(xs, ys, S_RES_W, S_RES_H,bg);
-            add_scrolled_text_or_normal(xs + 3, ys, name,
+            add_scrolled_text_or_normal(xs + S_RES_PAD, ys + 1, name,
                                         ubuntu_font_get_size(UbuntuFontSize::FONT_16),
                                         bg, COLOR_FG,
-                                        S_RES_W - 3*2, selected);
+                                        S_RES_W - S_RES_PAD*2, selected);
 
             break;
 

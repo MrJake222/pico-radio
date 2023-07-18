@@ -27,6 +27,7 @@ void TextScrolled::begin(int text_x_, int text_y_, const char* str_, const struc
     fg = fg_;
 
     set_str(str_);
+    offset_x = 0; // force scroll reset
 }
 
 void TextScrolled::update(int time_passed_ms) {
