@@ -10,8 +10,14 @@ static const char* urls[] = {
 
 static const int url_count = sizeof(urls) / sizeof(char*);
 
+void client_err_cb(void* arg, int err) {
+    printf("rs: client err %d\n", err);
+    ((RadioSearch*) arg)->client_errored = true;
+}
+
 static List* query_url(HttpClientPico& client, const char* url, struct station* stations, int max_stations,
-        volatile bool& should_abort) {
+        volatile bool& should_abort, volatile bool& client_errored) {
+    client_errored = false;
     int r = client.get(url);
     if (r) {
         printf("querying failed for url %s\n", url);
@@ -57,6 +63,12 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
             puts("rs: maxed out stations");
             break;
         }
+
+        if (client_errored) {
+            puts("rs: client error");
+            client.close();
+            return nullptr;
+        }
     }
 
     r = client.close();
@@ -68,23 +80,21 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
     return list;
 }
 
-void rs_search_task(void* arg) {
-
-    auto rs = (RadioSearch*) arg;
-
+void RadioSearch::task() {
+    
     // load stations from all URLs
 
     int errored = 0;
     for (int i=0; i<url_count; i++) {
-        if (rs->should_abort)
+        if (should_abort)
             break;
 
-        snprintf(rs->url_buf, SEARCH_URL_BUF_LEN, urls[i], rs->query);
+        snprintf(url_buf, SEARCH_URL_BUF_LEN, urls[i], query);
         
-        List* list = query_url(rs->client, rs->url_buf,
-                               rs->stations + rs->stations_offset,
-                               MAX_STATIONS - rs->stations_offset,
-                               rs->should_abort);
+        List* list = query_url(client, url_buf,
+                               stations + stations_offset,
+                               stations_count - stations_offset,
+                               should_abort, client_errored);
 
         if (!list) {
             errored++;
@@ -92,21 +102,21 @@ void rs_search_task(void* arg) {
         }
 
         // printf("done loading url, loaded %d stations\n", list->stations_found);
-        rs->stations_offset += list->get_stations_found();
+        stations_offset += list->get_stations_found();
 
-        if (rs->stations_offset == MAX_STATIONS) {
+        if (stations_offset == stations_count) {
             puts("rs: maxed out stations, done");
             break;
         }
     }
 
-    printf("done loading all, loaded %d stations, %d providers errored\n", rs->stations_offset, errored);
-    // for (int i=0; i<rs->stations_offset; i++) {
-    //     printf("uuid %s name %32s url %s\n", rs->stations[i].uuid, rs->stations[i].name, rs->stations[i].url);
+    printf("done loading all, loaded %d stations, %d providers errored\n", stations_offset, errored);
+    // for (int i=0; i<stations_offset; i++) {
+    //     printf("uuid %s name %32s url %s\n", stations[i].uuid, stations[i].name, stations[i].url);
     // }
 
-    if (rs->all_loaded_cb && !rs->should_abort)
-        rs->all_loaded_cb(rs->cb_arg, errored);
+    if (!should_abort)
+        call_all_loaded(errored);
 
     uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
     printf("radiosearch unused stack: %ld\n", min_free_stack);
@@ -115,34 +125,16 @@ void rs_search_task(void* arg) {
 }
 
 void RadioSearch::begin(const char* query_) {
+    ListLoader::begin_();
     query = query_;
 
     client.begin();
-    // client.set_err_cb(client_err_cb, this);
-
-    should_abort = false;
-
-    stations_offset = 0;
-    all_loaded_cb = nullptr;
-}
-
-void RadioSearch::load_stations() {
-    xTaskCreate(rs_search_task,
-                "search",
-                STACK_RADIO_SEARCH,
-                this,
-                PRI_RADIO_SEARCH,
-                nullptr);
+    client.set_err_cb(client_err_cb, this);
 }
 
 void RadioSearch::load_abort() {
-    should_abort = true;
+    ListLoader::load_abort();
     client.try_abort();
-}
-
-void RadioSearch::set_all_loaded_cb(void* arg, all_ld_cb_fn cb) {
-    cb_arg = arg;
-    all_loaded_cb = cb;
 }
 
 const char* RadioSearch::get_station_url(int i) {
@@ -153,7 +145,10 @@ const char* RadioSearch::get_station_url(int i) {
     const char* url = stations[i].url;
     const char* ext = url + strlen(url) - 4;
     if (strcmp(ext, ".pls") == 0) {
-        List* list = query_url(client, url, stations_pls, MAX_STATIONS_PLS, should_abort);
+        List* list = query_url(client, url,
+                               stations_pls, stations_pls_count,
+                               should_abort, client_errored);
+
         if (!list)
             return nullptr;
 

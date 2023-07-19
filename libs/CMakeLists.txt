@@ -33,9 +33,10 @@ add_library(libs
         radios/list.cpp
         radios/listm3u.cpp
         radios/listpls.cpp
+        radios/listloader.cpp
         radios/radiosearch.cpp
 
-        buffers.cpp
+        static.cpp
         circularbuffer.cpp
         util.cpp
         )

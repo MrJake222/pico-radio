@@ -12,7 +12,7 @@
 #include <config.hpp>
 #include <i2s.pio.h>
 #include <circularbuffer.hpp>
-#include <buffers.hpp>
+#include <static.hpp>
 #include <formatmp3.hpp>
 #include <formatwav.hpp>
 #include <decodebase.hpp>

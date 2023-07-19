@@ -37,7 +37,6 @@
 #define HTTP_LOCATION_HDR_SIZE          256
 #define HTTP_CONTENT_TYPE_HDR_SIZE      256
 
-#define HTTP_DATA_BUF_SIZE_BYTES        TCP_WND
 #define HTTP_TIMEOUT_MS                 5000
 #define HTTP_POLL_INTERVAL_MS           2000     // minimum is half a second
 #define HTTP_NOTIFY_INDEX               1
@@ -62,7 +61,7 @@
 #define PRI_PLAYER_STAT         2  // handles player's statistics updates
 #define PRI_FIFO_QUEUE          3  // handles message passing to for ex. player task
 #define PRI_LWIP_TCPIP          5
-#define PRI_RADIO_SEARCH        1
+#define PRI_LIST_LOADER         1
 #define PRI_DISPLAY_TICKER      1 // updates scrollable texts
 #define PRI_HW_SETUP            1
 #define PRI_WIFI_SETUP          1
@@ -72,7 +71,7 @@
 #define STACK_PLAYER              (220 + MIN_FREE_STACK)
 #define STACK_PLAYER_STAT         (164 + MIN_FREE_STACK)
 #define STACK_FIFO_QUEUE          configMINIMAL_STACK_SIZE // currently unused
-#define STACK_RADIO_SEARCH        (240 + MIN_FREE_STACK)
+#define STACK_LIST_LOADER         (240 + MIN_FREE_STACK)
 #define STACK_DISPLAY_TICKER      (160 + MIN_FREE_STACK)
 #define STACK_HW_SETUP            (225 + MIN_FREE_STACK)
 #define STACK_WIFI_SETUP          (200 + MIN_FREE_STACK)

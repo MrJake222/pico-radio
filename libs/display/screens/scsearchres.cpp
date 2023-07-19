@@ -2,13 +2,16 @@
 
 #include <screenmng.hpp>
 #include <radiosearch.hpp>
-#include <buffers.hpp>
+#include <static.hpp>
 #include <icons.hpp>
 #include <ubuntu_mono.hpp>
 
 void all_loaded_cb(void* arg, int errored);
 
-static RadioSearch rs(get_http_client());
+static RadioSearch rs(
+        get_stations(), MAX_STATIONS,
+        get_stations_pls(), MAX_STATIONS_PLS,
+        get_http_client());
 
 #define S_BASE_X      3
 #define S_BASE_Y     31

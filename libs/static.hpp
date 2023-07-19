@@ -8,6 +8,10 @@
 #include <cstdint>
 #include <circularbuffer.hpp>
 #include <httpclientpico.hpp>
+#include <list.hpp>
 
 volatile CircularBuffer& get_cbuf();
 HttpClientPico& get_http_client();
+
+struct station* get_stations();
+struct station* get_stations_pls();
