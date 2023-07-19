@@ -125,7 +125,7 @@ void RadioSearch::task() {
 }
 
 void RadioSearch::begin(const char* query_) {
-    ListLoader::begin_();
+    ListLoader::begin();
     query = query_;
 
     client.begin();

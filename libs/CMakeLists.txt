@@ -13,6 +13,7 @@ add_library(libs
         display/tft/st7735s.cpp
         display/textscrolled.cpp
         display/screen.cpp
+        display/screenlist.cpp
         display/screenmng.cpp
 
         httpc/httpclient.cpp

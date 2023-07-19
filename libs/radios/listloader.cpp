@@ -9,7 +9,7 @@ void ll_task(void* arg) {
     ((ListLoader*) arg)->task();
 }
 
-void ListLoader::begin_() {
+void ListLoader::begin() {
     should_abort = false;
 
     stations_offset = 0;

@@ -6,6 +6,8 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <cstdio>
+#include <radiosearch.hpp>
+#include <static.hpp>
 
 // protects screen from mutual usage
 static SemaphoreHandle_t mutex_display;
@@ -32,9 +34,15 @@ static void create_mutex(SemaphoreHandle_t& mutex) {
     xSemaphoreGive(mutex);
 }
 
+// list loaders
+static RadioSearch rs(
+        get_stations(), MAX_STATIONS,
+        get_stations_pls(), MAX_STATIONS_PLS,
+        get_http_client());
+
 // static ScFavourites sc_favourites(display, sem_ticker);
 ScSearch sc_search(display, mutex_ticker);
-ScSearchRes sc_search_res(display, mutex_ticker);
+ScSearchRes sc_search_res(display, mutex_ticker, rs);
 ScPlay sc_play(display, mutex_ticker);
 
 [[noreturn]] void screen_tick_task(void* arg) {

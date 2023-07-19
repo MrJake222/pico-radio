@@ -2,43 +2,36 @@
 
 #include <config.hpp>
 #include <screen.hpp>
+#include <screenlist.hpp>
 
-class ScSearchRes : public Screen {
+class ScSearchRes : public ScreenList {
 
     const char* get_title() override { return "Wyniki wyszukiwania"; }
+
+    int rows_above() override;
+    int rows_below() override;
 
     int size_x(int y) override;
     int size_y() override;
 
-    void iny() override;
-    void dey() override;
-
-    void button_pre_selection_change() override;
     void draw_button(int x, int y, bool selected) override;
-    void draw_top_buttons();
-    void draw_bottom_buttons();
-    void draw_scroll_bar();
 
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
-
-    // first <show> after <begin>
-    bool first;
-
-    // this variable holds index of the first
-    // currently displayed station
-    int base_y;
-    int max_base_y();
-    int kb_buttons();
-
-    // gated count, only updated after all stations are loaded
-    int station_count;
 
     const char* prompt;
     char subtitle[10 + MAX_PROMPT_LEN + 1]; // null
 
 public:
-    using Screen::Screen;
+    ScSearchRes(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
+                ListLoader& ll_)
+        : ScreenList(display_, mutex_ticker_,
+                     3, 31,
+                     147, 20, 1, 2,
+                     5, 2,
+                     ll_)
+        { }
+
     void begin(const char* prompt_);
     void show() override;
 

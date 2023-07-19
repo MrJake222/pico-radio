@@ -13,9 +13,6 @@ class ListLoader {
     virtual void task() = 0;
 
 protected:
-    // this should be called by subclass begin method
-    void begin_();
-
     void call_all_loaded(int errored);
 
     volatile bool should_abort;
@@ -29,6 +26,8 @@ public:
         : stations(stations_)
         , stations_count(stations_count_)
         { }
+
+    void begin();
 
     // set callback to call when all loading is done
     void set_all_loaded_cb(void* arg, all_ld_cb_fn cb);
