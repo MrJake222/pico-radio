@@ -84,3 +84,14 @@ int read_line(DataSource* ds, char* buf, int bufsize) {
         }
     }
 }
+
+void create_mutex_give(SemaphoreHandle_t& mutex) {
+    mutex = xSemaphoreCreateMutex();
+    assert(mutex != nullptr);
+    if (mutex)
+        puts("mutex creation ok");
+    else
+        puts("mutex creation failed");
+
+    xSemaphoreGive(mutex);
+}

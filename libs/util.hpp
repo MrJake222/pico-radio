@@ -2,6 +2,8 @@
 
 #include <cstdio>
 #include <cstdint>
+#include <FreeRTOS.h>
+#include <semphr.h>
 
 // hexdump-like printing
 void debug_print(uint8_t* buffer, int read_at, int bytes, int reverse);
@@ -21,3 +23,5 @@ public:
 // reads whole line, supports both \n or \r\n endings
 // returns length of line without termination (or -1 on failure)
 int read_line(DataSource* ds, char* buf, int bufsize);
+
+void create_mutex_give(SemaphoreHandle_t& mutex);

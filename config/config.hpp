@@ -77,6 +77,10 @@
 #define STACK_WIFI_SETUP          (200 + MIN_FREE_STACK)
 #define STACK_INPUT               (156 + MIN_FREE_STACK)
 
+// --------------------------------- Flash --------------------------------- //
+#define LITTLEFS_SIZE             (1<<16) // 64K, base 0x101F0000
+#define LITTLEFS_CACHES           1024    // 3 blocks of this size
+
 // --------------------------------- SD --------------------------------- //
 #define SD_ENABLE 1
 

@@ -8,6 +8,8 @@ static HttpClientPico http_client(cbuf);
 static struct station stations[MAX_STATIONS];
 static struct station stations_pls[MAX_STATIONS_PLS];
 
+static lfs_t lfs;
+
 volatile CircularBuffer& get_cbuf() {
     return cbuf;
 }
@@ -22,4 +24,8 @@ struct station* get_stations() {
 
 struct station* get_stations_pls() {
     return stations_pls;
+}
+
+lfs_t* get_lfs() {
+    return &lfs;
 }

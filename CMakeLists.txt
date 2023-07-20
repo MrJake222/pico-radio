@@ -13,9 +13,6 @@ project(pico-radio C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-# project-wide includes
-include_directories(config)
-
 # libraries
 add_subdirectory(libs)
 
@@ -25,9 +22,15 @@ pico_sdk_init()
 add_executable(${PROJECT_NAME}
         main.cpp
         config/sd_hw_config.c
+        fs.cpp
         )
 
 pico_add_extra_outputs(${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+        config
+        .
+        )
 
 target_link_libraries(${PROJECT_NAME}
         pico_stdlib

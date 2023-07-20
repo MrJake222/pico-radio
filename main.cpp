@@ -28,6 +28,8 @@
 #include <mcorefifo.hpp>
 #include <screen.hpp>
 #include <screenmng.hpp>
+#include <static.hpp>
+#include <fs.hpp>
 
 void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
@@ -116,11 +118,32 @@ void init_hardware() {
 
     fr = f_mount(&pSD->fatfs, pSD->pcName, 1);
     if (fr != FR_OK) {
-        fs_err(fr, "f_mount");
+        fs_err(fr, "sd: f_mount");
     }
 
-    puts("mount ok");
+    puts("sd: mount ok");
 #endif
+
+    pico_lfs_init();
+    puts("littlefs: init ok");
+
+    int r;
+    for (int i=0; i<2; i++) {
+        r = lfs_mount(get_lfs(), &pico_lfs_config);
+        if (r == 0)
+            break;
+
+        printf("littlefs: failed to mount err=%d\n", r);
+        if (r == LFS_ERR_CORRUPT) {
+            puts("littlefs: formatting");
+            lfs_format(get_lfs(), &pico_lfs_config);
+        }
+    }
+
+    if (r == 0)
+        puts("littlefs: mount ok");
+    else
+        puts("littlefs: failed to mount, giving up.");
 }
 
 void task_hardware_startup(void* arg) {

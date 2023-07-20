@@ -5,9 +5,9 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
-#include <cstdio>
 #include <radiosearch.hpp>
 #include <static.hpp>
+#include <util.hpp>
 
 // protects screen from mutual usage
 static SemaphoreHandle_t mutex_display;
@@ -26,13 +26,6 @@ static Screen* current_screen;
 // important for ex. when we want to remove a text and redraw something in its place
 // (ticker can preempt the input task)
 static SemaphoreHandle_t mutex_ticker;
-
-static void create_mutex(SemaphoreHandle_t& mutex) {
-    mutex = xSemaphoreCreateMutex();
-    assert(mutex != nullptr);
-    puts("mutex creation ok");
-    xSemaphoreGive(mutex);
-}
 
 // list loaders
 static RadioSearch rs(
@@ -61,8 +54,8 @@ void screenmng_init() {
     display.init();
     current_screen = &sc_search;
 
-    create_mutex(mutex_display);
-    create_mutex(mutex_ticker);
+    create_mutex_give(mutex_display);
+    create_mutex_give(mutex_ticker);
 
     // this takes time, but we want to show the user
     // readable screen as fast as possible

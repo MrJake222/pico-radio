@@ -7,3 +7,6 @@
 [submodule "libs/FreeRTOS-Kernel"]
 	path = libs/external/FreeRTOS-Kernel
 	url = git@github.com:FreeRTOS/FreeRTOS-Kernel.git
+[submodule "libs/external/littlefs"]
+	path = libs/external/littlefs
+	url = git@github.com:MrJake222/littlefs.git
