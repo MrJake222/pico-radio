@@ -5,6 +5,7 @@
 #include <task.h>
 #include <queue.h>
 #include <config.hpp>
+#include <lfs.hpp>
 
 enum class FinishReason {
     NoFinish,
@@ -24,8 +25,6 @@ enum DecodeMsgType {
     BUF_READ,
     END
 };
-
-typedef void(*entry_fn)();
 
 class DecodeBase {
 

@@ -4,7 +4,6 @@
 
 #include <cstdio>
 #include <lwip/stats.h>
-#include <pico/multicore.h>
 #include <cstring>
 
 void cbuf_read_cb(void* arg, unsigned int bytes) {
@@ -52,7 +51,9 @@ int DecodeBase::play() {
     // redirect ACKs through fifo
     cbuf.set_read_ack_callback(this, cbuf_read_cb);
     // start decoding on core1
-    multicore_launch_core1(core1_entry);
+    // watch out for lfs flash access
+
+    pico_lfs_launch_core1(core1_entry);
 
     // handle messages
     bool error = false;
@@ -80,7 +81,7 @@ int DecodeBase::play() {
         }
     }
 
-    multicore_reset_core1();
+    pico_lfs_reset_core1();
 
     return error ? -1 : 0;
 }

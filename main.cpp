@@ -29,7 +29,7 @@
 #include <screen.hpp>
 #include <screenmng.hpp>
 #include <static.hpp>
-#include <fs.hpp>
+#include <lfs.hpp>
 
 void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);

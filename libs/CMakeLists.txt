@@ -47,6 +47,7 @@ add_library(libs
         static.cpp
         circularbuffer.cpp
         util.cpp
+        lfs.cpp
         lfsutil.cpp
         )
 
