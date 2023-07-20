@@ -143,7 +143,6 @@ void CircularBuffer::remove_written(int o, const int len) volatile {
     }
 
     // adjust variables
-    // done after copying since the loop depends on write_at
     write_at -= len;
     if (write_at < 0)
         write_at += size;

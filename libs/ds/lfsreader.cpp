@@ -5,10 +5,10 @@ void LfsReader::begin(const char* path_) {
 }
 
 int LfsReader::open() {
-    // read-only, create file if it doesn't exist (empty list)
+    // open read-only
     int r;
 
-    r = lfs_file_open(lfs, &file, path, LFS_O_RDONLY | LFS_O_CREAT);
+    r = lfs_file_open(lfs, &file, path, LFS_O_RDONLY);
     if (r < 0) {
         printf("littlefs: failed to open code %d\n", r);
         return r;

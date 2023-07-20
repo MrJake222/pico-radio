@@ -46,6 +46,9 @@
 #define MAX_PROMPT_LEN        14
 #define SEARCH_URL_BUF_LEN    (128 + MAX_PROMPT_LEN + 1)
 
+// List parsing
+#define LIST_MAX_LINE_LENGTH 128
+
 // Max stations per query
 #define MAX_STATIONS          64 // max stations returned from search
 #define MAX_STATIONS_PLS       4 // max stations to resolve from *.pls file

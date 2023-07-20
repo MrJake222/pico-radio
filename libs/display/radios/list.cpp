@@ -3,13 +3,10 @@
 #include <cstring>
 #include <random>
 
-#define MAX_LINE_LEN    128
-
 ListError List::consume(DataSource* ds) {
-    char line[MAX_LINE_LEN + 1];
     int len;
 
-    len = read_line(ds, line, MAX_LINE_LEN + 1);
+    len = read_line(ds, line, LIST_MAX_LINE_LENGTH);
     if (len == RL_OVERRUN) {
         // line buffer overrun, ignore
         return ListError::OK;

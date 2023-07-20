@@ -2,6 +2,7 @@
 
 #include <listm3u.hpp>
 #include <static.hpp>
+#include <fav.hpp>
 
 void LoaderFav::task() {
 
@@ -11,9 +12,17 @@ void LoaderFav::task() {
     bool error = false;
     List* list = &listm3u;
 
+retry:
     rd.begin(PATH_FAVOURITES);
     r = rd.open();
     if (r < 0) {
+        if (r == LFS_ERR_NOENT) {
+            // does not exist
+            puts("creating new favourites file");
+            fav::create(lfs);
+            goto retry;
+        }
+
         errored++;
         goto end;
     }

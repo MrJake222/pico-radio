@@ -3,6 +3,7 @@
 #include <config.hpp>
 #include <circularbuffer.hpp>
 #include <datasource.hpp>
+#include <config.hpp>
 
 struct station {
     char uuid[ST_UUID_LEN + 1];
@@ -17,6 +18,8 @@ enum class ListError {
 };
 
 class List {
+
+    char line[LIST_MAX_LINE_LENGTH + 1];
 
     struct station* stations;
     int stations_len;

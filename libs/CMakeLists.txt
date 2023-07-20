@@ -12,6 +12,7 @@ add_library(libs
         display/assets/font.cpp
         display/assets/icons.cpp
 
+        display/radios/fav.cpp
         display/radios/list.cpp
         display/radios/listm3u.cpp
         display/radios/listpls.cpp
@@ -46,6 +47,7 @@ add_library(libs
         static.cpp
         circularbuffer.cpp
         util.cpp
+        lfsutil.cpp
         )
 
 target_include_directories(libs PUBLIC
