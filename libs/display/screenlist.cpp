@@ -106,7 +106,7 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
     xs = s_base_x;
     ys = s_base_y + (s_res_h + s_res_mar) * y;
-    name = ll.get_station_name(base_y + y);
+    name = ll.get_station(base_y + y)->name;
 
     bg = get_btn_bg(selected, true);
     display.fill_rect(xs, ys, s_res_w, s_res_h, bg);

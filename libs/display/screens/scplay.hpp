@@ -12,15 +12,16 @@ class ScPlay : public Screen {
     int size_x(int y) override;
     int size_y() override;
 
+    void draw_star(bool selected);
     void draw_button(int x, int y, bool selected) override;
 
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
-    const char* radio_name;
-    const char* radio_url;
+    const struct station* st;
+    int fav_index;
 
-    // metadata text index
+    // metadata scrolled text index
     int meta_idx;
 
     friend void player_failed_callback(void* arg);
@@ -29,6 +30,6 @@ class ScPlay : public Screen {
 public:
     using Screen::Screen;
 
-    void begin(const char* name_, const char* url_);
+    void begin(const struct station* st_, int fav_index_);
     void show() override;
 };

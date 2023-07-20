@@ -40,7 +40,7 @@ public:
     virtual void load_abort();
 
     int get_station_count() { return stations_offset; }
-    const char* get_station_name(int i) { return stations[i].name; }
+    const struct station* get_station(int i) { return &stations[i]; }
     // can be overridden to handle *.pls format
-    virtual const char* get_station_url(int i) { return stations[i].url; }
+    virtual int check_station_url(int i) { return 0; }
 };

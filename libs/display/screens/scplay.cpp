@@ -5,6 +5,8 @@
 #include <ubuntu_mono.hpp>
 #include <player.hpp>
 #include <cstdio>
+#include <fav.hpp>
+#include <static.hpp>
 
 #define STATS_Y     80
 
@@ -21,6 +23,16 @@ enum Action {
     BACK
 };
 
+void ScPlay::draw_star(bool selected) {
+    const int bg = get_btn_bg(selected, false);
+    const int fg = COLOR_FG;
+
+    display.fill_rect(14, 111, 17, 17, bg);
+    display.draw_icon(15, 112,
+                      fav_index < 0 ? icon_star_empty : icon_star_filled,
+                      bg, fg);
+}
+
 void ScPlay::draw_button(int x, int y, bool selected) {
 
     auto action = (Action) get_action(x, y);
@@ -36,8 +48,7 @@ void ScPlay::draw_button(int x, int y, bool selected) {
 
     switch (action) {
         case FAV:
-            display.fill_rect(14, 111, 17, 17, bg);
-            display.draw_icon(15, 112, icon_star_empty, bg, fg);
+            draw_star(selected);
             break;
 
         case BACK:
@@ -54,7 +65,17 @@ int ScPlay::get_action(int x, int y) {
 Screen* ScPlay::run_action(int action) {
     switch ((Action) action) {
         case FAV:
-            return nullptr; // TODO handle adding/removing from fav list
+            if (fav_index < 0)
+                // not on fav list
+                fav_index = fav::add(get_lfs(), st);
+            else {
+                // on fav list
+                fav::remove(get_lfs(), fav_index);
+                fav_index = -1;
+            }
+
+            draw_star(true);
+            return nullptr;
 
         case BACK:
             player_stop(); // handles wait
@@ -110,7 +131,7 @@ void ScPlay::show() {
     Screen::show();
 
     add_scrolled_text_or_normal(
-            2, 13, radio_name,
+            2, 13, st->name,
             ubuntu_font_get_size(UbuntuFontSize::FONT_24),
             COLOR_BG, COLOR_ACC2,
             display.W - 2*2);
@@ -130,15 +151,15 @@ void ScPlay::show() {
                           COLOR_BG, COLOR_FG);
 
     if (!is_err_displayed) {
-        player_start(radio_url,
+        player_start(st->url,
                      this,
                      player_failed_callback,
                      player_update_callback);
     }
 }
 
-void ScPlay::begin(const char* name_, const char* url_) {
-    radio_name = name_;
-    radio_url = url_;
+void ScPlay::begin(const struct station* st_, int fav_index_) {
+    st = st_;
+    fav_index = fav_index_;
     Screen::begin();
 }

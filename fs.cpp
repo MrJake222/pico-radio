@@ -3,6 +3,7 @@
 #include <config.hpp>
 #include <hardware/flash.h>
 #include <hardware/sync.h>
+#include <pico/multicore.h>
 #include <util.hpp>
 
 #include <FreeRTOS.h>
@@ -27,9 +28,11 @@ static int pico_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t of
 // May return LFS_ERR_CORRUPT if the block should be considered bad.
 static int pico_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
     uint32_t ints = save_and_disable_interrupts();
+    multicore_lockout_start_blocking();
     flash_range_program(FS_BASE_IN_FLASH + block * FLASH_SECTOR_SIZE + off,
                         (const uint8_t*)buffer,
                         size);
+    multicore_lockout_end_blocking();
     restore_interrupts(ints);
     return 0;
 }
@@ -40,9 +43,11 @@ static int pico_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t of
 // May return LFS_ERR_CORRUPT if the block should be considered bad.
 static int pico_erase(const struct lfs_config *c, lfs_block_t block) {
     uint32_t ints = save_and_disable_interrupts();
+    multicore_lockout_start_blocking();
     flash_range_erase(FS_BASE_IN_FLASH + block * FLASH_SECTOR_SIZE,
                       1);
 
+    multicore_lockout_end_blocking();
     restore_interrupts(ints);
     return 0;
 }

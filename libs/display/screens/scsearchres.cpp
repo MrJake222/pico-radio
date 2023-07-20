@@ -50,19 +50,19 @@ void ScSearchRes::draw_button(int x, int y, bool selected) {
 }
 
 Screen* ScSearchRes::run_action(int action) {
-    int i;
-    const char* url;
+    int i, r;
 
     switch ((Action) action) {
         case PLAY:
             i = get_selected_station_index();
-            url = ll.get_station_url(i);
-            if (!url) {
+            r = ll.check_station_url(i);
+            if (r < 0) {
                 show_error("Błąd: nie można otworzyć strumienia");
                 return nullptr;
             }
 
-            sc_play.begin(ll.get_station_name(i), url);
+            // <i> equals position on search list (not fav list)
+            sc_play.begin(ll.get_station(i), -1);
             return &sc_play;
 
         case BACK:

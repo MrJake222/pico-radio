@@ -25,14 +25,17 @@ int create(lfs_t* lfs) {
     return 0;
 }
 
-int add(lfs_t* lfs, struct station* st) {
+int add(lfs_t* lfs, const struct station* st) {
     int r;
     lfs_file_t file;
     char buf[LIST_MAX_LINE_LENGTH];
 
-    r = lfs_file_open(lfs, &file, PATH_FAVOURITES, LFS_O_WRONLY | LFS_O_APPEND);
+    r = lfs_file_open(lfs, &file, PATH_FAVOURITES, LFS_O_RDWR);
     if (r < 0)
         return r;
+
+    const int lines = lfsutil::skip_all_lines(lfs, &file);
+    const int entry_idx = (lines - 1) / 2;
 
     sprintf(buf, "#EXTINF:-1,%s\n", st->name);
     r = lfs_file_write(lfs, &file, buf, strlen(buf));
@@ -48,7 +51,7 @@ int add(lfs_t* lfs, struct station* st) {
     if (r < 0)
         return r;
 
-    return 0;
+    return entry_idx;
 }
 
 int remove(lfs_t* lfs, int index) {
@@ -60,8 +63,8 @@ int remove(lfs_t* lfs, int index) {
     if (r < 0)
         return r;
 
-    // skip preamble, and one less entry than requested
-    lfsutil::skip_lines(lfs, &file, 1 + 2*(index-1));
+    // skip preamble, and <index> entries
+    lfsutil::skip_lines(lfs, &file, 1 + 2*index);
 
     // file is now set on first character of the station to be deleted
     const int pos = lfs_file_tell(lfs, &file);
@@ -77,7 +80,7 @@ int remove(lfs_t* lfs, int index) {
     const int skip = pos_after - pos;
 
     int read;
-    do {
+    while (true) {
         // read at new position
         read = lfs_file_read(lfs, &file, buf, LIST_MAX_LINE_LENGTH);
         if (read < 0)
@@ -92,11 +95,16 @@ int remove(lfs_t* lfs, int index) {
 
         assert(read == write);
 
+        // break here not to skip
+        if (read < LIST_MAX_LINE_LENGTH)
+            break;
+
         // skip to new position
         lfs_file_seek(lfs, &file, skip, LFS_SEEK_CUR);
+    }
 
-    // loop till buffer underflows (end-of-file)
-    } while (read == LIST_MAX_LINE_LENGTH);
+    // truncate file to current position
+    lfs_file_truncate(lfs, &file, lfs_file_tell(lfs, &file));
 
     r = lfs_file_close(lfs, &file);
     if (r < 0)

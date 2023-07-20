@@ -9,7 +9,8 @@
 namespace fav {
 
 int create(lfs_t* lfs);
-int add(lfs_t* lfs, struct station* st);
+// returns index of the new station or -1 on failure
+int add(lfs_t* lfs, const struct station* st);
 int remove(lfs_t* lfs, int index);
 
 }

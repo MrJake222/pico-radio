@@ -114,7 +114,7 @@ void LoaderSearch::load_abort() {
     client.try_abort();
 }
 
-const char* LoaderSearch::get_station_url(int i) {
+int LoaderSearch::check_station_url(int i) {
     // handle playlists
     // some of the stations are in *.pls format (playlist, a couple of different streams)
     // we need to load this files and choose random stream from them
@@ -127,11 +127,11 @@ const char* LoaderSearch::get_station_url(int i) {
                                should_abort, client_errored);
 
         if (!list)
-            return nullptr;
+            return -1;
 
         // printf("done loading pls, loaded %d stations\n", list->stations_found);
         list->select_random(&stations[i]);
     }
 
-    return stations[i].url;
+    return 0;
 }

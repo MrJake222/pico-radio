@@ -38,5 +38,5 @@ public:
     void begin(const char* query_);
     void load_abort() override;
 
-    const char* get_station_url(int i) override;
+    int check_station_url(int i) override;
 };

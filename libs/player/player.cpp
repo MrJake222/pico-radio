@@ -180,6 +180,8 @@ static void dma_start() {
 }
 
 [[noreturn]] static void core1_entry() {
+    multicore_lockout_victim_init();
+
     int r = dec->dma_preload();
     if (r == 0) {
         // all good

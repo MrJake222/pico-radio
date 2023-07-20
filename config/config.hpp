@@ -78,7 +78,7 @@
 #define STACK_DISPLAY_TICKER      (160 + MIN_FREE_STACK)
 #define STACK_HW_SETUP            (225 + MIN_FREE_STACK)
 #define STACK_WIFI_SETUP          (200 + MIN_FREE_STACK)
-#define STACK_INPUT               (156 + MIN_FREE_STACK)
+#define STACK_INPUT               (273 + MIN_FREE_STACK)
 
 // --------------------------------- Flash --------------------------------- //
 #define LITTLEFS_SIZE             (1<<16) // 64K, base 0x101F0000
