@@ -1,12 +1,12 @@
 #pragma once
 
 #include <listloader.hpp>
-#include <lfsaccess.hpp>
+#include <lfsreader.hpp>
 #include <lfs.h>
 
 class RadioFav : public ListLoader {
 
-    LfsAccess lfsa;
+    LfsReader rd;
 
     void task() override;
 
@@ -14,6 +14,6 @@ public:
     RadioFav(struct station* stations_, int stations_count_,
             lfs_t* lfs)
         : ListLoader(stations_, stations_count_)
-        , lfsa(lfs)
+        , rd(lfs)
         { }
 };

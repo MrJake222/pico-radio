@@ -6,9 +6,9 @@
 #include <map>
 #include <circularbuffer.hpp>
 #include <config.hpp>
-#include <datainterface.hpp>
+#include <datasource.hpp>
 
-class HttpClient : public DataInterface {
+class HttpClient : public DataSource {
 
     // these are platform-specific
     // send/receive as much as possible, return how many was sent/received (at least one byte)
@@ -100,11 +100,9 @@ public:
     // or fails with return value -1
     int recv_all(char* buf, int buflen);
 
-    // DataInterface
+    // DataSource interface
     // read exactly one character or fail with return code -1
     int read_char(char *chr) override { return recv(chr, 1); }
     // more content available
     bool more_content() override { return (already_read() - headers_length) < get_content_length(); }
-    // write to stream
-    int write_all(const char *buf, int buflen) override { return send_all(buf, buflen, false); }
 };

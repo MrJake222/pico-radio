@@ -25,8 +25,8 @@ add_library(libs
         display/screenlist.cpp
         display/screenmng.cpp
 
-        ds/datainterface.cpp
-        ds/lfsaccess.cpp
+        ds/datasource.cpp
+        ds/lfsreader.cpp
 
         httpc/httpclient.cpp
         httpc/httpclientpico.cpp
