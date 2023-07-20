@@ -20,6 +20,6 @@ enum ReadLineError {
 
 // reads whole line, supports both \n or \r\n endings
 // returns length of line without termination (or -1 on failure)
-int read_line(DataInterface* ds, char* buf, int bufsize);
+int read_line(DataInterface* di, char* buf, int bufsize);
 
-int write_string(DataInterface* ds, char* str);
+int write_string(DataInterface* di, const char* str);

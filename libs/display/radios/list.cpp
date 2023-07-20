@@ -3,13 +3,10 @@
 #include <cstring>
 #include <random>
 
-#define MAX_LINE_LEN    128
-
 ListError List::consume(DataInterface* di) {
-    char line[MAX_LINE_LEN + 1];
     int len;
 
-    len = read_line(di, line, MAX_LINE_LEN + 1);
+    len = read_line(di, line, LIST_MAX_LINE_LENGTH);
     if (len == RL_OVERRUN) {
         // line buffer overrun, ignore
         return ListError::OK;
@@ -38,25 +35,39 @@ int List::consume_all(DataInterface* di, volatile bool& abort, volatile bool& er
     while (di->more_content()) {
         // loop until all content data has been read or aborted
         if (abort) {
-            puts("rs: abort");
+            puts("list: abort");
             break;
         }
 
         ListError lr = consume(di);
 
         if (lr == ListError::ERROR) {
-            puts("di: error");
+            puts("list: internal error");
             return -1;
         }
 
         else if (lr == ListError::ABORT) {
             // buffer maxed out, don't waste more time
-            puts("di: maxed out stations");
+            puts("list: maxed out stations");
             break;
         }
 
         if (error) {
-            puts("di: error");
+            puts("list: external error");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int List::produce_all(DataInterface* di) {
+    while (stations_found > 0) {
+        // line as scratch buffer
+        ListError lr = produce_format(di, line);
+
+        if (lr == ListError::ERROR) {
+            puts("list: internal error");
             return -1;
         }
     }
@@ -83,6 +94,14 @@ void List::set_current_url(const char* p) {
     // printf("url: '%s'\n", p);
     strncpy(stations[stations_found].url, p, ST_URL_LEN);
     stations[stations_found].url[ST_URL_LEN] = '\0';
+}
+
+const char* List::get_current_name() {
+    return stations[stations_found].name;
+}
+
+const char* List::get_current_url() {
+    return stations[stations_found].url;
 }
 
 void List::select_random(station* ts) {

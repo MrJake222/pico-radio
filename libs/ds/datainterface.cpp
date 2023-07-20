@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <cstring>
 
-int read_line(DataInterface* ds, char* buf, int bufsize) {
+int read_line(DataInterface* di, char* buf, int bufsize) {
 
     int line_length = 0;
     int ret;
@@ -14,7 +14,7 @@ int read_line(DataInterface* ds, char* buf, int bufsize) {
 
     while (true) {
         // recv will receive at least one byte
-        ret = ds->read_char(&chr);
+        ret = di->read_char(&chr);
         if (ret < 0)
             return RL_ERROR;
 
@@ -53,8 +53,8 @@ int read_line(DataInterface* ds, char* buf, int bufsize) {
     }
 }
 
-int write_string(DataInterface* ds, char* str) {
-    int ret = ds->write_all(str, (int) strlen(str));
+int write_string(DataInterface* di, const char* str) {
+    int ret = di->write_all(str, (int) strlen(str));
 
     if (ret < 0)
         return -1;
