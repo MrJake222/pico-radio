@@ -5,7 +5,7 @@
 
 #define MAX_LINE_LEN    128
 
-ListError List::consume() {
+ListError List::consume(DataSource* ds) {
     char line[MAX_LINE_LEN + 1];
     int len;
 
@@ -32,6 +32,36 @@ ListError List::consume() {
     // not maxed out stations
 
     return consume_format(line);
+}
+
+int List::consume_all(DataSource* ds, volatile bool& abort, volatile bool& error) {
+    while (ds->more_content()) {
+        // loop until all content data has been read or aborted
+        if (abort) {
+            puts("rs: abort");
+            break;
+        }
+
+        ListError lr = consume(ds);
+
+        if (lr == ListError::ERROR) {
+            puts("ds: error");
+            return -1;
+        }
+
+        else if (lr == ListError::ABORT) {
+            // buffer maxed out, don't waste more time
+            puts("ds: maxed out stations");
+            break;
+        }
+
+        if (error) {
+            puts("ds: error");
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 void List::set_current_uuid(const char* p) {

@@ -102,7 +102,15 @@ void init_lowlevel() {
 }
 
 void init_hardware() {
-    // Display config
+    // LittleFS config
+    pico_lfs_init();
+    puts("littlefs: init ok");
+
+    pico_lfs_mount_format();
+
+    // Display config (needs to be after littlefs)
+    // tries to read favourites
+    // TODO make init screen show first
     screenmng_init();
     puts("Display configuration done");
 
@@ -123,27 +131,6 @@ void init_hardware() {
 
     puts("sd: mount ok");
 #endif
-
-    pico_lfs_init();
-    puts("littlefs: init ok");
-
-    int r;
-    for (int i=0; i<2; i++) {
-        r = lfs_mount(get_lfs(), &pico_lfs_config);
-        if (r == 0)
-            break;
-
-        printf("littlefs: failed to mount err=%d\n", r);
-        if (r == LFS_ERR_CORRUPT) {
-            puts("littlefs: formatting");
-            lfs_format(get_lfs(), &pico_lfs_config);
-        }
-    }
-
-    if (r == 0)
-        puts("littlefs: mount ok");
-    else
-        puts("littlefs: failed to mount, giving up.");
 }
 
 void task_hardware_startup(void* arg) {

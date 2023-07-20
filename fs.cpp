@@ -7,6 +7,7 @@
 
 #include <FreeRTOS.h>
 #include <semphr.h>
+#include <static.hpp>
 
 #define FS_BASE_IN_FLASH (PICO_FLASH_SIZE_BYTES - LITTLEFS_SIZE)
 #define FS_BASE_ABS      (XIP_NOCACHE_NOALLOC_BASE + FS_BASE_IN_FLASH)
@@ -98,4 +99,24 @@ const struct lfs_config pico_lfs_config = {
 
 void pico_lfs_init() {
     create_mutex_give(lfs_mutex);
+}
+
+void pico_lfs_mount_format() {
+    int r;
+    for (int i=0; i<2; i++) {
+        r = lfs_mount(get_lfs(), &pico_lfs_config);
+        if (r == 0)
+            break;
+
+        printf("littlefs: failed to mount err=%d\n", r);
+        if (r == LFS_ERR_CORRUPT) {
+            puts("littlefs: formatting");
+            lfs_format(get_lfs(), &pico_lfs_config);
+        }
+    }
+
+    if (r == 0)
+        puts("littlefs: mount ok");
+    else
+        puts("littlefs: failed to mount, giving up.");
 }

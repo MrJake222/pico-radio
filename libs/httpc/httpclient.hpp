@@ -6,7 +6,7 @@
 #include <map>
 #include <circularbuffer.hpp>
 #include <config.hpp>
-#include <util.hpp>
+#include <datasource.hpp>
 
 class HttpClient : public DataSource {
 
@@ -88,7 +88,6 @@ public:
     int get_headers_length() { return headers_length; }
 
     int get_content_length() { return h_content_length; }
-    bool more_content() { return (already_read() - headers_length) < get_content_length(); }
 
     const char* get_content_type() { return h_content_type; }
     bool has_icy_metaint() { return h_icy_metaint != -1; }
@@ -101,6 +100,9 @@ public:
     // or fails with return value -1
     int recv_all(char* buf, int buflen);
 
+    // DataSource interface
     // read exactly one character or fail with return code -1
     int read_char(char *chr) override { return recv(chr, 1); }
+    // more content available
+    bool more_content() override { return (already_read() - headers_length) < get_content_length(); }
 };

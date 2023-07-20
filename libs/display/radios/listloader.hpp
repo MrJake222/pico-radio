@@ -9,7 +9,9 @@ class ListLoader {
     void* cb_arg;
     all_ld_cb_fn all_loaded_cb;
 
+    // wrapper to call task() from rtos
     friend void ll_task(void* arg);
+    // real task, should respect <should_abort>
     virtual void task() = 0;
 
 protected:

@@ -2,7 +2,7 @@
 
 #include <config.hpp>
 #include <circularbuffer.hpp>
-#include <util.hpp>
+#include <datasource.hpp>
 
 struct station {
     char uuid[ST_UUID_LEN + 1];
@@ -18,11 +18,11 @@ enum class ListError {
 
 class List {
 
-    DataSource* ds;
     struct station* stations;
     int stations_len;
     int stations_found;
 
+    ListError consume(DataSource* ds);
     virtual ListError consume_format(char* line) = 0;
 
 protected:
@@ -32,14 +32,13 @@ protected:
     void set_next_station() { stations_found++; }
 
 public:
-    virtual void begin(DataSource* ds_, struct station* stations_, int stations_len_) {
-        ds = ds_;
+    virtual void begin(struct station* stations_, int stations_len_) {
         stations = stations_;
         stations_len = stations_len_;
         stations_found = 0;
     }
 
-    ListError consume();
+    int consume_all(DataSource* ds, volatile bool& abort, volatile bool& error);
 
     int get_stations_found() { return stations_found; }
     void select_random(struct station* ts);

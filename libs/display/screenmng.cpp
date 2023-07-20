@@ -8,6 +8,7 @@
 #include <radiosearch.hpp>
 #include <static.hpp>
 #include <util.hpp>
+#include <radiofav.hpp>
 
 // protects screen from mutual usage
 static SemaphoreHandle_t mutex_display;
@@ -33,7 +34,11 @@ static RadioSearch rs(
         get_stations_pls(), MAX_STATIONS_PLS,
         get_http_client());
 
-// static ScFavourites sc_favourites(display, sem_ticker);
+static RadioFav rfav(
+        get_stations(), MAX_STATIONS,
+        get_lfs());
+
+ScFavourites sc_fav(display, mutex_ticker, rfav);
 ScSearch sc_search(display, mutex_ticker);
 ScSearchRes sc_search_res(display, mutex_ticker, rs);
 ScPlay sc_play(display, mutex_ticker);
@@ -52,7 +57,7 @@ ScPlay sc_play(display, mutex_ticker);
 
 void screenmng_init() {
     display.init();
-    current_screen = &sc_search;
+    current_screen = &sc_fav;
 
     create_mutex_give(mutex_display);
     create_mutex_give(mutex_ticker);

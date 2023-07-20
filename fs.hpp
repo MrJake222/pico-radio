@@ -4,3 +4,4 @@
 extern const struct lfs_config pico_lfs_config;
 
 void pico_lfs_init();
+void pico_lfs_mount_format();

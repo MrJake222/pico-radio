@@ -80,6 +80,7 @@
 // --------------------------------- Flash --------------------------------- //
 #define LITTLEFS_SIZE             (1<<16) // 64K, base 0x101F0000
 #define LITTLEFS_CACHES           1024    // 3 blocks of this size
+#define PATH_FAVOURITES           "/favourites.m3u"
 
 // --------------------------------- SD --------------------------------- //
 #define SD_ENABLE 1

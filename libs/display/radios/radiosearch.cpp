@@ -41,34 +41,11 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
         return nullptr;
     }
 
-    list->begin(&client, stations, max_stations);
-
-    while (client.more_content()) {
-        // loop until all content data has been read or aborted
-        if (should_abort) {
-            puts("rs: abort");
-            break;
-        }
-
-        ListError lr = list->consume();
-
-        if (lr == ListError::ERROR) {
-            puts("rs: error");
-            client.close();
-            return nullptr;
-        }
-
-        else if (lr == ListError::ABORT) {
-            // buffer maxed out, don't waste more time
-            puts("rs: maxed out stations");
-            break;
-        }
-
-        if (client_errored) {
-            puts("rs: client error");
-            client.close();
-            return nullptr;
-        }
+    list->begin(stations, max_stations);
+    r = list->consume_all(&client, should_abort, client_errored);
+    if (r < 0) {
+        // failed
+        list = nullptr;
     }
 
     r = client.close();

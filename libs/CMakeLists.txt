@@ -7,14 +7,26 @@ add_library(libs
         display/screens/scplay.cpp
         display/screens/scsearch.cpp
         display/screens/scsearchres.cpp
+
         display/assets/ubuntu_mono.cpp
         display/assets/font.cpp
         display/assets/icons.cpp
+
+        display/radios/list.cpp
+        display/radios/listm3u.cpp
+        display/radios/listpls.cpp
+        display/radios/listloader.cpp
+        display/radios/radiosearch.cpp
+        display/radios/radiofav.cpp
+
         display/tft/st7735s.cpp
         display/textscrolled.cpp
         display/screen.cpp
         display/screenlist.cpp
         display/screenmng.cpp
+
+        ds/datasource.cpp
+        ds/lfsreader.cpp
 
         httpc/httpclient.cpp
         httpc/httpclientpico.cpp
@@ -31,12 +43,6 @@ add_library(libs
         player/filetype.cpp
         player/icy.cpp
 
-        radios/list.cpp
-        radios/listm3u.cpp
-        radios/listpls.cpp
-        radios/listloader.cpp
-        radios/radiosearch.cpp
-
         static.cpp
         circularbuffer.cpp
         util.cpp
@@ -51,7 +57,9 @@ target_include_directories(libs PUBLIC
         radios
         display
         display/assets
+        display/radios
         display/tft
+        ds
         .
         )
 
