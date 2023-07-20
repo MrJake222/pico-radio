@@ -1,8 +1,9 @@
-#include "datasource.hpp"
+#include "datainterface.hpp"
 
 #include <cstdio>
+#include <cstring>
 
-int read_line(DataSource* ds, char* buf, int bufsize) {
+int read_line(DataInterface* ds, char* buf, int bufsize) {
 
     int line_length = 0;
     int ret;
@@ -50,4 +51,13 @@ int read_line(DataSource* ds, char* buf, int bufsize) {
             overrun = true;
         }
     }
+}
+
+int write_string(DataInterface* ds, char* str) {
+    int ret = ds->write_all(str, (int) strlen(str));
+
+    if (ret < 0)
+        return -1;
+
+    return 0;
 }

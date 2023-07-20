@@ -5,11 +5,11 @@
 
 #define MAX_LINE_LEN    128
 
-ListError List::consume(DataSource* ds) {
+ListError List::consume(DataInterface* di) {
     char line[MAX_LINE_LEN + 1];
     int len;
 
-    len = read_line(ds, line, MAX_LINE_LEN + 1);
+    len = read_line(di, line, MAX_LINE_LEN + 1);
     if (len == RL_OVERRUN) {
         // line buffer overrun, ignore
         return ListError::OK;
@@ -34,29 +34,29 @@ ListError List::consume(DataSource* ds) {
     return consume_format(line);
 }
 
-int List::consume_all(DataSource* ds, volatile bool& abort, volatile bool& error) {
-    while (ds->more_content()) {
+int List::consume_all(DataInterface* di, volatile bool& abort, volatile bool& error) {
+    while (di->more_content()) {
         // loop until all content data has been read or aborted
         if (abort) {
             puts("rs: abort");
             break;
         }
 
-        ListError lr = consume(ds);
+        ListError lr = consume(di);
 
         if (lr == ListError::ERROR) {
-            puts("ds: error");
+            puts("di: error");
             return -1;
         }
 
         else if (lr == ListError::ABORT) {
             // buffer maxed out, don't waste more time
-            puts("ds: maxed out stations");
+            puts("di: maxed out stations");
             break;
         }
 
         if (error) {
-            puts("ds: error");
+            puts("di: error");
             return -1;
         }
     }

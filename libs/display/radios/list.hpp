@@ -2,7 +2,7 @@
 
 #include <config.hpp>
 #include <circularbuffer.hpp>
-#include <datasource.hpp>
+#include <datainterface.hpp>
 
 struct station {
     char uuid[ST_UUID_LEN + 1];
@@ -22,7 +22,7 @@ class List {
     int stations_len;
     int stations_found;
 
-    ListError consume(DataSource* ds);
+    ListError consume(DataInterface* di);
     virtual ListError consume_format(char* line) = 0;
 
 protected:
@@ -38,7 +38,7 @@ public:
         stations_found = 0;
     }
 
-    int consume_all(DataSource* ds, volatile bool& abort, volatile bool& error);
+    int consume_all(DataInterface* di, volatile bool& abort, volatile bool& error);
 
     int get_stations_found() { return stations_found; }
     void select_random(struct station* ts);

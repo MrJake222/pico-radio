@@ -11,8 +11,7 @@ void RadioFav::task() {
     bool error = false;
     List* list = &listm3u;
 
-    rd.begin(PATH_FAVOURITES);
-    r = rd.open();
+    r = lfsa.open_read_create(PATH_FAVOURITES);
     if (r < 0) {
         errored++;
         goto end;
@@ -20,7 +19,7 @@ void RadioFav::task() {
 
     // size = lfs_file_size(get_lfs(), &file);
     list->begin(stations, stations_count);
-    r = list->consume_all(&rd, should_abort, error);
+    r = list->consume_all(&lfsa, should_abort, error);
     if (r < 0) {
         // failed
         errored++;
@@ -31,7 +30,7 @@ void RadioFav::task() {
     printf("done loading all favourites, loaded %d stations, error %d\n", stations_offset, errored);
 
 end:
-    rd.close();
+    lfsa.close();
 
     if (!should_abort)
         call_all_loaded(errored);
