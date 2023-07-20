@@ -10,7 +10,7 @@
 
 typedef void(*all_ld_cb_fn)(void* arg, int errored);
 
-class RadioSearch : public ListLoader {
+class LoaderSearch : public ListLoader {
 
     HttpClientPico& client;
 
@@ -26,9 +26,9 @@ class RadioSearch : public ListLoader {
     friend void client_err_cb(void* arg, int err);
 
 public:
-    RadioSearch(struct station* stations_, int stations_count_,
-            struct station* stations_pls_, int stations_pls_count_,
-            HttpClientPico& client_)
+    LoaderSearch(struct station* stations_, int stations_count_,
+                 struct station* stations_pls_, int stations_pls_count_,
+                 HttpClientPico& client_)
         : ListLoader(stations_, stations_count_)
         , client(client_)
         , stations_pls(stations_pls_)

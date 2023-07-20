@@ -16,8 +16,8 @@ add_library(libs
         display/radios/listm3u.cpp
         display/radios/listpls.cpp
         display/radios/listloader.cpp
-        display/radios/radiosearch.cpp
-        display/radios/radiofav.cpp
+        display/radios/loadersearch.cpp
+        display/radios/loaderfav.cpp
 
         display/tft/st7735s.cpp
         display/textscrolled.cpp

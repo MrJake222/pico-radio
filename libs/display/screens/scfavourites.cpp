@@ -2,7 +2,7 @@
 
 #include <screenmng.hpp>
 #include <ubuntu_mono.hpp>
-#include <radiofav.hpp>
+#include <loaderfav.hpp>
 #include <icons.hpp>
 
 
@@ -93,7 +93,7 @@ void ScFavourites::show() {
 
 void ScFavourites::begin() {
     // called from previous screen (on input)
-    ((RadioFav&) ll).begin();
+    ((LoaderFav&) ll).begin();
 
     ScreenList::begin();
 }

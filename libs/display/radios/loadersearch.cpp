@@ -1,4 +1,4 @@
-#include "radiosearch.hpp"
+#include "loadersearch.hpp"
 
 #include <listm3u.hpp>
 #include <listpls.hpp>
@@ -12,7 +12,7 @@ static const int url_count = sizeof(urls) / sizeof(char*);
 
 void client_err_cb(void* arg, int err) {
     printf("rs: client err %d\n", err);
-    ((RadioSearch*) arg)->client_errored = true;
+    ((LoaderSearch*) arg)->client_errored = true;
 }
 
 static List* query_url(HttpClientPico& client, const char* url, struct station* stations, int max_stations,
@@ -57,7 +57,7 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
     return list;
 }
 
-void RadioSearch::task() {
+void LoaderSearch::task() {
     
     // load stations from all URLs
 
@@ -101,7 +101,7 @@ void RadioSearch::task() {
     vTaskDelete(nullptr);
 }
 
-void RadioSearch::begin(const char* query_) {
+void LoaderSearch::begin(const char* query_) {
     ListLoader::begin();
     query = query_;
 
@@ -109,12 +109,12 @@ void RadioSearch::begin(const char* query_) {
     client.set_err_cb(client_err_cb, this);
 }
 
-void RadioSearch::load_abort() {
+void LoaderSearch::load_abort() {
     ListLoader::load_abort();
     client.try_abort();
 }
 
-const char* RadioSearch::get_station_url(int i) {
+const char* LoaderSearch::get_station_url(int i) {
     // handle playlists
     // some of the stations are in *.pls format (playlist, a couple of different streams)
     // we need to load this files and choose random stream from them

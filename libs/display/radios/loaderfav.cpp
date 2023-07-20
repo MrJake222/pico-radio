@@ -1,9 +1,9 @@
-#include "radiofav.hpp"
+#include "loaderfav.hpp"
 
 #include <listm3u.hpp>
 #include <static.hpp>
 
-void RadioFav::task() {
+void LoaderFav::task() {
 
     // load favourites from lfs
     int r;

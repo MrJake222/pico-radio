@@ -1,7 +1,7 @@
 #include "scsearchres.hpp"
 
 #include <screenmng.hpp>
-#include <radiosearch.hpp>
+#include <loadersearch.hpp>
 #include <icons.hpp>
 #include <ubuntu_mono.hpp>
 
@@ -87,7 +87,7 @@ void ScSearchRes::show() {
 void ScSearchRes::begin(const char* prompt_) {
     // called from previous screen (on input)
     prompt = prompt_;
-    ((RadioSearch&) ll).begin(prompt);
+    ((LoaderSearch&) ll).begin(prompt);
 
     ScreenList::begin();
 }
