@@ -34,13 +34,14 @@ class ScreenList : public Screen {
     // gated count, only updated after all stations are loaded
     int station_count;
 
+    // how many entry buttons are there
+    int kb_buttons();
+
+    int size_y() override { return kb_buttons() + rows_above() + rows_below(); }
+
 protected:
 
     ListLoader& ll;
-
-    // how many entry buttons are there
-    // used by subclass to return its size_y
-    int kb_buttons();
 
     // draws entry buttons, pass variables from draw_button
     void draw_button_entry(int y, bool selected);

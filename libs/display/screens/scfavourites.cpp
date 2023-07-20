@@ -3,6 +3,7 @@
 #include <screenmng.hpp>
 #include <ubuntu_mono.hpp>
 #include <radiofav.hpp>
+#include <icons.hpp>
 
 
 int ScFavourites::rows_above() {
@@ -10,25 +11,22 @@ int ScFavourites::rows_above() {
 }
 
 int ScFavourites::rows_below() {
-    return 0;
+    return 1;
 }
 
 int ScFavourites::size_x(int y) {
     return 1;
 }
 
-int ScFavourites::size_y() {
-    return kb_buttons();
-}
-
 enum Action {
     PLAY,
+    SEARCH
 };
 
 int ScFavourites::get_action(int x, int y) {
-    // if (y == last_y()) {
-    //     return BACK;
-    // }
+    if (y == last_y()) {
+        return SEARCH;
+    }
 
     return PLAY;
 }
@@ -37,17 +35,26 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
 
     auto action = (Action) get_action(x, y);
     int bg;
+    const int fg = COLOR_FG;
+
+    switch (action) {
+        case SEARCH:
+            bg = get_btn_bg(selected, false);
+            break;
+
+        default:
+            bg = get_btn_bg(selected, true);
+    }
 
     switch (action) {
         case PLAY:
             draw_button_entry(y, selected);
             break;
 
-        // case BACK:
-        //     bg = get_btn_bg(selected, false);
-        //     display.fill_rect(1, 114, 13, 13, bg);
-        //     display.draw_icon(2, 115, icon_back, bg, COLOR_FG);
-        //     break;
+        case SEARCH:
+            display.fill_rect(143, 111, 15, 15, bg);
+            display.draw_icon(144, 112, icon_search, bg, fg);
+            break;
     }
 }
 
@@ -66,6 +73,10 @@ Screen* ScFavourites::run_action(int action) {
 
             sc_play.begin(ll.get_station_name(i), url);
             return &sc_play;
+
+        case SEARCH:
+            sc_search.begin();
+            return &sc_search;
 
         // case BACK:
         //     ll.load_abort();

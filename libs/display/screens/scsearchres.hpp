@@ -12,7 +12,6 @@ class ScSearchRes : public ScreenList {
     int rows_below() override;
 
     int size_x(int y) override;
-    int size_y() override;
 
     void draw_button(int x, int y, bool selected) override;
 

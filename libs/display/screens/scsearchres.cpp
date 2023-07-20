@@ -18,10 +18,6 @@ int ScSearchRes::size_x(int y) {
     return 1;
 }
 
-int ScSearchRes::size_y() {
-    return kb_buttons() + 1;
-}
-
 enum Action {
     PLAY,
     BACK,

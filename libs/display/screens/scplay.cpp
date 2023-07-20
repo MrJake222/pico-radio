@@ -54,7 +54,7 @@ int ScPlay::get_action(int x, int y) {
 Screen* ScPlay::run_action(int action) {
     switch ((Action) action) {
         case FAV:
-            return nullptr;
+            return nullptr; // TODO handle adding/removing from fav list
 
         case BACK:
             player_stop(); // handles wait
