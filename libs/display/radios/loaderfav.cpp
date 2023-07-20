@@ -28,7 +28,7 @@ retry:
     }
 
     // size = lfs_file_size(get_lfs(), &file);
-    list->begin(stations, stations_count);
+    list->begin(stations, stations_max);
     r = list->consume_all(&rd, should_abort, error);
     if (r < 0) {
         // failed

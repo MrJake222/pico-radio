@@ -120,13 +120,13 @@ void ScreenList::show() {
     // called from input
     Screen::show();
 
-    if (first) {
+    if (!loaded) {
         add_normal_text(10, 40, "Ładowanie",
                         ubuntu_font_get_size(UbuntuFontSize::FONT_24),
                         COLOR_BG, COLOR_FG,
                         display.W);
 
-        first = false;
+        loaded = true;
         ll.load_stations();
     }
     else {
@@ -140,7 +140,7 @@ void ScreenList::begin() {
     Screen::begin();
 
     base_y = 0;
-    first = true;
+    loaded = false;
     station_count = 0;
 
     ll.set_all_loaded_cb(this, all_loaded_cb);
@@ -164,4 +164,22 @@ void all_loaded_cb(void* arg, int errored) {
         // re-draw the screen
         sc->show();
     }
+}
+
+void ScreenList::add_entry(const struct station* st) {
+    // abort if state is reset
+    if (!loaded)
+        return;
+
+    ll.add_station(st);
+    station_count++;
+}
+
+void ScreenList::remove_entry(int index) {
+    // abort if state is reset
+    if (!loaded)
+        return;
+
+    ll.remove_station(index);
+    station_count--;
 }

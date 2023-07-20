@@ -28,8 +28,9 @@ class ScreenList : public Screen {
     void draw_bottom_buttons();
     void draw_scroll_bar();
 
-    // first <show> after <begin>
-    bool first;
+    // set to false in <begin>
+    // set to true in <show>
+    bool loaded;
 
     // gated count, only updated after all stations are loaded
     int station_count;
@@ -76,4 +77,9 @@ public:
     void show() override;
 
     friend void all_loaded_cb(void* arg, int errored);
+
+    // stations get loaded from persistent storage rarely
+    // this function maintain this instance updated
+    void add_entry(const struct station* st);
+    void remove_entry(int index);
 };

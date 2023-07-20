@@ -11,7 +11,8 @@
 #define STATS_Y     80
 
 int ScPlay::size_x(int y) {
-    return 2;
+    // if from fav don't display fav_back
+    return prev == &sc_fav ? 2 : 3;
 }
 
 int ScPlay::size_y() {
@@ -19,8 +20,9 @@ int ScPlay::size_y() {
 }
 
 enum Action {
+    BACK,
     FAV,
-    BACK
+    FAV_BACK // fast fav back
 };
 
 void ScPlay::draw_star(bool selected) {
@@ -40,46 +42,70 @@ void ScPlay::draw_button(int x, int y, bool selected) {
     const int fg = COLOR_FG;
 
     switch (action) {
-        case FAV:
         case BACK:
+        case FAV:
+        case FAV_BACK:
             bg = get_btn_bg(selected, false);
             break;
     }
 
     switch (action) {
+        case BACK:
+            display.fill_rect(1, 114, 13, 13, bg);
+            display.draw_icon(2, 115, icon_back, bg, fg);
+            break;
+
         case FAV:
             draw_star(selected);
             break;
 
-        case BACK:
-            display.fill_rect(1, 114, 13, 13, bg);
-            display.draw_icon(2, 115, icon_back, bg, fg);
+        case FAV_BACK:
+            display.fill_rect(30, 110, 17, 18, bg);
+            display.draw_icon(31, 111, icon_fav_back, bg, fg);
             break;
     }
 }
 
 int ScPlay::get_action(int x, int y) {
-    return x == 1 ? FAV : BACK;
+    if (x == 0)
+        return BACK;
+    if (x == 1)
+        return FAV;
+    // if (x == 2)
+    return FAV_BACK;
 }
 
 Screen* ScPlay::run_action(int action) {
     switch ((Action) action) {
+        case BACK:
+            player_stop(); // handles wait
+            return prev;
+
         case FAV:
-            if (fav_index < 0)
+            if (fav_index < 0) {
                 // not on fav list
-                fav_index = fav::add(get_lfs(), st);
+                // add to persistent storage (and get index back)
+                fav_index = fav::add(get_lfs(), &st);
+                // add to favourites screen instance
+                sc_fav.add_entry(&st);
+            }
             else {
                 // on fav list
+                // remove from persistent storage
                 fav::remove(get_lfs(), fav_index);
+                // remove from favourites screen instance
+                sc_fav.remove_entry(fav_index);
+                // mark removed
                 fav_index = -1;
             }
 
             draw_star(true);
             return nullptr;
 
-        case BACK:
-            player_stop(); // handles wait
-            return &sc_search_res;
+        case FAV_BACK:
+            player_stop();
+            return &sc_fav;
+
     }
 
     return nullptr;
@@ -131,7 +157,7 @@ void ScPlay::show() {
     Screen::show();
 
     add_scrolled_text_or_normal(
-            2, 13, st->name,
+            2, 13, st.name,
             ubuntu_font_get_size(UbuntuFontSize::FONT_24),
             COLOR_BG, COLOR_ACC2,
             display.W - 2*2);
@@ -151,15 +177,16 @@ void ScPlay::show() {
                           COLOR_BG, COLOR_FG);
 
     if (!is_err_displayed) {
-        player_start(st->url,
+        player_start(st.url,
                      this,
                      player_failed_callback,
                      player_update_callback);
     }
 }
 
-void ScPlay::begin(const struct station* st_, int fav_index_) {
-    st = st_;
+void ScPlay::begin(const struct station* st_, int fav_index_, Screen* prev_) {
+    st = *st_;
     fav_index = fav_index_;
+    prev = prev_;
     Screen::begin();
 }

@@ -71,7 +71,7 @@ Screen* ScFavourites::run_action(int action) {
             }
 
             // <i> equals position on the fav list
-            sc_play.begin(ll.get_station(i), i);
+            sc_play.begin(ll.get_station(i), i, this);
             return &sc_play;
 
         case SEARCH:

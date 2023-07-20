@@ -38,3 +38,15 @@ void ListLoader::load_stations() {
 void ListLoader::load_abort() {
     should_abort = true;
 }
+
+void ListLoader::add_station(const struct station* st) {
+    stations[stations_offset++] = *st;
+}
+
+void ListLoader::remove_station(int index) {
+    for (int i=index; i<stations_offset-1; i++) {
+        stations[i] = stations[i+1];
+    }
+
+    stations_offset--;
+}

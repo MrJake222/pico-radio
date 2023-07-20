@@ -20,7 +20,7 @@ public:
     ScFavourites(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
             ListLoader& ll_)
     : ScreenList(display_, mutex_ticker_,
-                 3, 31,
+                 3, 25,
                  147, 20, 1, 2,
                  5, 2,
                  ll_)

@@ -70,7 +70,7 @@ void LoaderSearch::task() {
         
         List* list = query_url(client, url_buf,
                                stations + stations_offset,
-                               stations_count - stations_offset,
+                               stations_max - stations_offset,
                                should_abort, client_errored);
 
         if (!list) {
@@ -81,7 +81,7 @@ void LoaderSearch::task() {
         // printf("done loading url, loaded %d stations\n", list->stations_found);
         stations_offset += list->get_stations_found();
 
-        if (stations_offset == stations_count) {
+        if (stations_offset == stations_max) {
             puts("rs: maxed out stations, done");
             break;
         }

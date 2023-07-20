@@ -4,6 +4,7 @@
 #include <screen.hpp>
 #include <cstring>
 #include <decodebase.hpp>
+#include <list.hpp>
 
 class ScPlay : public Screen {
 
@@ -18,8 +19,9 @@ class ScPlay : public Screen {
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
-    const struct station* st;
+    struct station st;
     int fav_index;
+    Screen* prev;
 
     // metadata scrolled text index
     int meta_idx;
@@ -30,6 +32,6 @@ class ScPlay : public Screen {
 public:
     using Screen::Screen;
 
-    void begin(const struct station* st_, int fav_index_);
+    void begin(const struct station* st_, int fav_index_, Screen* prev_);
     void show() override;
 };

@@ -13,3 +13,4 @@ extern const struct icon icon_back;
 extern const struct icon icon_search;
 extern const struct icon icon_star_empty;
 extern const struct icon icon_star_filled;
+extern const struct icon icon_fav_back;

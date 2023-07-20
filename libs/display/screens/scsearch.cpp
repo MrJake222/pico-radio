@@ -244,7 +244,7 @@ Screen* ScSearch::run_action(int action) {
             break;
 
         case BACK:
-            break;
+            return &sc_fav;
 
         case SEARCH:
             prompt[pi] = '\0';

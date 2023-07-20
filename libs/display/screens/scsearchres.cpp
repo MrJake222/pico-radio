@@ -62,7 +62,7 @@ Screen* ScSearchRes::run_action(int action) {
             }
 
             // <i> equals position on search list (not fav list)
-            sc_play.begin(ll.get_station(i), -1);
+            sc_play.begin(ll.get_station(i), -1, this);
             return &sc_play;
 
         case BACK:
@@ -88,6 +88,11 @@ void ScSearchRes::begin(const char* prompt_) {
     // called from previous screen (on input)
     prompt = prompt_;
     ((LoaderSearch&) ll).begin(prompt);
+
+    // reset favourites screen state
+    // this is important because here we are reusing
+    // the same buffers for stations as the fav list
+    sc_fav.begin();
 
     ScreenList::begin();
 }

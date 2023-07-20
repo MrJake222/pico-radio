@@ -20,13 +20,13 @@ protected:
     volatile bool should_abort;
 
     struct station* const stations;
-    const int stations_count;
+    const int stations_max;
     int stations_offset;
 
 public:
-    ListLoader(struct station* stations_, int stations_count_)
+    ListLoader(struct station* stations_, int stations_max_)
         : stations(stations_)
-        , stations_count(stations_count_)
+        , stations_max(stations_max_)
         { }
 
     void begin();
@@ -43,4 +43,7 @@ public:
     const struct station* get_station(int i) { return &stations[i]; }
     // can be overridden to handle *.pls format
     virtual int check_station_url(int i) { return 0; }
+
+    void add_station(const struct station* st);
+    void remove_station(int index);
 };
