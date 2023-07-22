@@ -225,7 +225,7 @@ static void player_task(void* arg) {
         default:
             puts("format unsupported");
             failed = true;
-            goto clean_up;
+            goto clean_up; // TODO clean_up references dec (null here)
     }
 
     r = dec->setup();
