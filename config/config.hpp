@@ -88,11 +88,16 @@
 // --------------------------------- SD --------------------------------- //
 #define SD_ENABLE 1
 
-// --------------------------------- I2S --------------------------------- //
+// --------------------------------- LCD --------------------------------- //
+#define LCD_SCROLLED_TEXTS_MAX          4
+#define LCD_SCROLLED_TEXTS_LEN_MAX      64
+#define LCD_TICK_INTERVAL_MS            50
+
+// --------------------------------- PINOUTS --------------------------------- //
+#ifdef PINOUT_PROTOTYPE
 #define I2S_CLK_CHANNEL_BASE 18 // 18-clk 19-channel
 #define I2S_DATA             20
 
-// --------------------------------- LCD --------------------------------- //
 #define LCD_SPI     1
 #define LCD_SCK     10
 #define LCD_TX      11
@@ -100,13 +105,29 @@
 #define LCD_RST     6
 #define LCD_DC      8
 #define LCD_BL      7
-#define LCD_SCROLLED_TEXTS_MAX          4
-#define LCD_SCROLLED_TEXTS_LEN_MAX      64
-#define LCD_TICK_INTERVAL_MS            50
 
-// --------------------------------- Buttons --------------------------------- //
 #define BTN_UP      12
 #define BTN_DOWN    21
 #define BTN_LEFT    15
 #define BTN_RIGHT   13
 #define BTN_CENTER  14
+#endif
+
+#ifdef PINOUT_V1
+#define I2S_CLK_CHANNEL_BASE  8 // 8-clk 9-channel
+#define I2S_DATA              7
+
+#define LCD_SPI     1
+#define LCD_SCK     14
+#define LCD_TX      15
+#define LCD_CS      13
+#define LCD_RST     11
+#define LCD_DC      12
+#define LCD_BL      10
+
+#define BTN_UP      20
+#define BTN_DOWN    19
+#define BTN_LEFT    22
+#define BTN_RIGHT   21
+#define BTN_CENTER  18
+#endif

@@ -13,6 +13,12 @@ project(pico-radio C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
+# pinout configuration
+add_compile_definitions(
+#        PINOUT_PROTOTYPE
+        PINOUT_V1
+)
+
 # libraries
 add_subdirectory(libs)
 
