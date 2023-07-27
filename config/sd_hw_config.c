@@ -34,21 +34,8 @@ socket, which SPI it is driven by, and how it is wired.
 #include "ff.h" /* Obtains integer types */
 //
 #include "diskio.h" /* Declarations of disk functions */
-
-/* 
-This example assumes the following hardware configuration:
-
-|       | SPI0  | GPIO  | Pin   | SPI       | MicroSD   | Description            | 
-| ----- | ----  | ----- | ---   | --------  | --------- | ---------------------- |
-| MISO  | RX    | 16    | 21    | DO        | DO        | Master In, Slave Out   |
-| MOSI  | TX    | 19    | 25    | DI        | DI        | Master Out, Slave In   |
-| SCK   | SCK   | 18    | 24    | SCLK      | CLK       | SPI clock              |
-| CS0   | CSn   | 17    | 22    | SS or CS  | CS        | Slave (or Chip) Select |
-| DET   |       | 22    | 29    |           | CD        | Card Detect            |
-| GND   |       |       | 18,23 |           | GND       | Ground                 |
-| 3v3   |       |       | 36    |           | 3v3       | 3.3 volt power         |
-
-*/
+//
+#include <config.hpp>
 
 // Hardware Configuration of SPI "objects"
 // Note: multiple SD cards can be driven by one SPI if they use different slave
@@ -56,9 +43,9 @@ This example assumes the following hardware configuration:
 static spi_t spis[] = {  // One for each SPI.
     {
         .hw_inst = spi0,  // SPI component
-        .miso_gpio = 4,  // GPIO number (not Pico pin number)
-        .mosi_gpio = 3,
-        .sck_gpio = 2,
+        .miso_gpio = SD_RX,  // GPIO number (not Pico pin number)
+        .mosi_gpio = SD_TX,
+        .sck_gpio = SD_SCK,
 
         // .baud_rate = 1000 * 1000
         .baud_rate = 12500 * 1000
@@ -69,11 +56,11 @@ static spi_t spis[] = {  // One for each SPI.
 static sd_card_t sd_cards[] = {  // One for each SD card
     {
         .pcName = "0:",   // Name used to mount device
-        .spi = &spis[0],  // Pointer to the SPI driving this card
-        .ss_gpio = 5,    // The SPI slave select GPIO for this SD card
-        .use_card_detect = false,
-        .card_detect_gpio = 22,  // Card detect
-        .card_detected_true = 1  // What the GPIO read returns when a card is
+        .spi = &spis[SD_SPI_ID],  // Pointer to the SPI driving this card
+        .ss_gpio = SD_CS,    // The SPI slave select GPIO for this SD card
+        .use_card_detect = true,
+        .card_detect_gpio = SD_CD,  // Card detect
+        .card_detected_true = 0  // What the GPIO read returns when a card is
                                  // present.
     }};
 

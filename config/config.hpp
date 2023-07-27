@@ -98,7 +98,15 @@
 #define I2S_CLK_CHANNEL_BASE 18 // 18-clk 19-channel
 #define I2S_DATA             20
 
-#define LCD_SPI     1
+#define SD_SPI_ID   0
+#define SD_SCK      2
+#define SD_TX       3
+#define SD_RX       4
+#define SD_CS       5
+#define SD_CD       0
+#define SD_WP       1
+
+#define LCD_SPI_ID  1
 #define LCD_SCK     10
 #define LCD_TX      11
 #define LCD_CS      9
@@ -117,7 +125,15 @@
 #define I2S_CLK_CHANNEL_BASE  8 // 8-clk 9-channel
 #define I2S_DATA              7
 
-#define LCD_SPI     1
+#define SD_SPI_ID   0
+#define SD_SCK      2
+#define SD_TX       3
+#define SD_RX       4
+#define SD_CS       1
+#define SD_CD       5
+#define SD_WP       6
+
+#define LCD_SPI_ID   1
 #define LCD_SCK     14
 #define LCD_TX      15
 #define LCD_CS      13

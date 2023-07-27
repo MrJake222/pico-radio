@@ -16,7 +16,7 @@ static SemaphoreHandle_t mutex_display;
 static ST7735S display(
         160, 128,
         1, 2,
-        LCD_SPI ? spi1 : spi0,
+        LCD_SPI_ID ? spi1 : spi0,
         LCD_SCK, LCD_TX, LCD_CS,
         LCD_RST, LCD_DC, LCD_BL,
         mutex_display);
