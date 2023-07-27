@@ -84,12 +84,12 @@ void init_lowlevel() {
     // set_sys_clock_khz(140000, true);
     set_sys_clock_khz(180000, true);
 
-    // UART on USB
-    // stdio_usb_init();
-    // UART on 0/1 and USB
-    stdio_init_all();
+    // stdio on USB
+    stdio_usb_init();
+    // stdio on UART
+    stdio_uart_init_full(STDIO_UART_ID ? uart1 : uart0, STDIO_BAUD,
+                         STDIO_TX, STDIO_RX);
 
-    // sleep_ms(2000);
     printf("\n\nHello usb pico-radio!\n");
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys) / 1000000);
     puts("");

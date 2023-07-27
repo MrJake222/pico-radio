@@ -95,6 +95,11 @@
 
 // --------------------------------- PINOUTS --------------------------------- //
 #ifdef PINOUT_PROTOTYPE
+#define STDIO_UART_ID   0
+#define STDIO_BAUD      115200
+#define STDIO_TX        16
+#define STDIO_RX        17
+
 #define I2S_CLK_CHANNEL_BASE 18 // 18-clk 19-channel
 #define I2S_DATA             20
 
@@ -122,6 +127,16 @@
 #endif
 
 #ifdef PINOUT_V1
+#define STDIO_UART_ID   0
+#define STDIO_BAUD      115200
+#ifdef PINOUT_V1_0
+#define STDIO_TX        0 // blown pin (oops) forces us
+                          // to use different UART pin
+#else
+#define STDIO_TX        16 // schematic
+#endif
+#define STDIO_RX        17
+
 #define I2S_CLK_CHANNEL_BASE  8 // 8-clk 9-channel
 #define I2S_DATA              7
 

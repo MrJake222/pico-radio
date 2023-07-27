@@ -17,6 +17,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_compile_definitions(
 #        PINOUT_PROTOTYPE
         PINOUT_V1
+        PINOUT_V1_0
 )
 
 # libraries
@@ -48,8 +49,7 @@ target_link_libraries(${PROJECT_NAME}
 target_compile_definitions(${PROJECT_NAME} PRIVATE
         PICO_MAX_SHARED_IRQ_HANDLERS=8u
         PICO_DEBUG_MALLOC=1
-        PICO_DEFAULT_UART_TX_PIN=16
-        PICO_DEFAULT_UART_RX_PIN=17
+        PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=2000
         )
 
 # enable only usb stdio functions
