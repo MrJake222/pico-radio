@@ -49,7 +49,6 @@ target_link_libraries(${PROJECT_NAME}
 target_compile_definitions(${PROJECT_NAME} PRIVATE
         PICO_MAX_SHARED_IRQ_HANDLERS=8u
         PICO_DEBUG_MALLOC=1
-        PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=2000
         )
 
 # enable only usb stdio functions
