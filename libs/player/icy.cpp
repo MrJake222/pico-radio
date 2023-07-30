@@ -92,10 +92,12 @@ int ICY::get_stream_title(char* title, int title_len) const {
 
     // beginning of the tag
     val = strchr(val, '\'');
-
-    // strip val of ''
-    val += 1;                     // skip first '
-    *strchr(val, '\'') = '\0';    // trim last '
+    if (val) {
+        // quote found
+        // strip val of '
+        val += 1;                     // skip first '
+        *strrchr(val, '\'') = '\0';   // trim last '
+    }
 
     strncpy(title, val, title_len);
     return 0;
