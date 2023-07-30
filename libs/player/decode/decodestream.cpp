@@ -10,7 +10,8 @@ void cbuf_write_cb(void* arg, unsigned int bytes) {
     // called from lwip callback
     auto dec = (DecodeStream*) arg;
 
-    dec->metadata_icy.read(dec->cbuf);
+    // read all ICY metadata chunks
+    while (dec->metadata_icy.read(dec->cbuf) == 0);
 }
 
 void DecodeStream::begin(const char* path_, Format* format_) {
