@@ -7,7 +7,7 @@
 
 
 int ScFavourites::rows_above() {
-    return 0;
+    return 1;
 }
 
 int ScFavourites::rows_below() {
@@ -19,12 +19,20 @@ int ScFavourites::size_x(int y) {
 }
 
 enum Action {
+    BATTERY,
+
     PLAY,
     SEARCH
 };
 
 int ScFavourites::get_action(int x, int y) {
+    if (y == 0) {
+        // status icon row
+        return BATTERY;
+    }
+
     if (y == last_y()) {
+        // action icon row
         return SEARCH;
     }
 
@@ -38,6 +46,7 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
     const int fg = COLOR_FG;
 
     switch (action) {
+        case BATTERY:
         case SEARCH:
             bg = get_btn_bg(selected, false);
             break;
@@ -47,6 +56,11 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
     }
 
     switch (action) {
+        case BATTERY:
+            display.fill_rect(143, 3, 15, 15, bg);
+            display.draw_icon(144, 4, icon_battery, bg, fg);
+            break;
+
         case PLAY:
             draw_button_entry(y, selected);
             break;
@@ -62,6 +76,10 @@ Screen* ScFavourites::run_action(int action) {
     int i, r;
 
     switch ((Action) action) {
+        case BATTERY:
+            sc_bat.begin();
+            return &sc_bat;
+
         case PLAY:
             i = get_selected_station_index();
             r = ll.check_station_url(i);

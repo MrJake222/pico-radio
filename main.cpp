@@ -30,6 +30,7 @@
 #include <screenmng.hpp>
 #include <static.hpp>
 #include <lfs.hpp>
+#include <analog.hpp>
 
 void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
@@ -131,6 +132,8 @@ void init_hardware() {
 
     puts("sd: mount ok");
 #endif
+
+    analog::init();
 }
 
 void task_hardware_startup(void* arg) {

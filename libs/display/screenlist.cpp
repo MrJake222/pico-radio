@@ -104,6 +104,9 @@ void ScreenList::draw_button_entry(int y, bool selected) {
     const char* name;
     int bg;
 
+    // 0-align y coordinate
+    y -= first_list_row();
+
     xs = s_base_x;
     ys = s_base_y + (s_res_h + s_res_mar) * y;
     name = ll.get_station(base_y + y)->name;

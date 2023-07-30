@@ -90,8 +90,9 @@ protected:
 
     void draw_progress_bar(int x, int y, int percent, int bg, int fg);
 
-    // slow ticks (500 ms)
-    // virtual void tick_slow() { }
+    // slow ticks (1 s)
+    int tick_sec_counter;
+    virtual void tick_sec() { }
 
 public:
     Screen(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_)

@@ -136,6 +136,12 @@ void Screen::tick() {
         texts[i].draw();
     }
 
+    tick_sec_counter++;
+    if (tick_sec_counter == 1000 / LCD_TICK_INTERVAL_MS) {
+        tick_sec_counter = 0;
+        tick_sec();
+    }
+
     xSemaphoreGive(mutex_ticker);
 }
 
@@ -193,6 +199,8 @@ void Screen::show() {
                     display.W - 2*2);
 
     draw_buttons();
+    tick_sec_counter = 0;
+    tick_sec(); // first tick
 }
 
 void Screen::hide() {

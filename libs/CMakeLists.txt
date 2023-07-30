@@ -1,8 +1,10 @@
 add_subdirectory(external)
 
 add_library(libs
+        analog/analog.cpp
         buttons/buttons.cpp
 
+        display/screens/scbattery.cpp
         display/screens/scfavourites.cpp
         display/screens/scplay.cpp
         display/screens/scsearch.cpp
@@ -52,6 +54,7 @@ add_library(libs
         )
 
 target_include_directories(libs PUBLIC
+        analog
         buttons
         httpc
         mcorefifo
@@ -73,6 +76,7 @@ target_link_libraries(libs
         hardware_timer
         hardware_gpio
         hardware_irq
+        hardware_adc
 
         pico_cyw43_arch_lwip_sys_freertos
         )

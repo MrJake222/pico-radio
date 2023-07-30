@@ -42,6 +42,7 @@ ScFavourites sc_fav(display, mutex_ticker, favl);
 ScSearch sc_search(display, mutex_ticker);
 ScSearchRes sc_search_res(display, mutex_ticker, sl);
 ScPlay sc_play(display, mutex_ticker);
+ScBattery sc_bat(display, mutex_ticker);
 
 [[noreturn]] void screen_tick_task(void* arg) {
     TickType_t last_wake;

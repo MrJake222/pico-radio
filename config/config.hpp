@@ -124,6 +124,9 @@
 #define BTN_LEFT    15
 #define BTN_RIGHT   13
 #define BTN_CENTER  14
+
+#define ADC_VCC     -1
+#define ADC_VBATT   -1
 #endif
 
 #ifdef PINOUT_V1
@@ -161,4 +164,9 @@
 #define BTN_LEFT    22
 #define BTN_RIGHT   21
 #define BTN_CENTER  18
+
+#define ADC_VCC         28
+#define ADC_VCC_MUL      2
+#define ADC_VBATT       27
+#define ADC_VBATT_MUL    2
 #endif
