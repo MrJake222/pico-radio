@@ -73,6 +73,7 @@ int ICY::get_stream_title(char* title, int title_len) const {
     // parse
     char* name = buf_priv;
     char* val;
+    char* end;
 
     // search for StreamTitle tag
     while (true) {
@@ -82,12 +83,16 @@ int ICY::get_stream_title(char* title, int title_len) const {
 
         *val++ = '\0'; // replace = with \0 and skip
 
+        end = strchr(val, ';');
+        if (!*end)
+            return -1;
+
+        *end++ = '\0'; // replace ; with \0 and skip
+
         if (strcmp(name, "StreamTitle") == 0)
             break;
 
-        name = strchr(val, ';');
-        if (!*name)
-            return -1;
+        name = end;
     }
 
     // beginning of the tag
