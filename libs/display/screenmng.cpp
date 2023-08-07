@@ -49,7 +49,8 @@ ScBattery sc_bat(display, mutex_ticker);
     last_wake = xTaskGetTickCount();
 
     while (true) {
-        current_screen->tick();
+        if (current_screen)
+            current_screen->tick();
 
         xTaskDelayUntil(&last_wake,
                         LCD_TICK_INTERVAL_MS / portTICK_PERIOD_MS);
@@ -79,9 +80,13 @@ void screenmng_init() {
 
 void screenmng_open(Screen* new_screen) {
     current_screen->hide();
+
+    // disable ticker on old screen
+    current_screen = nullptr;
+
     new_screen->show();
 
-    // this moves ticker from current to new screen
+    // enable ticker on new screen
     current_screen = new_screen;
 }
 
