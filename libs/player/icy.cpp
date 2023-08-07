@@ -30,7 +30,7 @@ int ICY::read(volatile CircularBuffer& cbuf) {
 
     int o = (int)(next % cbuf.size);
     uint8_t* icy = cbuf.ptr_at(o);
-    uint8_t icy_len = 1 + *icy * 16; // including size byte
+    int icy_len = 1 + *icy * 16; // including size byte
 
     if (next + icy_len > cbuf.written_bytes_total()) {
         // icy not fully in the region
