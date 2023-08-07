@@ -67,9 +67,11 @@ int DecodeFile::load_buffer(int bytes) {
 }
 
 int DecodeFile::check_buffer() {
-    if (eof)
+    if (eof) {
         // no more data to read
+        notify_stop();
         return 0;
+    }
 
     if (cbuf.health() > load_max_health)
         // data chunk too small

@@ -11,9 +11,13 @@ int FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
     int matched;
     do {
         if (raw_buf.data_left() < MP3_HEADER_SIZE) {
-            int ret = raw_buf.try_wrap_buffer();
-            if (ret <= 0)
-                return -1; // failed
+            int ret = wrap_buffer_wait_for_data();
+            if (ret == -1)
+                // failed
+                return -1; // error
+
+            if (ret == -2)
+                return -2; // abort
 
             continue;
         }
@@ -52,7 +56,7 @@ int FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
 }
 
 int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
-    if (user_abort)
+    if (abort)
         return 0;
 
     // printf("decode o %ld  avail %ld\n", raw_buf.get_read_offset(), raw_buf.data_left_continuous());
@@ -69,9 +73,14 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
 
         if (raw_buf.data_left_continuous() < MP3_HEADER_SIZE) {
             // even the header won't fit in continuous buffer
-            ret = raw_buf.try_wrap_buffer();
-            if (ret <= 0)
-                return ret;
+            ret = wrap_buffer_wait_for_data();
+            if (ret == -1)
+                // failed
+                return -1; // error
+
+            if (ret == -2)
+                // abort
+                return 0; // no frames decoded
         }
 
         uint8_t* dptr_orig = raw_buf.read_ptr();
@@ -96,13 +105,13 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
                 break;
 
             case ERR_MP3_INDATA_UNDERFLOW:
-                ret = raw_buf.try_wrap_buffer();
+                ret = wrap_buffer_wait_for_data();
                 if (ret == -1)
                     // failed
-                    return -1;
+                    return -1; // error
 
-                if (ret == 0)
-                    // no data to wrap
+                if (ret == -2)
+                    // abort
                     return 0; // no frames decoded
 
                 again = true;
@@ -119,9 +128,13 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
                 raw_buf.read_reverse(rev);
 #endif
                 ret = align_buffer(orig_read);
-                if (ret < 0) {
+                if (ret == -1) {
                     puts("align_buffer failed");
                     return -1;
+                }
+                if (ret == -2) {
+                    // abort
+                    return 0;
                 }
 
                 again = true;

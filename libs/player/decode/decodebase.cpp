@@ -33,7 +33,7 @@ void DecodeBase::begin(const char* path_, Format* format_) {
 
     decode_finished_by = FinishReason::NoFinish;
     frame_decode_time_ms = 0;
-    user_abort = false;
+    abort = false;
 }
 
 int DecodeBase::setup() {
@@ -134,8 +134,8 @@ int DecodeBase::dma_preload() {
 
     // wait for data in buffer
     puts("core1: waiting for data");
-    while (cbuf.health() < min_health) {
-        if (user_abort)
+    while (cbuf.health() < BUF_HEALTH_MIN) {
+        if (abort)
             goto fail;
     }
 

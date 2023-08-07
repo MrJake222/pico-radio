@@ -391,7 +391,7 @@ void player_stop() {
     task_to_notify_end = xTaskGetCurrentTaskHandle();
 
     // initialize playback stopping
-    dec->stop();
+    dec->notify_stop();
 
     // wait for stop
     int ret = ulTaskNotifyTake(pdTRUE, PLAYER_END_TIMEOUT_MS / portTICK_PERIOD_MS);

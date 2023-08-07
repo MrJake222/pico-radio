@@ -26,6 +26,11 @@
 #define BUF_REVERSE                     0
 // buffer overrun protection, can lead to loop
 #define BUF_OVERRUN_PROTECTION          0
+// minimum buffer health for core1 to start decoding (beginning of playback or after underflow)
+#define BUF_HEALTH_MIN                  50
+// buffer health when a underflow is detected
+#define BUF_HEALTH_UNDERFLOW            10
+
 #define PLAYER_END_TIMEOUT_MS           1000
 #define PLAYER_META_BUF_LEN             128
 

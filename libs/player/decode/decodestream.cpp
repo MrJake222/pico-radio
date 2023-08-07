@@ -60,9 +60,9 @@ void DecodeStream::end() {
     DecodeBase::end();
 }
 
-void DecodeStream::stop() {
+void DecodeStream::notify_stop() {
     client.try_abort();
-    DecodeBase::stop();
+    DecodeBase::notify_stop();
 }
 
 void DecodeStream::ack_bytes(uint16_t bytes) {

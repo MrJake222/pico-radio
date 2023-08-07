@@ -32,8 +32,7 @@ class CircularBuffer {
     volatile rw_callback_fn write_ack_callback;
 
     // wraps buffer unconditionally
-    // returns number of bytes copied
-    int wrap_buffer() volatile;
+    void wrap_buffer() volatile;
 
 public:
     const int size_hidden;
@@ -102,9 +101,9 @@ public:
     bool should_wrap_buffer()  volatile const;
 
     // wraps buffer, but only after both checks pass (can & should)
-    // return value can be interpreted as number of bytes copied (-1 is error)
-    // if <should> is false, returns 0 (no data to copy)
+    // if <should> is false, returns -2 (no data to copy)
     // if <can> is false, returns -1 (error, data won't fit, enlarge "hidden" section)
+    // on success returns 0
     int try_wrap_buffer()         volatile;
 
 

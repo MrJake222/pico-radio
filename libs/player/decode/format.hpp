@@ -8,7 +8,7 @@ class Format {
 
 protected:
     // used to abort playback as fast as possible
-    bool user_abort;
+    bool abort;
 
     volatile CircularBuffer& raw_buf;
 
@@ -17,12 +17,18 @@ public:
         : raw_buf(raw_buf_)
         { }
 
-    void set_user_abort() { user_abort = true; }
+    // used on end-of-file/stream and on user abort
+    void set_abort() { abort = true; }
 
     // call every time before decoding starts
     virtual void begin() {
-        user_abort = false;
+        abort = false;
     }
+
+    // tries to wrap buffer but on data underflow waits for
+    // incoming data (busy waiting). Returns immediately on user abort.
+    // Returns 0 on success -1 on failure (not enough "hidden" section in CircularBuffer), -2 on user abort
+    int wrap_buffer_wait_for_data();
 
     // returns number of units to decode to fill whole buffer
     // (wav bytes or mp3 frames)

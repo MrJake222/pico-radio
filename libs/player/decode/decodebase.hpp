@@ -43,9 +43,6 @@ class DecodeBase {
     volatile bool& a_done_irq;
     volatile bool& b_done_irq;
 
-    // minimum buffer health for core1 to start decoding
-    static const int min_health = 50;
-
     // called when <dma_watch> actually loads some data
     void dma_feed_done(int decoded, int took_us, DMAChannel channel);
 
@@ -54,7 +51,7 @@ class DecodeBase {
 
     // how much last dma feed took to decode 1 frame on average
     float frame_decode_time_ms;
-    bool user_abort;
+    bool abort;
 
     // Main task variables
     xQueueHandle queue;
@@ -71,7 +68,7 @@ class DecodeBase {
     virtual void ack_bytes(uint16_t bytes) = 0;
 
     // function to be called to start core1
-    // called after filling up at least <min_health>% of buffer filled
+    // called after filling up at least <BUF_HEALTH_MIN>% of buffer filled
     entry_fn core1_entry;
 
 protected:
@@ -122,8 +119,9 @@ public:
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
 
-    // caller wants to stop playback thread (from core0, ex. user aborts)
-    virtual void stop() { user_abort = true; format->set_user_abort(); }
+    // notify playback thread that it should not expect more data and exit
+    // (from core0, ex. user abort, end-of-file/stream)
+    virtual void notify_stop() { abort = true; format->set_abort(); }
 
     // Media information
     // return source medium size in bytes
@@ -137,7 +135,7 @@ public:
     virtual int get_meta_str(char* meta, int meta_len) = 0;
 
     /* ---------- DMA feed handling CORE 1 ---------- */
-    // run on core1 startup, waits for <min_health> buffer data,
+    // run on core1 startup, waits for <BUF_HEALTH_MIN> buffer data,
     // preloads pcm buffer, can fail on user abort
     int dma_preload();
     // uses dma flags to load specific part of the buffer

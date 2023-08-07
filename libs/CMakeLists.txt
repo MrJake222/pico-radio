@@ -39,6 +39,7 @@ add_library(libs
         player/decode/decodebase.cpp
         player/decode/decodefile.cpp
         player/decode/decodestream.cpp
+        player/decode/format.cpp
         player/decode/formatmp3.cpp
         player/decode/formatwav.cpp
         player/i2s.pio.cpp
