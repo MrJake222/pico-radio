@@ -225,7 +225,7 @@ static void player_task(void* arg) {
         default:
             puts("format unsupported");
             failed = true;
-            goto clean_up; // TODO clean_up references dec (null here)
+            goto clean_up_unsupported;
     }
 
     r = dec->setup();
@@ -282,6 +282,7 @@ clean_up:
     dec->end();
     dec = nullptr;
 
+clean_up_unsupported:
     if (fin_cb)
         fin_cb(cb_arg, failed);
 
