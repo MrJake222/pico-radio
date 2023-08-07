@@ -111,11 +111,15 @@ Screen* ScPlay::run_action(int action) {
     return nullptr;
 }
 
-void player_failed_callback(void* arg) {
+void player_finished_callback(void* arg, bool failed) {
     // called from player task
-
     auto sc = (ScPlay*) arg;
-    sc->show_error("odtwarzanie zakończyło się błędem");
+
+    if (failed)
+        sc->show_error("odtwarzanie zakończyło się błędem");
+    else
+        // just close the screen
+        screenmng_open(sc->prev);
 }
 
 void player_update_callback(void* arg, DecodeBase* dec) {
@@ -179,7 +183,7 @@ void ScPlay::show() {
     if (!is_err_displayed) {
         player_start(st.url,
                      this,
-                     player_failed_callback,
+                     player_finished_callback,
                      player_update_callback);
     }
 }

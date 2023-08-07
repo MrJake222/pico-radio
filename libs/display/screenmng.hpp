@@ -14,4 +14,5 @@ extern ScPlay sc_play;
 extern ScBattery sc_bat;
 
 void screenmng_init();
+void screenmng_open(Screen* new_screen);
 void screenmng_input(ButtonEnum input);

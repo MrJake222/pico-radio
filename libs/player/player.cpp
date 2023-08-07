@@ -78,7 +78,7 @@ xTaskHandle player_stat_task_h;
 
 // callbacks
 static void* cb_arg;
-static player_cb_fn fail_cb;
+static player_cb_fn_err fin_cb;
 static player_cb_fn_dec upd_cb;
 
 // task to notify when playback really ends
@@ -282,8 +282,8 @@ clean_up:
     dec->end();
     dec = nullptr;
 
-    if (failed && fail_cb)
-        fail_cb(cb_arg);
+    if (fin_cb)
+        fin_cb(cb_arg, failed);
 
     if (task_to_notify_end)
         xTaskNotifyGive(task_to_notify_end);
@@ -354,12 +354,12 @@ static void player_stat_task(void* arg) {
     vTaskDelete(nullptr);
 }
 
-void player_start(const char* path, void* cb_arg_, player_cb_fn fail_cb_, player_cb_fn_dec upd_cb_) {
+void player_start(const char* path, void* cb_arg_, player_cb_fn_err fin_cb_, player_cb_fn_dec upd_cb_) {
     printf("\nplaying: %s as %s file\n", path, filetype_from_name_string(path));
 
     strcpy(filepath, path);
     cb_arg = cb_arg_;
-    fail_cb = fail_cb_;
+    fin_cb = fin_cb_;
     upd_cb = upd_cb_;
     task_to_notify_end = nullptr;
 
@@ -383,9 +383,6 @@ void player_start(const char* path, void* cb_arg_, player_cb_fn fail_cb_, player
 void player_stop() {
     if (!player_is_started())
         return;
-
-    // disable any errors (returning from here means a new screen is displayed)
-    fail_cb = nullptr;
 
     // only one task can wait for end
     assert(task_to_notify_end == nullptr);

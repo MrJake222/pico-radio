@@ -77,13 +77,17 @@ void screenmng_init() {
             nullptr);
 }
 
+void screenmng_open(Screen* new_screen) {
+    current_screen->hide();
+    new_screen->show();
+
+    // this moves ticker from current to new screen
+    current_screen = new_screen;
+}
+
 void screenmng_input(ButtonEnum input) {
     Screen* new_screen = current_screen->input(input);
     if (new_screen) {
-        current_screen->hide();
-        new_screen->show();
-
-        // this moves ticker from current to new screen
-        current_screen = new_screen;
+        screenmng_open(new_screen);
     }
 }

@@ -26,7 +26,7 @@ class ScPlay : public Screen {
     // metadata scrolled text index
     int meta_idx;
 
-    friend void player_failed_callback(void* arg);
+    friend void player_finished_callback(void* arg, bool failed);
     friend void player_update_callback(void* arg, DecodeBase* dec);
 
 public:
