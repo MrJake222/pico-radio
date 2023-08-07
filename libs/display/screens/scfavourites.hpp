@@ -9,6 +9,7 @@ class ScFavourites : public ScreenList {
     int rows_above() override;
     int rows_below() override;
 
+    int default_y() override;
     int size_x(int y) override;
 
     void draw_button(int x, int y, bool selected) override;

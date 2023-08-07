@@ -1,4 +1,6 @@
 #include "screen.hpp"
+#include "icons.hpp"
+#include "analog.hpp"
 
 #include <ubuntu_mono.hpp>
 #include <cstdio>
@@ -127,6 +129,33 @@ void Screen::reset_scrolled_texts() {
     xSemaphoreGive(mutex_ticker);
 }
 
+void Screen::tick_sec_enable() {
+    xSemaphoreTake(mutex_ticker, portMAX_DELAY);
+    tick_sec_counter = 0;
+    tick_sec_enabled = true;
+    xSemaphoreGive(mutex_ticker);
+}
+
+void Screen::tick_sec_disable() {
+    xSemaphoreTake(mutex_ticker, portMAX_DELAY);
+    tick_sec_enabled = false;
+    xSemaphoreGive(mutex_ticker);
+}
+
+void Screen::tick_sec() {
+    // update top-of-the-screen status icons
+
+    // battery
+    const int bv = analog::battery_percentage();
+    const int bx = 149;
+    const int by = 2;
+    if (bv >= 60)
+        display.draw_icon(bx, by, icon_battery_100, COLOR_BG, COLOR_FG_GOOD);
+    else if (bv >= 20)
+        display.draw_icon(bx, by, icon_battery_50, COLOR_BG, COLOR_FG_WARN);
+    else
+        display.draw_icon(bx, by, icon_battery_0, COLOR_BG, COLOR_FG_ERR);
+}
 
 void Screen::tick() {
     xSemaphoreTake(mutex_ticker, portMAX_DELAY);
@@ -136,10 +165,12 @@ void Screen::tick() {
         texts[i].draw();
     }
 
-    tick_sec_counter++;
-    if (tick_sec_counter == 1000 / LCD_TICK_INTERVAL_MS) {
-        tick_sec_counter = 0;
-        tick_sec();
+    if (tick_sec_enabled) {
+        tick_sec_counter++;
+        if (tick_sec_counter == 1000 / LCD_TICK_INTERVAL_MS) {
+            tick_sec_counter = 0;
+            tick_sec();
+        }
     }
 
     xSemaphoreGive(mutex_ticker);
@@ -199,7 +230,7 @@ void Screen::show() {
                     display.W - 2*2);
 
     draw_buttons();
-    tick_sec_counter = 0;
+    tick_sec_enable();
     tick_sec(); // first tick
 }
 
@@ -209,6 +240,7 @@ void Screen::hide() {
 
 void Screen::show_error(const char* err) {
     reset_scrolled_texts();
+    tick_sec_disable();
 
     display.clear_screen(COLOR_BG_ERR);
     display.write_text_wrap(2, 0, err,

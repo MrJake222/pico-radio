@@ -5,12 +5,17 @@
 #include <loaderfav.hpp>
 #include <icons.hpp>
 
-
+// allowing to enter battery status icon from here is temporary
+// and should be moved to settings/status screen of some sort
 int ScFavourites::rows_above() {
     return 1;
 }
 
 int ScFavourites::rows_below() {
+    return 1;
+}
+
+int ScFavourites::default_y() {
     return 1;
 }
 
@@ -57,8 +62,8 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
 
     switch (action) {
         case BATTERY:
-            display.fill_rect(143, 3, 15, 15, bg);
-            display.draw_icon(144, 4, icon_battery, bg, fg);
+            display.fill_rect(148, 1, 10, 13, bg);
+            display.draw_icon(149, 2, icon_battery_100, bg, COLOR_FG_GOOD);
             break;
 
         case PLAY:

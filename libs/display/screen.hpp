@@ -18,6 +18,9 @@
 #define COLOR_ACC2           0x803E33
 #define COLOR_ACC3           0xD29ED2
 #define COLOR_FG             0x0
+#define COLOR_FG_GOOD        0x1F641F
+#define COLOR_FG_WARN        0x64641F
+#define COLOR_FG_ERR         0x641F1F
 
 class Screen {
 
@@ -33,11 +36,12 @@ class Screen {
     // first free index in <texts> array
     int texts_index;
 
+    // see screenmng.cpp for details
+    // is private because it's not recursive
+    SemaphoreHandle_t& mutex_ticker;
+
 protected:
     ST7735S& display;
-
-    // see screenmng.cpp for details
-    SemaphoreHandle_t& mutex_ticker;
 
     // grid is (0, f(y)) x (0, y)
     // can be irregular
@@ -91,8 +95,11 @@ protected:
     void draw_progress_bar(int x, int y, int percent, int bg, int fg);
 
     // slow ticks (1 s)
+    bool tick_sec_enabled; // protects from writing over the error screen
     int tick_sec_counter;
-    virtual void tick_sec() { }
+    void tick_sec_enable();
+    void tick_sec_disable();
+    virtual void tick_sec();
 
 public:
     Screen(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_)

@@ -100,6 +100,9 @@ void init_lowlevel() {
 
     fifo_init();
     puts("mcorefifo init ok");
+
+    analog::init();
+    puts("analog init ok");
 }
 
 void init_hardware() {
@@ -132,8 +135,6 @@ void init_hardware() {
 
     puts("sd: mount ok");
 #endif
-
-    analog::init();
 }
 
 void task_hardware_startup(void* arg) {
