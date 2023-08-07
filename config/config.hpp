@@ -38,7 +38,8 @@
 #define HTTP_CONTENT_TYPE_HDR_SIZE      256
 
 #define HTTP_TIMEOUT_MS                 5000
-#define HTTP_POLL_INTERVAL_MS           2000     // minimum is half a second
+#define HTTP_POLL_INTERVAL_MS           5000     // minimum is half a second
+                                                 // calculated from MP3 buffer size (64kB / 128kbps = 4s)
 #define HTTP_NOTIFY_INDEX               1
 
 // --------------------------------- Radio --------------------------------- //
