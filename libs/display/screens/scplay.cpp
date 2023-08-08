@@ -78,8 +78,9 @@ int ScPlay::get_action(int x, int y) {
 Screen* ScPlay::run_action(int action) {
     switch ((Action) action) {
         case BACK:
-            player_stop(); // handles wait
-            return prev;
+            player_stop(); // handles wait & opening of the <prev>
+                           // screen via <player_finished_callback>
+            return nullptr; // don't open prev screen yet here
 
         case FAV:
             if (fav_index < 0) {
