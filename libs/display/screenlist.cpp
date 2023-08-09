@@ -186,4 +186,5 @@ void ScreenList::remove_entry(int index) {
 
     ll.remove_station(index);
     station_count--;
+    base_y = MIN(base_y, max_base_y());
 }
