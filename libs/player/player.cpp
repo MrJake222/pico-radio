@@ -6,6 +6,7 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
+#include <semphr.h>
 
 #include <helix_static.h>
 
@@ -71,6 +72,7 @@ static DecodeStream dec_stream(
         core1_entry);
 
 static DecodeBase* dec;
+static SemaphoreHandle_t dec_mutex;
 
 // player tasks
 xTaskHandle player_task_h;
@@ -237,9 +239,18 @@ static void player_task(void* arg) {
         goto clean_up;
     }
 
-    if (player_stat_task_h)
-        // start displaying stats
-        xTaskNotifyGive(player_stat_task_h);
+    // create <dec> mutex to prevent stat task
+    // from running on null reference at the end
+    dec_mutex = xSemaphoreCreateMutex();
+    if (!dec_mutex) {
+        puts("dec mutex creation failed");
+        failed = true;
+        goto clean_up;
+    }
+
+    // give mutex & start displaying stats
+    xSemaphoreGive(dec_mutex);
+    xTaskNotifyGive(player_stat_task_h);
 
     // this starts core1
     // and blocks for the time of playback
@@ -278,9 +289,13 @@ static void player_task(void* arg) {
 
 clean_up:
     pio_sm_put_blocking(pio, sm, 0);
-
     dec->end();
+
+    r = xSemaphoreTake(dec_mutex, PLAYER_END_TIMEOUT_MS / portTICK_PERIOD_MS);
+    if (r != pdTRUE)
+        puts("timeout waiting for dec_mutex");
     dec = nullptr;
+    xSemaphoreGive(dec_mutex);
 
 clean_up_unsupported:
     if (fin_cb)
@@ -331,22 +346,27 @@ static void player_update_stats() {
 
 static void player_stat_task(void* arg) {
 
-    while (!player_is_started())
-        // wait for playback to start
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    // wait for playback to start
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     TickType_t last_wake;
     last_wake = xTaskGetTickCount();
 
     int last_current = -1;
 
-    while (player_is_started()) {
+    while (true) {
+        xSemaphoreTake(dec_mutex, portMAX_DELAY);
+        if (!player_is_started())
+            break;
+
         const int current = dec->current_time();
 
         if (current != last_current || current < 1) {
             player_update_stats();
             last_current = current;
         }
+
+        xSemaphoreGive(dec_mutex);
 
         xTaskDelayUntil(&last_wake,
                         500 / portTICK_PERIOD_MS);
@@ -365,20 +385,20 @@ void player_start(const char* path, void* cb_arg_, player_cb_fn_err fin_cb_, pla
     task_to_notify_end = nullptr;
 
     xTaskCreate(
-            player_task,
-            "player",
-            STACK_PLAYER,
-            nullptr,
-            PRI_PLAYER,
-            &player_task_h);
-
-    xTaskCreate(
             player_stat_task,
             "player stat",
             STACK_PLAYER_STAT,
             nullptr,
             PRI_PLAYER_STAT,
             &player_stat_task_h);
+
+    xTaskCreate(
+            player_task,
+            "player",
+            STACK_PLAYER,
+            nullptr,
+            PRI_PLAYER,
+            &player_task_h);
 }
 
 void player_stop() {
