@@ -46,6 +46,7 @@
 #define HTTP_POLL_INTERVAL_MS           5000     // minimum is half a second
                                                  // calculated from MP3 buffer size (64kB / 128kbps = 4s)
 #define HTTP_NOTIFY_INDEX               1
+#define HTTP_MAX_REDIRECTS              2
 
 // --------------------------------- Radio --------------------------------- //
 // Search prompt length

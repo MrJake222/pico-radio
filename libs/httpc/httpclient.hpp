@@ -40,6 +40,8 @@ class HttpClient : public DataSource {
     // Query/Response buffer
     char qrbuf[HTTP_QUERY_RESP_BUF_SIZE];
 
+    int redirect_attempts;
+
     // request headers
     bool send_icy_metadata;
 
@@ -62,7 +64,7 @@ protected:
 
     // always called before starting a connection
     virtual void reset_state() { h_icy_metaint = -1; }
-    virtual void reset_state_with_cb() { reset_state(); send_icy_metadata = false; }
+    virtual void reset_state_with_cb() { reset_state(); send_icy_metadata = false; redirect_attempts = 0; }
 
 public:
 

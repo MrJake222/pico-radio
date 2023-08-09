@@ -207,14 +207,19 @@ int HttpClient::parse_http() {
 
         case 301: // moved permanently
         case 308: // permanent redirect
-            puts("permanent redirect, aborting (may be https redirect, db should update)");
-            return -1;
-
         case 302: // found
         case 307: // temporary redirect
-            puts("found");
-            close();
-            return get(h_location);
+            if (redirect_attempts < HTTP_MAX_REDIRECTS) {
+                printf("redirect, attempt %d\n", redirect_attempts+1);
+
+                close();
+                redirect_attempts++;
+                return get(h_location);
+            }
+            else {
+                puts("redirect, reached max attempts");
+                return -1;
+            }
 
         default:
             printf("unsupported response status code ('%s' / %s)\n", codestr, codedesc);
