@@ -99,7 +99,7 @@
 #define LCD_SCROLLED_TEXTS_MAX          4
 #define LCD_SCROLLED_TEXTS_LEN_MAX      64
 #define LCD_TICK_INTERVAL_MS            50
-#define LCD_BL_TIMEOUT_MS               5000
+#define LCD_BL_TIMEOUT_MS               30000
 
 // --------------------------------- PINOUTS --------------------------------- //
 #ifdef PINOUT_PROTOTYPE

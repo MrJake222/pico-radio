@@ -75,7 +75,7 @@ static void gpio_callback(uint gpio, uint32_t events) {
 
         if (r == pdTRUE) {
             // received input
-            
+
             if (backlight) {
                 // process only if display on (user sees what he's doing)
                 screenmng_input(input);
