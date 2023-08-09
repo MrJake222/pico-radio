@@ -16,3 +16,4 @@ extern ScBattery sc_bat;
 void screenmng_init();
 void screenmng_open(Screen* new_screen);
 void screenmng_input(ButtonEnum input);
+void screenmng_backlight(bool on);

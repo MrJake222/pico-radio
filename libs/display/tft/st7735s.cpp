@@ -26,6 +26,10 @@ void ST7735S::gpio_setup() {
     gpio_set_function(p_cs, GPIO_FUNC_SPI);
 }
 
+void ST7735S::bl_set(bool on) {
+    gpio_put(p_bl, on);
+}
+
 void ST7735S::spi_setup() {
     spi_init(spi, 60 * 1000000);
     spi_set_slave(spi, false);

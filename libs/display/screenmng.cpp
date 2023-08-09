@@ -96,3 +96,7 @@ void screenmng_input(ButtonEnum input) {
         screenmng_open(new_screen);
     }
 }
+
+void screenmng_backlight(bool on) {
+    display.bl_set(on);
+}

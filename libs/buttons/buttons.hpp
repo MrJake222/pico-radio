@@ -1,8 +1,5 @@
 #pragma once
 
-#include <FreeRTOS.h>
-#include <queue.h>
-
 enum ButtonEnum {
     UP,
     DOWN,

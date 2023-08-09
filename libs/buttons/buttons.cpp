@@ -1,9 +1,14 @@
 #include "buttons.hpp"
 
-#include <hardware/gpio.h>
 #include <cstdio>
 #include <config.hpp>
 #include <screenmng.hpp>
+
+#include <hardware/gpio.h>
+
+#include <FreeRTOS.h>
+#include <task.h>
+#include <queue.h>
 
 static QueueHandle_t input_queue;
 
@@ -57,20 +62,38 @@ static void gpio_callback(uint gpio, uint32_t events) {
 
     ButtonEnum input;
     int r;
+    bool backlight = true;
 
     while (true) {
         r = xQueueReceive(
                 input_queue,
                 &input,
-                portMAX_DELAY);
+                backlight
+                    ? LCD_BL_TIMEOUT_MS / portTICK_PERIOD_MS
+                    : portMAX_DELAY); // wait timeout if backlight on (to turn it off)
+                                      // or indefinitely (for input) if off
 
-        if (r != pdTRUE)
-            continue;
+        if (r == pdTRUE) {
+            // received input
+            
+            if (backlight) {
+                // process only if display on (user sees what he's doing)
+                screenmng_input(input);
 
-        uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
-        printf("input unused stack: %ld\n", min_free_stack);
+                // print stack stats
+                uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
+                printf("input unused stack: %ld\n", min_free_stack);
+            }
 
-        screenmng_input(input);
+            // turn on the display
+            screenmng_backlight(true);
+            backlight = true;
+        }
+        else {
+            // timeout occurred -> turn off the display
+            screenmng_backlight(false);
+            backlight = false;
+        }
     }
 }
 

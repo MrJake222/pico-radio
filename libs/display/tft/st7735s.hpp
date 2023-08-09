@@ -67,6 +67,7 @@ public:
     int size() { return sizeof(ST7735S); }
 
     void init();
+    void bl_set(bool on);
 
     static const int R_BITS = 5;
     static const int G_BITS = 6;
