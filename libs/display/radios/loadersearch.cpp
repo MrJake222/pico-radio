@@ -4,7 +4,7 @@
 #include <listpls.hpp>
 
 static const char* urls[] = {
-        "http://npc.k21a.mrwski.eu:8080/search",
+//        "http://npc.k21a.mrwski.eu:8080/search",
         "http://at1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s"
 };
 
@@ -67,7 +67,8 @@ void LoaderSearch::task() {
             break;
 
         snprintf(url_buf, SEARCH_URL_BUF_LEN, urls[i], query);
-        
+
+        client_begin_set_callback();
         List* list = query_url(client, url_buf,
                                stations + stations_offset,
                                stations_max - stations_offset,
@@ -101,12 +102,14 @@ void LoaderSearch::task() {
     vTaskDelete(nullptr);
 }
 
+void LoaderSearch::client_begin_set_callback() {
+    client.begin();
+    client.set_err_cb(client_err_cb, this);
+}
+
 void LoaderSearch::begin(const char* query_) {
     ListLoader::begin();
     query = query_;
-
-    client.begin();
-    client.set_err_cb(client_err_cb, this);
 }
 
 void LoaderSearch::load_abort() {
@@ -122,6 +125,7 @@ int LoaderSearch::check_station_url(int i) {
     const char* url = stations[i].url;
     const char* ext = url + strlen(url) - 4;
     if (strcmp(ext, ".pls") == 0) {
+        client_begin_set_callback();
         List* list = query_url(client, url,
                                stations_pls, stations_pls_count,
                                should_abort, client_errored);

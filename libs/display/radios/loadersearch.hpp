@@ -23,6 +23,7 @@ class LoaderSearch : public ListLoader {
     void task() override;
 
     volatile bool client_errored;
+    void client_begin_set_callback();
     friend void client_err_cb(void* arg, int err);
 
 public:
