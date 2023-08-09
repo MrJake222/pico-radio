@@ -8,28 +8,21 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
-#include <queue.h>
 
 #include <buttons/buttons.hpp>
-
-#include <i2s.pio.h>
 
 #include <f_util.h>
 #include <ff.h>
 #include <hw_config.h>
 
 #include <config.hpp>
-#include <tft/st7735s.hpp>
 
 // wifi
 #include <pico/cyw43_arch.h>
 
 #include <player.hpp>
 #include <mcorefifo.hpp>
-#include <screen.hpp>
 #include <screenmng.hpp>
-#include <static.hpp>
-#include <lfs.hpp>
 #include <analog.hpp>
 
 void fs_err(FRESULT fr, const char* tag) {
@@ -95,9 +88,6 @@ void init_lowlevel() {
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys) / 1000000);
     puts("");
 
-    buttons_init();
-    puts("buttons init ok");
-
     fifo_init();
     puts("mcorefifo init ok");
 
@@ -117,6 +107,9 @@ void init_hardware() {
     // TODO make init screen show first
     screenmng_init();
     puts("Display configuration done");
+
+    buttons_init();
+    puts("buttons init ok");
 
     player_init();
     puts("player done");
@@ -160,8 +153,8 @@ void init_wifi() {
     // const char* WIFI_PASSWORD = "ForThosE4bOut";
     // const char* WIFI_SSID = "NLP";
     // const char* WIFI_SSID = "NPC";
-    // const char* WIFI_SSID = "MyNet";
-    const char* WIFI_SSID = "BPi";
+    const char* WIFI_SSID = "MyNet";
+    // const char* WIFI_SSID = "BPi";
     // const char* WIFI_SSID = "NPC";
     const char* WIFI_PASSWORD = "bequick77";
     // const char* WIFI_SSID = "NorbertAP";
@@ -216,25 +209,6 @@ void task_wifi_startup(void* arg) {
     vTaskDelete(nullptr);
 }
 
-[[noreturn]] void task_input_handle(void* arg) {
-    ButtonEnum input;
-    int r;
-
-    while (true) {
-        r = xQueueReceive(
-                input_queue,
-                &input,
-                portMAX_DELAY);
-
-        if (r != pdTRUE)
-            continue;
-
-        uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
-        printf("input unused stack: %ld\n", min_free_stack);
-
-        screenmng_input(input);
-    }
-}
 
 int main() {
     init_lowlevel();
@@ -253,14 +227,6 @@ int main() {
             STACK_WIFI_SETUP,
             nullptr,
             PRI_WIFI_SETUP,
-            nullptr);
-
-    xTaskCreate(
-            task_input_handle,
-            "input handle",
-            STACK_INPUT,
-            nullptr,
-            PRI_INPUT,
             nullptr);
 
     vTaskStartScheduler();
