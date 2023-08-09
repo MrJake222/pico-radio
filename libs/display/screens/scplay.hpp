@@ -26,6 +26,11 @@ class ScPlay : public Screen {
     // metadata scrolled text index
     int meta_idx;
 
+    // true if user pressed a button to request player stop
+    // used by <player_finished_callback> to close the player screen when playback
+    // stops by itself
+    bool player_stop_requested;
+
     friend void player_finished_callback(void* arg, bool failed);
     friend void player_update_callback(void* arg, DecodeBase* dec);
 

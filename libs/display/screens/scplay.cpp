@@ -78,9 +78,9 @@ int ScPlay::get_action(int x, int y) {
 Screen* ScPlay::run_action(int action) {
     switch ((Action) action) {
         case BACK:
-            player_stop(); // handles wait & opening of the <prev>
-                           // screen via <player_finished_callback>
-            return nullptr; // don't open prev screen yet here
+            player_stop_requested = true;
+            player_stop();
+            return prev;
 
         case FAV:
             if (fav_index < 0) {
@@ -104,6 +104,7 @@ Screen* ScPlay::run_action(int action) {
             return nullptr;
 
         case FAV_BACK:
+            player_stop_requested = true;
             player_stop();
             return &sc_fav;
 
@@ -118,8 +119,8 @@ void player_finished_callback(void* arg, bool failed) {
 
     if (failed)
         sc->show_error("odtwarzanie zakończyło się błędem");
-    else
-        // just close the screen
+    else if (!sc->player_stop_requested)
+        // just close the screen (if not closed by the user)
         screenmng_open(sc->prev);
 }
 
@@ -193,5 +194,6 @@ void ScPlay::begin(const struct station* st_, int fav_index_, Screen* prev_) {
     st = *st_;
     fav_index = fav_index_;
     prev = prev_;
+    player_stop_requested = false;
     Screen::begin();
 }
