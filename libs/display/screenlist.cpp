@@ -24,14 +24,14 @@ int ScreenList::kb_buttons() {
 void ScreenList::draw_top_buttons() {
     // draw top 3 buttons, bottom button drawn by base class
     for (int y=0; y<kb_buttons()-1; y++) {
-        draw_button(0, y, false);
+        draw_button(0, y + rows_above(), false);
     }
 }
 
 void ScreenList::draw_bottom_buttons() {
     // draw bottom 3 buttons, top button drawn by base class
     for (int y=1; y<kb_buttons(); y++) {
-        draw_button(0, y, false);
+        draw_button(0, y + rows_above(), false);
     }
 }
 
@@ -60,9 +60,9 @@ void ScreenList::iny() {
         draw_scroll_bar();
         draw_top_buttons();
     }
-    else if (current_y == last_y()) {
-        // last icon
-        // move to top
+    else if (current_y == first_list_row() - 1) {
+        // last top icon
+        // move to top of the list (after this the first row is selected)
         base_y = 0;
         draw_scroll_bar();
         Screen::iny();
@@ -81,8 +81,9 @@ void ScreenList::dey() {
         draw_bottom_buttons();
     }
     else if (current_y == last_list_row() + 1) {
-        // last icon
-        // move to bottom
+        // last bottom icon
+        // move to bottom of the list
+        // after this the last row is selected
         base_y = max_base_y();
         draw_scroll_bar();
         Screen::dey();
