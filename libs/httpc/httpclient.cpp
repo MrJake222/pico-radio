@@ -210,7 +210,7 @@ int HttpClient::parse_http() {
         case 302: // found
         case 307: // temporary redirect
             if (redirect_attempts < HTTP_MAX_REDIRECTS) {
-                printf("redirect, attempt %d\n", redirect_attempts+1);
+                printf("redirect, attempt %d, location: %s\n", redirect_attempts+1, h_location);
 
                 close();
                 redirect_attempts++;
