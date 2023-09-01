@@ -14,7 +14,7 @@ class LoaderSearch : public ListLoader {
 
     HttpClientPico& client;
 
-    const char* query;
+    char query_enc[PROMPT_URL_BUF_LEN];
     char url_buf[SEARCH_URL_BUF_LEN];
 
     struct station* const stations_pls;

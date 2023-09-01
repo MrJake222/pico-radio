@@ -2,6 +2,7 @@
 
 #include <listm3u.hpp>
 #include <listpls.hpp>
+#include <util.hpp>
 
 static const char* urls[] = {
 //        "http://npc.k21a.mrwski.eu:8080/search",
@@ -66,7 +67,7 @@ void LoaderSearch::task() {
         if (should_abort)
             break;
 
-        snprintf(url_buf, SEARCH_URL_BUF_LEN, urls[i], query);
+        snprintf(url_buf, SEARCH_URL_BUF_LEN, urls[i], query_enc);
 
         client_begin_set_callback();
         List* list = query_url(client, url_buf,
@@ -109,7 +110,7 @@ void LoaderSearch::client_begin_set_callback() {
 
 void LoaderSearch::begin(const char* query_) {
     ListLoader::begin();
-    query = query_;
+    url_encode_string(query_enc, query_);
 }
 
 void LoaderSearch::load_abort() {

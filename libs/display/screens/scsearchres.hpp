@@ -6,7 +6,7 @@
 
 class ScSearchRes : public ScreenList {
 
-    const char* get_title() override { return "Wyniki wyszukiwania"; }
+    const char* get_title() override { return "Wyniki"; }
 
     int rows_above() override;
     int rows_below() override;

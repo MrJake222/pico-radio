@@ -45,3 +45,19 @@ void create_mutex_give(SemaphoreHandle_t& mutex) {
 
     xSemaphoreGive(mutex);
 }
+
+void url_encode_string(char* dst, const char* src) {
+    while (*src++) {
+        if (*src == ' ') {
+            *dst++ = '%';
+            *dst++ = '2';
+            *dst++ = '0'; // %20
+        }
+
+        // add other characters here
+
+        else {
+            *dst++ = *src;
+        }
+    }
+}
