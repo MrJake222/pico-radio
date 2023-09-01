@@ -47,7 +47,7 @@ void create_mutex_give(SemaphoreHandle_t& mutex) {
 }
 
 void url_encode_string(char* dst, const char* src) {
-    while (*src++) {
+    while (*src) {
         if (*src == ' ') {
             *dst++ = '%';
             *dst++ = '2';
@@ -59,5 +59,7 @@ void url_encode_string(char* dst, const char* src) {
         else {
             *dst++ = *src;
         }
+
+        src++;
     }
 }

@@ -5,8 +5,13 @@
 #include <util.hpp>
 
 static const char* urls[] = {
-//        "http://npc.k21a.mrwski.eu:8080/search",
-        "http://at1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s"
+        // "http://npc.k21a.mrwski.eu:8080/search",
+        // nullptr,
+
+        "http://de1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
+        "http://fr1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
+        "http://at1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
+        nullptr,
 };
 
 static const int url_count = sizeof(urls) / sizeof(char*);
@@ -67,13 +72,25 @@ void LoaderSearch::task() {
         if (should_abort)
             break;
 
-        snprintf(url_buf, SEARCH_URL_BUF_LEN, urls[i], query_enc);
+        List* list = nullptr;
 
-        client_begin_set_callback();
-        List* list = query_url(client, url_buf,
-                               stations + stations_offset,
-                               stations_max - stations_offset,
-                               should_abort, client_errored);
+        for (; urls[i]; i++) {
+            if (should_abort)
+                break;
+
+            // loop over one server
+            // if already good, skip the code, but advance pointer
+            if (list)
+                continue;
+
+            snprintf(url_buf, SEARCH_URL_BUF_LEN, urls[i], query_enc);
+
+            client_begin_set_callback();
+            list = query_url(client, url_buf,
+                                   stations + stations_offset,
+                                   stations_max - stations_offset,
+                                   should_abort, client_errored);
+        }
 
         if (!list) {
             errored++;
