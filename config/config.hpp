@@ -111,6 +111,7 @@
 
 #define I2S_CLK_CHANNEL_BASE 18 // 18-clk 19-channel
 #define I2S_DATA             20
+#define AMP_MUTE             -1
 
 #define SD_SPI_ID   0
 #define SD_SCK      2
@@ -151,6 +152,7 @@
 
 #define I2S_CLK_CHANNEL_BASE  8 // 8-clk 9-channel
 #define I2S_DATA              7
+#define AMP_MUTE              26
 
 #define SD_SPI_ID   0
 #define SD_SCK      2

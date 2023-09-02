@@ -46,6 +46,7 @@ add_library(libs
         player/player.cpp
         player/filetype.cpp
         player/icy.cpp
+        player/amp.cpp
 
         static.cpp
         circularbuffer.cpp

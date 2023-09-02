@@ -20,6 +20,8 @@
 #include <decodefile.hpp>
 #include <decodestream.hpp>
 
+#include <amp.hpp>
+
 static volatile bool a_done_irq = false;
 static volatile bool b_done_irq = false;
 
@@ -158,6 +160,10 @@ void player_init() {
 
     HELIX_STATIC_INIT(mp3DecInfo, fh, si, sfi, hi, di, mi, sbi);
     puts("Decoder begin done");
+
+    amp_init();
+    amp_mute();
+    puts("amp muted");
 }
 
 
@@ -188,6 +194,7 @@ static void dma_start() {
     if (r == 0) {
         // all good
         i2s_program_set_bit_freq(pio, sm, dec->bit_freq());
+        amp_unmute();
         dma_start();
 
         while (!dec->decode_finished()) {
@@ -259,6 +266,8 @@ static void player_task(void* arg) {
         puts("play failed");
         failed = true;
     }
+
+    amp_mute();
 
     printf("\nfinished decode.\n");
 
