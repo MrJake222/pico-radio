@@ -60,7 +60,12 @@ void ScreenList::iny() {
         draw_scroll_bar();
         draw_top_buttons();
     }
-    else if (current_y == first_list_row() - 1) {
+    else if ((current_y == last_y() && rows_above() == 0) || (current_y == first_list_row() - 1)) {
+        // last icon and no icons above
+        // the cursor will jump straight into topmost list position
+        //
+        // OR
+        //
         // last top icon
         // move to top of the list (after this the first row is selected)
         base_y = 0;
