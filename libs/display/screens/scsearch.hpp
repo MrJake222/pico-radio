@@ -39,4 +39,8 @@ public:
 
     void begin() override;
     void show() override;
+
+    // call from search result when back clicked
+    // restores "_" cursor after the text
+    void show_cursor();
 };

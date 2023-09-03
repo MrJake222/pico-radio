@@ -67,6 +67,7 @@ Screen* ScSearchRes::run_action(int action) {
 
         case BACK:
             ll.load_abort();
+            sc_search.show_cursor();
             return &sc_search;
     }
 

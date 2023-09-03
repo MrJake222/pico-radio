@@ -275,3 +275,9 @@ void ScSearch::begin() {
 
     prev_x_clear();
 }
+
+void ScSearch::show_cursor() {
+    // just reverse what is erased in SEARCH action
+    // ( prompt[pi] = '\0' )
+    prompt[pi] = '_';
+}

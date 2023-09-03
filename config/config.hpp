@@ -50,7 +50,7 @@
 
 // --------------------------------- Radio --------------------------------- //
 // Search prompt length
-#define MAX_PROMPT_LEN        14
+#define MAX_PROMPT_LEN        15
 #define PROMPT_URL_BUF_LEN    (MAX_PROMPT_LEN*3)                // (spaces are %20, hence *3)
 #define SEARCH_URL_BUF_LEN    (128 + PROMPT_URL_BUF_LEN + 1)
 
