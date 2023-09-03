@@ -21,11 +21,6 @@ void ListLoader::call_all_loaded(int errored) {
         all_loaded_cb(cb_arg, errored);
 }
 
-void ListLoader::set_all_loaded_cb(void* arg, all_ld_cb_fn cb) {
-    cb_arg = arg;
-    all_loaded_cb = cb;
-}
-
 void ListLoader::load_stations() {
     xTaskCreate(ll_task,
                 "ll",

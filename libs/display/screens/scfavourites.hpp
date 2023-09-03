@@ -21,6 +21,8 @@ class ScFavourites : public ScreenList {
     LoaderFav& ll;
     ListLoader & get_ll() override { return ll; }
 
+    friend void fav_update_cb(void* arg, const char* info);
+
 public:
     ScFavourites(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
                  LoaderFav& ll_)

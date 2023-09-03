@@ -5,6 +5,8 @@
 #include <icons.hpp>
 #include <ubuntu_mono.hpp>
 
+#define STATUS_X    60
+#define STATUS_Y    70
 
 int ScSearchRes::rows_above() {
     return 0;
@@ -83,7 +85,19 @@ void ScSearchRes::show() {
                     ubuntu_font_get_size(UbuntuFontSize::FONT_16),
                     COLOR_BG, COLOR_FG,
                     display.W);
+
+    if (!is_loaded()) {
+        add_normal_text_ljust(STATUS_X, STATUS_Y, "Dostawca",
+                              ubuntu_font_get_size(UbuntuFontSize::FONT_12),
+                              COLOR_BG, COLOR_FG);
+
+        add_normal_text_ljust(STATUS_X, STATUS_Y+11, "Serwer",
+                              ubuntu_font_get_size(UbuntuFontSize::FONT_12),
+                              COLOR_BG, COLOR_FG);
+    }
 }
+
+void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers);
 
 void ScSearchRes::begin(const char* prompt_) {
     // called from previous screen (on input)
@@ -96,4 +110,12 @@ void ScSearchRes::begin(const char* prompt_) {
     sc_fav.begin();
 
     ScreenList::begin();
+    ll.set_update_cb(search_update_cb);
+}
+
+void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers) {
+    auto sc = (ScSearchRes*) arg;
+
+    sc->draw_progress_bar(STATUS_X+3, STATUS_Y+5,    provider_idx*100 / sc->ll.get_provider_count(), COLOR_BG_DARK, COLOR_ACC2);
+    sc->draw_progress_bar(STATUS_X+3, STATUS_Y+11+5, server_idx*100   / max_servers,                 COLOR_BG_DARK, COLOR_ACC2);
 }

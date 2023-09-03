@@ -114,9 +114,22 @@ void ScFavourites::show() {
     ScreenList::show();
 }
 
+void fav_update_cb(void* arg, const char* info);
+
 void ScFavourites::begin() {
     // called from previous screen (on input)
     ll.begin();
 
     ScreenList::begin();
+    ll.set_update_cb(fav_update_cb);
+}
+
+void fav_update_cb(void* arg, const char* info) {
+    auto sc = (ScFavourites*) arg;
+
+    // it just loads too fast (no point in cluttering with what user cannot read)
+    // sc->add_normal_text(10, 60, info,
+    //                 ubuntu_font_get_size(UbuntuFontSize::FONT_12),
+    //                 COLOR_BG, COLOR_FG,
+    //                 sc->display.W - 10);
 }

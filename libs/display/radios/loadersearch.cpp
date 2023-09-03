@@ -4,17 +4,40 @@
 #include <listpls.hpp>
 #include <util.hpp>
 
-static const char* urls[] = {
-        // "http://npc.k21a.mrwski.eu:8080/search",
-        // nullptr,
+void LoaderSearch::update(int provider_idx, int server_idx, int max_servers) {
+    if (upd_cb)
+        upd_cb(get_cb_arg(), provider_idx, server_idx, max_servers);
+}
 
-        "http://de1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
-        "http://fr1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
-        "http://at1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
-        nullptr,
+#define MAX_SERVERS     3
+
+struct provider {
+    int server_count;
+    const char* servers[MAX_SERVERS];
 };
 
-static const int url_count = sizeof(urls) / sizeof(char*);
+static const struct provider providers[] = {
+        {
+            .server_count = 2,
+            .servers = {
+                    "http://npc.k21a.mrwski.eu:8080/search",
+                    "http://bpi.k21a.mrwski.eu:8080/search",
+            }
+        },
+
+        {
+            .server_count = 3,
+            .servers = {
+                    "http://de1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
+                    "http://fr1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
+                    "http://at1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
+            }
+        }
+};
+
+int LoaderSearch::get_provider_count() {
+    return sizeof(providers) / sizeof(struct provider);
+}
 
 void client_err_cb(void* arg, int err) {
     printf("rs: client err %d\n", err);
@@ -68,22 +91,25 @@ void LoaderSearch::task() {
     // load stations from all URLs
 
     int errored = 0;
-    for (int i=0; i<url_count; i++) {
+    for (int pi=0; pi<get_provider_count(); pi++) {
         if (should_abort)
             break;
 
+        struct provider provider = providers[pi];
         List* list = nullptr;
 
-        for (; urls[i]; i++) {
+        for (int si=0; si<provider.server_count; si++) {
             if (should_abort)
                 break;
 
             // loop over one server
-            // if already good, skip the code, but advance pointer
+            // if already good, break
             if (list)
-                continue;
+                break;
 
-            snprintf(url_buf, SEARCH_URL_BUF_LEN, urls[i], query_enc);
+            update(pi+1, si+1, provider.server_count);
+
+            snprintf(url_buf, SEARCH_URL_BUF_LEN, provider.servers[si], query_enc);
 
             client_begin_set_callback();
             list = query_url(client, url_buf,

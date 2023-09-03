@@ -8,7 +8,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-typedef void(*all_ld_cb_fn)(void* arg, int errored);
+typedef void(*ld_search_update_cb)(void* arg, int provider_idx, int server_idx, int max_servers);
 
 class LoaderSearch : public ListLoader {
 
@@ -26,6 +26,9 @@ class LoaderSearch : public ListLoader {
     void client_begin_set_callback();
     friend void client_err_cb(void* arg, int err);
 
+    ld_search_update_cb upd_cb;
+    void update(int provider_idx, int server_idx, int max_servers);
+
 public:
     LoaderSearch(struct station* stations_, int stations_count_,
                  struct station* stations_pls_, int stations_pls_count_,
@@ -40,4 +43,7 @@ public:
     void load_abort() override;
 
     int check_station_url(int i) override;
+
+    void set_update_cb(ld_search_update_cb cb) { upd_cb = cb; }
+    int get_provider_count();
 };

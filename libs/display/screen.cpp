@@ -206,12 +206,12 @@ void Screen::draw_progress_bar(int x, int y, int percent, int bg, int fg) {
 
     // percent
     char buf[5];
-    sprintf(buf, "%02d%%", percent);
+    sprintf(buf, "%02d%%", MIN(percent, 99)); // do not allow to display 100%
     add_normal_text(
             x + 64 + 4, y - 5, buf,
             ubuntu_font_get_size(UbuntuFontSize::FONT_12),
             COLOR_BG, COLOR_FG,
-            display.W);
+            display.W - (x + 64 + 4));
 }
 
 void Screen::begin() {

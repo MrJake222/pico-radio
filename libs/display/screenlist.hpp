@@ -43,6 +43,7 @@ class ScreenList : public Screen {
     virtual ListLoader& get_ll() = 0;
 
 protected:
+    bool is_loaded() { return loaded; }
 
     // draws entry buttons, pass variables from draw_button
     void draw_button_entry(int y, bool selected);

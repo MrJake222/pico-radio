@@ -135,7 +135,6 @@ void ScreenList::show() {
                         COLOR_BG, COLOR_FG,
                         display.W);
 
-        loaded = true;
         get_ll().load_stations();
     }
     else {
@@ -152,13 +151,16 @@ void ScreenList::begin() {
     loaded = false;
     station_count = 0;
 
-    get_ll().set_all_loaded_cb(this, all_loaded_cb);
+    get_ll().set_cb_arg(this);
+    get_ll().set_all_loaded_cb(all_loaded_cb);
 }
 
 
 void all_loaded_cb(void* arg, int errored) {
     // called from RadioSearch task
     auto sc = ((ScreenList*) arg);
+
+    sc->loaded = true;
 
     // set station count
     sc->station_count = sc->get_ll().get_station_count();

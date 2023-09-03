@@ -25,6 +25,8 @@ class ScSearchRes : public ScreenList {
     LoaderSearch& ll;
     ListLoader & get_ll() override { return ll; }
 
+    friend void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers);
+
 public:
     ScSearchRes(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
                 LoaderSearch& ll_)

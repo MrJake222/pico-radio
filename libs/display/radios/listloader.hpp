@@ -15,6 +15,7 @@ class ListLoader {
     virtual void task() = 0;
 
 protected:
+    void* get_cb_arg() { return cb_arg; }
     void call_all_loaded(int errored);
 
     volatile bool should_abort;
@@ -32,7 +33,8 @@ public:
     void begin();
 
     // set callback to call when all loading is done
-    void set_all_loaded_cb(void* arg, all_ld_cb_fn cb);
+    void set_cb_arg(void* arg) { cb_arg = arg; }
+    void set_all_loaded_cb(all_ld_cb_fn cb) { all_loaded_cb = cb; }
 
     // start loading stations
     virtual void load_stations();
