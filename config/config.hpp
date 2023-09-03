@@ -102,6 +102,10 @@
 #define LCD_TICK_INTERVAL_MS            50
 #define LCD_BL_TIMEOUT_MS               30000
 
+// --------------------------------- Buttons --------------------------------- //
+#define BTN_REPEAT_START_TIMEOUT_MS     500
+#define BTN_REPEAT_PER_SECOND           26
+
 // --------------------------------- PINOUTS --------------------------------- //
 #ifdef PINOUT_PROTOTYPE
 #define STDIO_UART_ID   0

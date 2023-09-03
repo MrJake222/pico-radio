@@ -6,12 +6,14 @@
 #include <player.hpp>
 
 #include <hardware/gpio.h>
+#include <hardware/timer.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
-#include <queue.h>
 
-static QueueHandle_t input_queue;
+static TaskHandle_t input_task_h;
+static bool b_pressed[BUTTONS] = { false };
+static uint32_t b_pressed_time_us[BUTTONS] = { 0 };
 
 static void gpio_callback(uint gpio, uint32_t events) {
     gpio_acknowledge_irq(gpio, events);
@@ -42,10 +44,20 @@ static void gpio_callback(uint gpio, uint32_t events) {
             return;
     }
 
-    xQueueSendFromISR(input_queue, &val, nullptr);
+    if (events & GPIO_IRQ_EDGE_FALL) {
+        // pressed
+        b_pressed[val] = true;
+        b_pressed_time_us[val] = time_us_32();
+    }
+    else if (events & GPIO_IRQ_EDGE_RISE) {
+        // released
+        b_pressed[val] = false;
+    }
+
+    xTaskNotifyGive(input_task_h);
 }
 
-[[noreturn]] void task_input_handle(void* arg) {
+[[noreturn]] void input_task(void* arg) {
     const int all[] = {BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_CENTER};
     for (int gpio : all) {
         gpio_set_dir(gpio, GPIO_IN);
@@ -54,7 +66,7 @@ static void gpio_callback(uint gpio, uint32_t events) {
 
         gpio_set_irq_enabled_with_callback(
                 gpio,
-                GPIO_IRQ_EDGE_FALL,
+                GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE,
                 true,
                 gpio_callback);
     }
@@ -64,53 +76,71 @@ static void gpio_callback(uint gpio, uint32_t events) {
     ButtonEnum input;
     int r;
     bool backlight = true;
+    bool b_pressed_local[BUTTONS] = { false };
+    TickType_t timeout = portMAX_DELAY;
 
     while (true) {
-        r = xQueueReceive(
-                input_queue,
-                &input,
-                backlight
-                    ? LCD_BL_TIMEOUT_MS / portTICK_PERIOD_MS
-                    : portMAX_DELAY); // wait timeout if backlight on (to turn it off)
-                                      // or indefinitely (for input) if off
+        ulTaskNotifyTake(true, timeout);
 
-        if (r == pdTRUE) {
-            // received input
-
-            if (backlight) {
-                // process only if display on (user sees what he's doing)
-                screenmng_input(input);
-
-                // print stack stats
-                uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
-                printf("input unused stack: %ld\n", min_free_stack);
-            }
-
-            // turn on the display
+        if (!backlight) {
             screenmng_backlight(true);
             backlight = true;
+
+            // when user does not see the screen's content, don't perform any other actions
+            continue;
         }
-        else if (player_is_started()) {
-            // timeout occurred -> turn off the display
-            // (only when the player is playing, if not
-            //  the user might forget about turning the radio off)
+
+        // if any key is pressed or repeating
+        bool pressed_any = false;
+        bool repeating_any = false;
+        int pressed_time_us_last = 0;
+
+        for (int i=0; i<BUTTONS; i++) {
+            if (b_pressed[i] && !b_pressed_local[i]) {
+                // newly pressed
+                screenmng_input((ButtonEnum) i);
+            }
+
+            b_pressed_local[i] = b_pressed[i];
+
+            if (b_pressed[i]) {
+                pressed_any = true;
+
+                if ((time_us_32() - b_pressed_time_us[i]) >  BTN_REPEAT_START_TIMEOUT_MS*1000) {
+                    repeating_any = true;
+                    screenmng_input((ButtonEnum) i);
+                }
+            }
+
+            pressed_time_us_last = MAX(pressed_time_us_last, b_pressed_time_us[i]);
+        }
+
+        if ((time_us_32() - pressed_time_us_last) >  LCD_BL_TIMEOUT_MS*1000 && player_is_started()) {
+            // if the last key was pressed more than LCD_BL_TIMEOUT_MS ms ago, disable the backlight
+            // (but only if the player is playing, otherwise the user might forget to turn the radio off)
             screenmng_backlight(false);
             backlight = false;
         }
+
+        // set timeout for next notification
+        // if repeating some keys, run this task very fast
+        // if waiting for repetition to begin (some keys pressed), run fast
+        // if no repeating and no keys are held down, wait slowly for backlight timeout
+        // if screen backlight is off, wait indefinitely
+        timeout =
+                repeating_any ? (1000 / BTN_REPEAT_PER_SECOND) / portTICK_PERIOD_MS
+                : pressed_any ? BTN_REPEAT_START_TIMEOUT_MS / portTICK_PERIOD_MS
+                : backlight   ? LCD_BL_TIMEOUT_MS / portTICK_PERIOD_MS
+                : portMAX_DELAY;
     }
 }
 
 void buttons_init() {
-    input_queue = xQueueCreate(5, 1);
-    if (!input_queue) {
-        puts("buttons: queue init failed");
-    }
-
     xTaskCreate(
-            task_input_handle,
+            input_task,
             "input handle",
             STACK_INPUT,
             nullptr,
             PRI_INPUT,
-            nullptr);
+            &input_task_h);
 }
