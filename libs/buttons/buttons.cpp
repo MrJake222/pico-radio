@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <config.hpp>
 #include <screenmng.hpp>
+#include <player.hpp>
 
 #include <hardware/gpio.h>
 
@@ -89,8 +90,10 @@ static void gpio_callback(uint gpio, uint32_t events) {
             screenmng_backlight(true);
             backlight = true;
         }
-        else {
+        else if (player_is_started()) {
             // timeout occurred -> turn off the display
+            // (only when the player is playing, if not
+            //  the user might forget about turning the radio off)
             screenmng_backlight(false);
             backlight = false;
         }
