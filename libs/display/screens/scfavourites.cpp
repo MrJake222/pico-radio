@@ -116,7 +116,7 @@ void ScFavourites::show() {
 
 void ScFavourites::begin() {
     // called from previous screen (on input)
-    ((LoaderFav&) ll).begin();
+    ll.begin();
 
     ScreenList::begin();
 }

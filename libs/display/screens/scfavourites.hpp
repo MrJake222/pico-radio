@@ -1,6 +1,7 @@
 #pragma once
 
 #include <screenlist.hpp>
+#include <loaderfav.hpp>
 
 class ScFavourites : public ScreenList {
 
@@ -17,14 +18,17 @@ class ScFavourites : public ScreenList {
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
+    LoaderFav& ll;
+    ListLoader & get_ll() override { return ll; }
+
 public:
     ScFavourites(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
-            ListLoader& ll_)
+                 LoaderFav& ll_)
     : ScreenList(display_, mutex_ticker_,
                  3, 25,
                  147, 20, 1, 2,
-                 5, 2,
-                 ll_)
+                 5, 2)
+    , ll(ll_)
     { }
 
     void begin() override;

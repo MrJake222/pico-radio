@@ -3,6 +3,7 @@
 #include <config.hpp>
 #include <screen.hpp>
 #include <screenlist.hpp>
+#include <loadersearch.hpp>
 
 class ScSearchRes : public ScreenList {
 
@@ -21,14 +22,17 @@ class ScSearchRes : public ScreenList {
     const char* prompt;
     char subtitle[10 + MAX_PROMPT_LEN + 1]; // null
 
+    LoaderSearch& ll;
+    ListLoader & get_ll() override { return ll; }
+
 public:
     ScSearchRes(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
-                ListLoader& ll_)
+                LoaderSearch& ll_)
         : ScreenList(display_, mutex_ticker_,
                      3, 31,
                      147, 20, 1, 2,
-                     5, 2,
-                     ll_)
+                     5, 2)
+        , ll(ll_)
         { }
 
     void begin(const char* prompt_);

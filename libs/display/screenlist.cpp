@@ -115,7 +115,7 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
     xs = s_base_x;
     ys = s_base_y + (s_res_h + s_res_mar) * y;
-    name = ll.get_station(base_y + y)->name;
+    name = get_ll().get_station(base_y + y)->name;
 
     bg = get_btn_bg(selected, true);
     display.fill_rect(xs, ys, s_res_w, s_res_h, bg);
@@ -136,7 +136,7 @@ void ScreenList::show() {
                         display.W);
 
         loaded = true;
-        ll.load_stations();
+        get_ll().load_stations();
     }
     else {
         draw_scroll_bar();
@@ -152,7 +152,7 @@ void ScreenList::begin() {
     loaded = false;
     station_count = 0;
 
-    ll.set_all_loaded_cb(this, all_loaded_cb);
+    get_ll().set_all_loaded_cb(this, all_loaded_cb);
 }
 
 
@@ -161,7 +161,7 @@ void all_loaded_cb(void* arg, int errored) {
     auto sc = ((ScreenList*) arg);
 
     // set station count
-    sc->station_count = sc->ll.get_station_count();
+    sc->station_count = sc->get_ll().get_station_count();
 
     if (errored > 0) {
         // show error
@@ -180,7 +180,7 @@ void ScreenList::add_entry(const struct station* st) {
     if (!loaded)
         return;
 
-    ll.add_station(st);
+    get_ll().add_station(st);
     station_count++;
 }
 
@@ -189,7 +189,7 @@ void ScreenList::remove_entry(int index) {
     if (!loaded)
         return;
 
-    ll.remove_station(index);
+    get_ll().remove_station(index);
     station_count--;
     base_y = MIN(base_y, max_base_y());
 }

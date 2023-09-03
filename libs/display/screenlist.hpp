@@ -40,9 +40,9 @@ class ScreenList : public Screen {
 
     int size_y() override { return kb_buttons() + rows_above() + rows_below(); }
 
-protected:
+    virtual ListLoader& get_ll() = 0;
 
-    ListLoader& ll;
+protected:
 
     // draws entry buttons, pass variables from draw_button
     void draw_button_entry(int y, bool selected);
@@ -62,13 +62,11 @@ public:
     ScreenList(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
                int s_base_x_, int s_base_y_,
                int s_res_w_, int s_res_h_, int s_res_mar_, int s_res_pad_,
-               int s_scr_w_, int s_scr_pad_,
-                ListLoader& ll_)
+               int s_scr_w_, int s_scr_pad_)
         : Screen(display_, mutex_ticker_)
         , s_base_x(s_base_x_), s_base_y(s_base_y_)
         , s_res_w(s_res_w_), s_res_h(s_res_h_), s_res_mar(s_res_mar_), s_res_pad(s_res_pad_)
         , s_scr_w(s_scr_w_), s_scr_pad(s_scr_pad_)
-        , ll(ll_)
         { }
 
     // subclasses should call different ll.begin() methods

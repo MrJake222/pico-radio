@@ -88,7 +88,7 @@ void ScSearchRes::show() {
 void ScSearchRes::begin(const char* prompt_) {
     // called from previous screen (on input)
     prompt = prompt_;
-    ((LoaderSearch&) ll).begin(prompt);
+    ll.begin(prompt);
 
     // reset favourites screen state
     // this is important because here we are reusing
