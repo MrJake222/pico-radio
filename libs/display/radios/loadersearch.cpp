@@ -16,27 +16,32 @@ struct provider {
     const char* servers[MAX_SERVERS];
 };
 
+// server urls must contain name(%s) limit(%d) and offset(%d) wildcards
 static const struct provider providers[] = {
-        {
-            .server_count = 2,
-            .servers = {
-                    "http://npc.k21a.mrwski.eu:8080/search",
-                    "http://bpi.k21a.mrwski.eu:8080/search",
-            }
-        },
+        // {
+        //     .server_count = 2,
+        //     .servers = {
+        //             "http://npc.k21a.mrwski.eu:8080/search",
+        //             "http://bpi.k21a.mrwski.eu:8080/search",
+        //     }
+        // },
 
         {
             .server_count = 3,
             .servers = {
-                    "http://de1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
-                    "http://fr1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
-                    "http://at1.api.radio-browser.info/m3u/stations/search?codec=mp3&limit=64&offset=0&name=%s",
+                    "http://de1.api.radio-browser.info/m3u/stations/search?codec=mp3&name=%s&limit=%d&offset=%d",
+                    "http://fr1.api.radio-browser.info/m3u/stations/search?codec=mp3&name=%s&limit=%d&offset=%d",
+                    "http://at1.api.radio-browser.info/m3u/stations/search?codec=mp3&name=%s&limit=%d&offset=%d",
             }
         }
 };
 
 int LoaderSearch::get_provider_count() {
     return sizeof(providers) / sizeof(struct provider);
+}
+
+int LoaderSearch::get_station_count_per_provider() {
+    return MAX_STATIONS / get_provider_count();
 }
 
 void client_err_cb(void* arg, int err) {
@@ -109,7 +114,10 @@ void LoaderSearch::task() {
 
             update(pi+1, si+1, provider.server_count);
 
-            snprintf(url_buf, SEARCH_URL_BUF_LEN, provider.servers[si], query_enc);
+            snprintf(url_buf, SEARCH_URL_BUF_LEN, provider.servers[si],
+                     query_enc,                                     // query string
+                     get_station_count_per_provider(),              // limit
+                     get_station_count_per_provider() * page);      // offset
 
             client_begin_set_callback();
             list = query_url(client, url_buf,

@@ -21,6 +21,8 @@ class ScFavourites : public ScreenList {
     LoaderFav& ll;
     ListLoader & get_ll() override { return ll; }
 
+    int get_max_pages() override { return 1; }
+
     friend void fav_update_cb(void* arg, const char* info);
 
 public:

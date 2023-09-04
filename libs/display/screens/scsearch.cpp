@@ -229,6 +229,8 @@ void ScSearch::show() {
     Screen::show();
 
     draw_prompt_field();
+    buttons_repeat_left_right(true);
+    buttons_repeat_center(true);
 }
 
 Screen* ScSearch::run_action(int action) {
@@ -244,11 +246,15 @@ Screen* ScSearch::run_action(int action) {
             break;
 
         case BACK:
+            buttons_repeat_left_right(false);
+            buttons_repeat_center(false);
             return &sc_fav;
 
         case SEARCH:
             prompt[pi] = '\0';
             sc_search_res.begin(prompt);
+            buttons_repeat_left_right(false);
+            buttons_repeat_center(false);
             return &sc_search_res;
 
         case KB:

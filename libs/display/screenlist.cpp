@@ -52,6 +52,53 @@ void ScreenList::draw_scroll_bar() {
     display.fill_rect(x, (int)start, s_scr_w, (int)height, COLOR_ACC1);
 }
 
+void ScreenList::inx() {
+    if (scrolled_area()) {
+        // inside of scrolling area
+        int page_orig = page;
+
+        // inx -> next page
+        page++;
+        if (get_max_pages() != -1)
+            page %= get_max_pages();
+
+        // reload page
+        if (page != page_orig) {
+            reset();
+            get_ll().load_stations(page);
+        }
+    }
+    else {
+        Screen::inx();
+    }
+}
+
+void ScreenList::dex() {
+    if (scrolled_area()) {
+        // inside of scrolling area
+        int page_orig = page;
+
+        // dex -> prev page
+        page--;
+        if (page < 0) {
+            if (get_max_pages() == -1)
+                // infinite, stay at 0
+                page = 0;
+            else
+                page = get_max_pages() - 1;
+        }
+
+        // reload page
+        if (page != page_orig) {
+            reset();
+            get_ll().load_stations(page);
+        }
+    }
+    else {
+        Screen::dex();
+    }
+}
+
 void ScreenList::iny() {
     if (current_y == last_list_row() && get_selected_station_index() + 1 < station_count) {
         // last kb row
@@ -135,10 +182,11 @@ void ScreenList::show() {
                         COLOR_BG, COLOR_FG,
                         display.W);
 
-        get_ll().load_stations();
+        get_ll().load_stations(page);
     }
     else {
         draw_scroll_bar();
+        print_page();
     }
 }
 
@@ -147,23 +195,62 @@ void all_loaded_cb(void* arg, int errored);
 void ScreenList::begin() {
     Screen::begin();
 
-    base_y = 0;
-    loaded = false;
+    reset();
+    page = 0;
     station_count = 0;
+    loaded = false;
 
     get_ll().set_cb_arg(this);
     get_ll().set_all_loaded_cb(all_loaded_cb);
 }
 
+void ScreenList::reset() {
+    base_y = 0;
+
+    get_ll().reset();
+}
+
+void ScreenList::print_page() {
+    if (get_max_pages() == 1)
+        return;
+
+    const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_12);
+
+    char buf[10];
+    if (get_max_pages() == -1)
+        // infinite pages
+        sprintf(buf, "%2d / \xE2\x88\x9E", get_page()+1); // infinity sign
+    else
+        sprintf(buf, "%2d / %2d", get_page()+1, get_max_pages());
+
+    const int width = strlen_utf8(buf) * font->W;
+    const int x = (display.W - width) / 2;
+
+    add_normal_text(x, 114, buf,
+                        font,
+                        COLOR_BG, COLOR_FG,
+                        display.W);
+}
 
 void all_loaded_cb(void* arg, int errored) {
     // called from RadioSearch task
     auto sc = ((ScreenList*) arg);
 
-    sc->loaded = true;
-
     // set station count
     sc->station_count = sc->get_ll().get_station_count();
+
+    if (sc->loaded) {
+        // it's a reload
+        sc->reset_scrolled_texts();
+        sc->draw_buttons();
+        sc->print_page();
+        return;
+    }
+
+    // it's a fresh load
+    // report errors and redraw the whole screen
+
+    sc->loaded = true;
 
     if (errored > 0) {
         // show error

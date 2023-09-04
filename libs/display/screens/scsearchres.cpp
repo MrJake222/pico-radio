@@ -103,6 +103,7 @@ void ScSearchRes::begin(const char* prompt_) {
     // called from previous screen (on input)
     prompt = prompt_;
     ll.begin(prompt);
+    ll.set_update_cb(search_update_cb);
 
     // reset favourites screen state
     // this is important because here we are reusing
@@ -110,12 +111,14 @@ void ScSearchRes::begin(const char* prompt_) {
     sc_fav.begin();
 
     ScreenList::begin();
-    ll.set_update_cb(search_update_cb);
 }
 
 void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers) {
     auto sc = (ScSearchRes*) arg;
 
-    sc->draw_progress_bar(STATUS_X+3, STATUS_Y+5,    provider_idx*100 / sc->ll.get_provider_count(), COLOR_BG_DARK, COLOR_ACC2);
-    sc->draw_progress_bar(STATUS_X+3, STATUS_Y+11+5, server_idx*100   / max_servers,                 COLOR_BG_DARK, COLOR_ACC2);
+    if (!sc->is_loaded()) {
+        // TODO draw this as "done" providers/server not in-progress ones
+        sc->draw_progress_bar(STATUS_X+3, STATUS_Y+5,    provider_idx*100 / sc->ll.get_provider_count(), COLOR_BG_DARK, COLOR_ACC2);
+        sc->draw_progress_bar(STATUS_X+3, STATUS_Y+11+5, server_idx*100   / max_servers,                 COLOR_BG_DARK, COLOR_ACC2);
+    }
 }

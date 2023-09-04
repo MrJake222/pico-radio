@@ -14,6 +14,7 @@
 static TaskHandle_t input_task_h;
 static bool b_pressed[BUTTONS] = { false };
 static uint32_t b_pressed_time_us[BUTTONS] = { 0 };
+static bool b_repeat_allowed[BUTTONS] = { false };
 
 static void gpio_callback(uint gpio, uint32_t events) {
     gpio_acknowledge_irq(gpio, events);
@@ -73,8 +74,10 @@ static void gpio_callback(uint gpio, uint32_t events) {
 
     puts("buttons: gpio init ok");
 
-    ButtonEnum input;
-    int r;
+    // only up/down repeat allowed
+    b_repeat_allowed[UP] = true;
+    b_repeat_allowed[DOWN] = true;
+
     bool backlight = true;
     bool b_pressed_local[BUTTONS] = { false };
     TickType_t timeout = portMAX_DELAY;
@@ -106,7 +109,7 @@ static void gpio_callback(uint gpio, uint32_t events) {
             if (b_pressed[i]) {
                 pressed_any = true;
 
-                if ((time_us_32() - b_pressed_time_us[i]) >  BTN_REPEAT_START_TIMEOUT_MS*1000) {
+                if (b_repeat_allowed[i] && ((time_us_32() - b_pressed_time_us[i]) >  BTN_REPEAT_START_TIMEOUT_MS*1000)) {
                     repeating_any = true;
                     screenmng_input((ButtonEnum) i);
                 }
@@ -143,4 +146,13 @@ void buttons_init() {
             nullptr,
             PRI_INPUT,
             &input_task_h);
+}
+
+void buttons_repeat_left_right(bool enable) {
+    b_repeat_allowed[LEFT] = enable;
+    b_repeat_allowed[RIGHT] = enable;
+}
+
+void buttons_repeat_center(bool enable) {
+    b_repeat_allowed[CENTER] = enable;
 }

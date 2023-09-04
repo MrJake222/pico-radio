@@ -25,6 +25,8 @@ class ScSearchRes : public ScreenList {
     LoaderSearch& ll;
     ListLoader & get_ll() override { return ll; }
 
+    int get_max_pages() override { return -1; } // infinite pages
+
     friend void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers);
 
 public:

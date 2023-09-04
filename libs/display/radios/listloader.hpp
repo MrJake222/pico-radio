@@ -24,6 +24,8 @@ protected:
     const int stations_max;
     int stations_offset;
 
+    int page;
+
 public:
     ListLoader(struct station* stations_, int stations_max_)
         : stations(stations_)
@@ -31,13 +33,14 @@ public:
         { }
 
     void begin();
+    void reset();
 
     // set callback to call when all loading is done
     void set_cb_arg(void* arg) { cb_arg = arg; }
     void set_all_loaded_cb(all_ld_cb_fn cb) { all_loaded_cb = cb; }
 
     // start loading stations
-    virtual void load_stations();
+    virtual void load_stations(int page_);
     // stop loading stations
     virtual void load_abort();
 

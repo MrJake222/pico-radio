@@ -57,8 +57,8 @@ protected:
     int current_y;
     // increment/decrement x/y
     // with wrapping and limiting
-    void inx();
-    void dex();
+    virtual void inx();
+    virtual void dex();
     virtual void iny();
     virtual void dey();
 

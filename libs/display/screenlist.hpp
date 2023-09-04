@@ -15,11 +15,15 @@ class ScreenList : public Screen {
     int first_list_row() { return rows_above(); }
     int last_list_row()  { return last_y() - rows_below(); }
 
+    bool scrolled_area() { return (first_list_row() <= current_y) && (current_y <= last_list_row()); }
+
     // this variable holds index of the first
     // currently displayed station
     int base_y;
     int max_base_y();
 
+    void inx() override;
+    void dex() override;
     void iny() override;
     void dey() override;
 
@@ -28,8 +32,10 @@ class ScreenList : public Screen {
     void draw_bottom_buttons();
     void draw_scroll_bar();
 
+    // was the loading at least called once (the interface was displayed)?
     // set to false in <begin>
     // set to true in <show>
+    // remains <true> when loading a new page
     bool loaded;
 
     // gated count, only updated after all stations are loaded
@@ -42,8 +48,17 @@ class ScreenList : public Screen {
 
     virtual ListLoader& get_ll() = 0;
 
+    // pagination support
+    int page;
+    void print_page();
+
 protected:
     bool is_loaded() { return loaded; }
+    int get_page() { return page; }
+
+    // should return max pages to switch to
+    // return 1 to disable, -1 to infinite pages
+    virtual int get_max_pages() = 0;
 
     // draws entry buttons, pass variables from draw_button
     void draw_button_entry(int y, bool selected);
@@ -74,6 +89,8 @@ public:
     // before calling to this super-method
     void begin() override;
     void show() override;
+
+    void reset();
 
     friend void all_loaded_cb(void* arg, int errored);
 
