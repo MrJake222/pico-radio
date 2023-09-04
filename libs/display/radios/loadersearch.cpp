@@ -94,6 +94,7 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
 void LoaderSearch::task() {
     
     // load stations from all URLs
+    update(0, 0, MAX_SERVERS);
 
     int errored = 0;
     for (int pi=0; pi<get_provider_count(); pi++) {
@@ -112,8 +113,6 @@ void LoaderSearch::task() {
             if (list)
                 break;
 
-            update(pi+1, si+1, provider.server_count);
-
             snprintf(url_buf, SEARCH_URL_BUF_LEN, provider.servers[si],
                      query_enc,                                     // query string
                      get_station_count_per_provider(),              // limit
@@ -124,6 +123,11 @@ void LoaderSearch::task() {
                                    stations + stations_offset,
                                    stations_max - stations_offset,
                                    should_abort, client_errored);
+
+            // when done, update the screen
+            update(pi+1,
+                   si+1,
+                   provider.server_count);
         }
 
         if (!list) {
