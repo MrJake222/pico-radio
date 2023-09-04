@@ -13,12 +13,13 @@ class TextScrolled {
 
     char str[LCD_SCROLLED_TEXTS_LEN_MAX + 1];
     const struct font* font;
+    int text_width; // text width         [px]
+    int text_gap;   // gap between texts  [px]
 
     int bg;
     int fg;
 
     float offset_x;
-    int offset_second;
 
 public:
     TextScrolled(ST7735S& display_)

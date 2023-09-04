@@ -9,9 +9,10 @@ void TextScrolled::set_str(const char* str_) {
         return;
 
     strncpy(str, str_, LCD_SCROLLED_TEXTS_LEN_MAX);
+    text_width = font->W * strlen_utf8(str);
+    text_gap   = font->W * 4;
 
     offset_x = 0;
-    offset_second = (strlen_utf8(str) + 4) * font->W;
 
     display.fill_rect(text_x, text_y, max_width, font->H, bg);
 }
@@ -41,11 +42,11 @@ void TextScrolled::draw() {
                        str, font, bg, fg,
                        text_x, text_x + max_width);
 
-    display.write_text(text_x - (int)offset_x + offset_second, text_y,
+    display.write_text(text_x - (int)offset_x + text_width + text_gap, text_y,
                        str, font, bg, fg,
                        text_x, text_x + max_width);
 
-    if ((int)offset_x == offset_second) {
-        offset_x = 0;
+    if ((int)offset_x >= text_width) {
+        offset_x = -text_gap;
     }
 }
