@@ -90,8 +90,6 @@ public:
     void begin() override;
     void show() override;
 
-    void reset();
-
     friend void all_loaded_cb(void* arg, int errored);
 
     // stations get loaded from persistent storage rarely

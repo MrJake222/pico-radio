@@ -124,11 +124,16 @@ void LoaderSearch::task() {
                                    stations_max - stations_offset,
                                    should_abort, client_errored);
 
-            // when done, update the screen
-            update(pi+1,
+            // when done server
+            update(pi,
                    si+1,
                    provider.server_count);
         }
+
+        // when done provider
+        update(pi+1,
+               provider.server_count,
+               provider.server_count);
 
         if (!list) {
             errored++;

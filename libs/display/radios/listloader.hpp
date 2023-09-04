@@ -33,7 +33,6 @@ public:
         { }
 
     void begin();
-    void reset();
 
     // set callback to call when all loading is done
     void set_cb_arg(void* arg) { cb_arg = arg; }

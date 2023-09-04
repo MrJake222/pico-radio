@@ -10,13 +10,7 @@ void ll_task(void* arg) {
 }
 
 void ListLoader::begin() {
-    reset();
     all_loaded_cb = nullptr;
-}
-
-void ListLoader::reset() {
-    should_abort = false;
-    stations_offset = 0;
 }
 
 void ListLoader::call_all_loaded(int errored) {
@@ -26,6 +20,8 @@ void ListLoader::call_all_loaded(int errored) {
 
 void ListLoader::load_stations(int page_) {
     page = page_;
+    should_abort = false;
+    stations_offset = 0;
 
     xTaskCreate(ll_task,
                 "ll",

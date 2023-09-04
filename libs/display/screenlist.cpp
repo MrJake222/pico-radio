@@ -64,7 +64,6 @@ void ScreenList::inx() {
 
         // reload page
         if (page != page_orig) {
-            reset();
             get_ll().load_stations(page);
         }
     }
@@ -90,7 +89,6 @@ void ScreenList::dex() {
 
         // reload page
         if (page != page_orig) {
-            reset();
             get_ll().load_stations(page);
         }
     }
@@ -195,19 +193,14 @@ void all_loaded_cb(void* arg, int errored);
 void ScreenList::begin() {
     Screen::begin();
 
-    reset();
+    base_y = 0;
     page = 0;
     station_count = 0;
     loaded = false;
 
+    // ll <reset> called by <begin> called by subclass
     get_ll().set_cb_arg(this);
     get_ll().set_all_loaded_cb(all_loaded_cb);
-}
-
-void ScreenList::reset() {
-    base_y = 0;
-
-    get_ll().reset();
 }
 
 void ScreenList::print_page() {
@@ -241,10 +234,19 @@ void all_loaded_cb(void* arg, int errored) {
 
     if (sc->loaded) {
         // it's a reload
-        sc->reset_scrolled_texts();
-        sc->draw_buttons();
-        sc->print_page();
-        return;
+
+        // move to top
+        sc->current_y = sc->default_y();
+        sc->base_y = 0;
+
+        // reset & draw all necessary elements
+        // this does all a show() would do but no clear screen occurs
+        // probably suboptimal -> code duplication (for now disabled)
+        // sc->reset_scrolled_texts();
+        // sc->draw_buttons();
+        // sc->print_page();
+        // sc->draw_scroll_bar();
+        // return;
     }
 
     // it's a fresh load
