@@ -12,11 +12,12 @@ struct font {
     const uint8_t* utf8_data;
 };
 
-// can be used to skip bytes
-bool is_known_unicode(const char* str);
+// interpret 1x UTF-8 character and return its length (in bytes)
+int get_char_width(const char* str);
+
+// interpret whole string (up to \0) and return its length in displayed characters
 int strlen_utf8(const char* str);
 
 // returns data pointer of the appropriate font type (utf8, ascii)
-// returns number of bytes consumed (2 byte when utf8 character detected or 1 byte) into bytes_consumed
 // displays unknown characters as '?'
-const uint8_t* get_font_data_ptr(const struct font* font, const char* str, int* bytes_consumed);
+const uint8_t* get_font_data_ptr(const struct font* font, const char* str);

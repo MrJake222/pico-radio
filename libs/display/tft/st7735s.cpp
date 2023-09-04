@@ -154,8 +154,7 @@ static int rgb_blend(unsigned int fg, unsigned int bg, unsigned int fg_alpha) {
 
 int ST7735S::write_char(int text_x, int text_y, const char* str, const struct font* font, int bg, int fg, int clip_left, int clip_right) {
 
-    int bytes_consumed;
-    const uint8_t* chr_ptr = get_font_data_ptr(font, str, &bytes_consumed);
+    const uint8_t* chr_ptr = get_font_data_ptr(font, str);
 
     setup_write(text_x + clip_left,
                 text_y,
@@ -172,7 +171,7 @@ int ST7735S::write_char(int text_x, int text_y, const char* str, const struct fo
     }
 
     end_write();
-    return bytes_consumed;
+    return get_char_width(str);
 }
 
 void ST7735S::write_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int min_x, int max_x) {
@@ -182,8 +181,7 @@ void ST7735S::write_text(int text_x, int text_y, const char *str, const struct f
 
         if (right_x < min_x) {
             // out of window on the left -> keep going
-            // skip 2 (unicode) or 1 (non-unicode) bytes
-            str += is_known_unicode(str) ? 2 : 1;
+            str += get_char_width(str);
         }
 
         else if (left_x > max_x) {
