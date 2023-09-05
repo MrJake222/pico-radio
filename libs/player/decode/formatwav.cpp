@@ -3,9 +3,7 @@
 #include <pico/platform.h>
 #include <formatwav.hpp>
 
-void FormatWAV::decode_header() {
-    Format::decode_header();
-
+int FormatWAV::decode_header() {
     while (raw_buf.data_left() < WAVE_HEADER_SIZE);
     memcpy(&header, raw_buf.read_ptr(), WAVE_HEADER_SIZE);
     raw_buf.read_ack(WAVE_HEADER_SIZE);
@@ -20,6 +18,8 @@ void FormatWAV::decode_header() {
 
     // printf("duration:    %02u:%02u\n", duration_sec(0)/60, duration_sec(0)%60);
     // puts("");
+
+    return 0;
 }
 
 int FormatWAV::decode_up_to_n(uint32_t *audio_pcm_buf, int n) {

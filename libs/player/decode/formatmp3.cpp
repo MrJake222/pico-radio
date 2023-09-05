@@ -179,10 +179,34 @@ int FormatMP3::decode_up_to_n(uint32_t* audio_pcm_buf, int n) {
         if (decoded == 0)
             break;
 
-        frame_offset += MP3_SAMPLES_PER_FRAME;
+        frame_offset += samps_per_channel(); // 32bit pointer -> contains whole frame with 2 channels each 16 bit
     }
 
     return frames_read;
+}
+
+int FormatMP3::decode_header() {
+
+    while (true) {
+        int r = MP3GetNextFrameInfo(hMP3Decoder, &frame_info, raw_buf.read_ptr());
+        if (r == ERR_MP3_NONE)
+            break;
+
+        else if (r == ERR_MP3_INVALID_FRAMEHEADER) {
+            r = align_buffer(raw_buf.read_ptr());
+            if (r == -1) {
+                puts("align_buffer failed");
+                return -1;
+            }
+        }
+
+        else {
+            printf("decode_header unknown error code %d\n", r);
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 void FormatMP3::calculate_stats() {
@@ -205,12 +229,22 @@ void FormatMP3::calculate_stats() {
     }
 }
 
+int FormatMP3::units_to_decode_whole(int audio_pcm_size_words) {
+    // size is in 32bit words (samples 2x16bit)
+    // then divided by samples outputted
+    return audio_pcm_size_words / samps_per_channel();
+}
+
 long FormatMP3::bit_freq() {
     return (long)frame_info.bitsPerSample * frame_info.nChans * frame_info.samprate;
 }
 
 float FormatMP3::ms_per_unit() {
     return (float)frame_info.outputSamps * 1000 / frame_info.nChans / frame_info.samprate;
+}
+
+int FormatMP3::samps_per_channel() {
+    return frame_info.outputSamps / frame_info.nChans;
 }
 
 int FormatMP3::bytes_to_sec(b_type bytes) {

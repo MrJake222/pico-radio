@@ -12,14 +12,13 @@
 #define BUF_HIDDEN_MP3_SIZE_BYTES      (BUF_HIDDEN_MP3_SIZE_FRAMES * BUF_MP3_SIZE_BYTES_PER_FRAME)
 #define BUF_MP3_SIZE_BYTES             (BUF_MP3_SIZE_FRAMES * BUF_MP3_SIZE_BYTES_PER_FRAME)
 
-// for MP3 playing
-#define MP3_SAMPLES_PER_FRAME       1152 // sample = 2 channels * 16 bit = 32bit word
+// PCM decompressed data
+// only valid for MPEG1, use only below (maximum values)
+#define MP3_SAMPLES_PER_FRAME       1152 // sample = 2 channels * 16 bit = 32bit word )
 #define BUF_PCM_SIZE_FRAMES         4    // can be reduced to 2 (optimize format mp3 runs)
-#define BUF_PCM_SIZE_32BIT          (MP3_SAMPLES_PER_FRAME * BUF_PCM_SIZE_FRAMES)
-#define BUF_PCM_HALF_32BIT          (BUF_PCM_SIZE_32BIT / 2)
-
-// for WAV playing
-#define BUF_PCM_SIZE_BYTES     (BUF_PCM_SIZE_32BIT * 4)
+// use only for purposes defined below (if you need buffer size use CircularBuffer::size parameter)
+#define BUF_PCM_SIZE_32BIT          (MP3_SAMPLES_PER_FRAME * BUF_PCM_SIZE_FRAMES)   // used to define buffer and to calculate frame count
+#define BUF_PCM_HALF_32BIT          (BUF_PCM_SIZE_32BIT / 2)                        // used by DMA to manage half-transfers with chaining
 
 // --------------------------------- Playback variables --------------------------------- //
 // buffer reversing after bad frame, dangerous can lead to loops

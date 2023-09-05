@@ -29,9 +29,9 @@ class FormatWAV : public Format {
 public:
     using Format::Format;
 
-    int units_to_decode_whole() override { return BUF_PCM_SIZE_BYTES; }
+    int units_to_decode_whole(int audio_pcm_size_words) override { return audio_pcm_size_words * 4; }
 
-    void decode_header() override;
+    int decode_header() override;
     int decode_up_to_n(uint32_t *audio_pcm_buf, int n) override;
 
     long bit_freq() override;

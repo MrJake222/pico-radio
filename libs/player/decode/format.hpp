@@ -30,15 +30,15 @@ public:
     // Returns 0 on success -1 on failure (not enough "hidden" section in CircularBuffer), -2 on user abort
     int wrap_buffer_wait_for_data();
 
-    // returns number of units to decode to fill whole buffer
+    // returns number of units to decode to fill whole PCM buffer (size passed down)
     // (wav bytes or mp3 frames)
     // halved passed as n to decode_up_to_n
-    virtual int units_to_decode_whole() = 0;
-    int units_to_decode_half() { return units_to_decode_whole() / 2; }
+    virtual int units_to_decode_whole(int audio_pcm_size_words) = 0;
+    int units_to_decode_half(int audio_pcm_size_words) { return units_to_decode_whole(audio_pcm_size_words) / 2; }
 
     // called upon first interaction with the buffer
     // has default implementation as not all formats have headers
-    virtual void decode_header() { }
+    virtual int decode_header() = 0;
 
     // this return number of units actually decoded
     // "decode" means move from <this->raw_buf> to <audio_pcm_buf> (possibly doing some work)

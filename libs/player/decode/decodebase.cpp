@@ -112,7 +112,7 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
         return;
     }
 
-    if (decoded < format->units_to_decode_half()) {
+    if (decoded < format->units_to_decode_half(audio_pcm_size_words)) {
         // dma channel wasn't supplied with enough data -> ending playback
         decode_finished_by = channel == DMAChannel::ChanA
                 ? FinishReason::UnderflowChanA
@@ -131,6 +131,8 @@ void DecodeBase::dma_feed_done(int decoded, int took_us, DMAChannel channel) {
 int DecodeBase::dma_preload() {
 
     int decoded;
+    int whole;
+    int r;
 
     // wait for data in buffer
     puts("core1: waiting for data");
@@ -143,12 +145,19 @@ int DecodeBase::dma_preload() {
     cbuf.debug_read(32, 0);
     puts("");
 
-    format->decode_header();
+    r = format->decode_header();
+    if (r < 0) {
+        // failure, couldn't decode header (possibly required below)
+        puts("dma_preload: decode_header failed");
+        goto fail;
+    }
 
-    decoded = format->decode_up_to_n(audio_pcm, format->units_to_decode_whole());
-    if (decoded < format->units_to_decode_whole()) {
+    whole = format->units_to_decode_whole(audio_pcm_size_words);
+    decoded = format->decode_up_to_n(audio_pcm, whole);
+    if (decoded < whole) {
         // failure, couldn't decode enough frames
         // probably a user abort (buffer has enough data because of loop above)
+        puts("dma_preload: decoded less than <whole> units");
         goto fail;
     }
 
@@ -172,7 +181,7 @@ void DecodeBase::dma_watch() {
         // channel A done (first one)
         // reload first half of the buffer
         t_start = time_us_64();
-        decoded = format->decode_up_to_n(audio_pcm, format->units_to_decode_half());
+        decoded = format->decode_up_to_n(audio_pcm, format->units_to_decode_half(audio_pcm_size_words));
         t_end = time_us_64();
         dma_feed_done(decoded, (int) (t_end - t_start), DMAChannel::ChanA);
     }
@@ -183,7 +192,7 @@ void DecodeBase::dma_watch() {
         // channel B done (second one)
         // reload second half of the buffer
         t_start = time_us_64();
-        decoded = format->decode_up_to_n(audio_pcm + (audio_pcm_size_words / 2), format->units_to_decode_half());
+        decoded = format->decode_up_to_n(audio_pcm + (audio_pcm_size_words / 2), format->units_to_decode_half(audio_pcm_size_words));
         t_end = time_us_64();
         dma_feed_done(decoded, (int) (t_end - t_start), DMAChannel::ChanB);
     }

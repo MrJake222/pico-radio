@@ -39,13 +39,16 @@ public:
         bitrate_count = 0;
     }
 
-    int units_to_decode_whole() override { return BUF_PCM_SIZE_FRAMES; }
-
     int decode_up_to_n(uint32_t *audio_pcm_buf, int n) override;
 
+    // call before using any of below functions
+    int decode_header() override;
+
+    int units_to_decode_whole(int audio_pcm_size_words) override;
     long bit_freq() override;
     float ms_per_unit() override;
     int bytes_to_sec(b_type bytes) override;
+    int samps_per_channel();
 
     int bitrate_in() override;
     int byterate_in() { return bitrate_in() / 8; }
