@@ -4,7 +4,7 @@
 #include <cstring>
 
 void TextScrolled::set_str(const char* str_) {
-    if (strcmp(str, str_) == 0)
+    if (strncmp(str, str_, LCD_SCROLLED_TEXTS_LEN_MAX) == 0)
         // same text
         return;
 
