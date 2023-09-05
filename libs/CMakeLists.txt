@@ -29,10 +29,12 @@ add_library(libs
         display/screenmng.cpp
 
         ds/datasource.cpp
-        ds/lfsreader.cpp
 
         httpc/httpclient.cpp
         httpc/httpclientpico.cpp
+
+        lfs/lfs.cpp
+        lfs/lfsaccess.cpp
 
         mcorefifo/mcorefifo.cpp
 
@@ -51,14 +53,13 @@ add_library(libs
         static.cpp
         circularbuffer.cpp
         util.cpp
-        lfs.cpp
-        lfsutil.cpp
         )
 
 target_include_directories(libs PUBLIC
         analog
         buttons
         httpc
+        lfs
         mcorefifo
         player/decode
         player

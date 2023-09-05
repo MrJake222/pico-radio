@@ -126,9 +126,10 @@ int HttpClient::test_for_http() {
 }
 
 int HttpClient::parse_headers() {
-    while (1) {
-        int len = read_line(this, qrbuf, HTTP_QUERY_RESP_BUF_SIZE);
-        if (len < 0)
+    int r, len;
+    while (true) {
+        r = read_line(this, qrbuf, HTTP_QUERY_RESP_BUF_SIZE, &len);
+        if (r < 0)
             return -1;
         if (len == 0)
             break;
@@ -166,9 +167,9 @@ int HttpClient::parse_headers() {
 
 int HttpClient::parse_http() {
     memcpy(qrbuf, buf_http, 4);
-
-    int len = read_line(this, qrbuf + 4, HTTP_QUERY_RESP_BUF_SIZE - 4);
-    if (len < 0)
+    int r, len;
+    r = read_line(this, qrbuf + 4, HTTP_QUERY_RESP_BUF_SIZE - 4, &len);
+    if (r < 0)
         return -1;
 
     qrbuf[4 + len] = 0;

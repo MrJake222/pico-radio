@@ -1,7 +1,7 @@
 #pragma once
 
 #include <listloader.hpp>
-#include <lfsreader.hpp>
+#include <lfsaccess.hpp>
 #include <lfs.h>
 
 typedef void(*ld_fav_update_cb)(void* arg, const char* info);
@@ -9,7 +9,7 @@ typedef void(*ld_fav_update_cb)(void* arg, const char* info);
 class LoaderFav : public ListLoader {
 
     lfs_t* lfs;
-    LfsReader rd;
+    LfsAccess rd;
 
     void task() override;
 

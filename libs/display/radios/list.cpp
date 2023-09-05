@@ -4,15 +4,15 @@
 #include <random>
 
 ListError List::consume(DataSource* ds) {
-    int len;
+    int r, len;
 
-    len = read_line(ds, line, LIST_MAX_LINE_LENGTH);
-    if (len == RL_OVERRUN) {
+    r = read_line(ds, line, LIST_MAX_LINE_LENGTH, &len);
+    if (r == RL_OVERRUN) {
         // line buffer overrun, ignore
         return ListError::OK;
     }
 
-    if (len == RL_ERROR) {
+    if (r == RL_ERROR) {
         return ListError::ERROR;
     }
 

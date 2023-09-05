@@ -3,11 +3,11 @@
 #include <cstdio>
 #include <cassert>
 
-int read_line(DataSource* ds, char* buf, int bufsize) {
+int read_line(DataSource* ds, char* buf, int bufsize, int* line_length) {
 
     assert(buf != nullptr || bufsize == 0);
 
-    int line_length = 0;
+    *line_length = 0;
     int ret;
 
     char chr;
@@ -37,17 +37,18 @@ int read_line(DataSource* ds, char* buf, int bufsize) {
 
             if (r_seen) {
                 // string already terminated
-                return line_length - 1; // line length without \r
+                (*line_length)--; // line length without \r
+                return 0;
             }
 
             // \r not seen
             // terminate string
-            buf[line_length] = 0;
-            return line_length;
+            buf[*line_length] = 0;
+            return 0;
         }
 
-        if (line_length+1 < bufsize) {
-            buf[line_length++] = chr;
+        if (*line_length+1 < bufsize) {
+            buf[(*line_length)++] = chr;
         }
         else {
             overrun = true;

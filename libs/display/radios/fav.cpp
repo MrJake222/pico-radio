@@ -1,24 +1,27 @@
 #include "fav.hpp"
 
 #include <lfs.h>
-#include <lfsutil.hpp>
+#include <lfsaccess.hpp>
 #include <config.hpp>
+#include <static.hpp>
 
 namespace fav {
 
+static LfsAccess acc(get_lfs());
+
 int create(lfs_t* lfs) {
     int r;
-    lfs_file_t file;
+    acc.begin(PATH_FAVOURITES);
 
-    r = lfs_file_open(lfs, &file, PATH_FAVOURITES, LFS_O_WRONLY | LFS_O_CREAT);
+    r = acc.open_w_create();
     if (r < 0)
         return r;
 
-    r = lfs_file_write(lfs, &file, "#EXTM3U\n", strlen("#EXTM3U\n"));
+    r = acc.write_str("#EXTM3U\n");
     if (r < 0)
         return r;
 
-    r = lfs_file_close(lfs, &file);
+    r = acc.close();
     if (r < 0)
         return r;
 
@@ -27,27 +30,27 @@ int create(lfs_t* lfs) {
 
 int add(lfs_t* lfs, const struct station* st) {
     int r;
-    lfs_file_t file;
     char buf[LIST_MAX_LINE_LENGTH];
+    acc.begin(PATH_FAVOURITES);
 
-    r = lfs_file_open(lfs, &file, PATH_FAVOURITES, LFS_O_RDWR);
+    r = acc.open_rw();
     if (r < 0)
         return r;
 
-    const int lines = lfsutil::skip_all_lines(lfs, &file);
+    const int lines = acc.skip_all_lines();
     const int entry_idx = (lines - 1) / 2;
 
     sprintf(buf, "#EXTINF:-1,%s\n", st->name);
-    r = lfs_file_write(lfs, &file, buf, strlen(buf));
+    r = acc.write_str(buf);
     if (r < 0)
         return r;
 
     sprintf(buf, "%s\n", st->url);
-    r = lfs_file_write(lfs, &file, buf, strlen(buf));
+    r = acc.write_str(buf);
     if (r < 0)
         return r;
 
-    r = lfs_file_close(lfs, &file);
+    r = acc.close();
     if (r < 0)
         return r;
 
@@ -56,24 +59,24 @@ int add(lfs_t* lfs, const struct station* st) {
 
 int remove(lfs_t* lfs, int index) {
     int r;
-    lfs_file_t file;
     char buf[LIST_MAX_LINE_LENGTH];
+    acc.begin(PATH_FAVOURITES);
 
-    r = lfs_file_open(lfs, &file, PATH_FAVOURITES, LFS_O_RDWR);
+    r = acc.open_rw();
     if (r < 0)
         return r;
 
     // skip preamble, and <index> entries
-    lfsutil::skip_lines(lfs, &file, 1 + 2*index);
+    acc.skip_lines(1 + 2*index);
 
     // file is now set on first character of the station to be deleted
-    const int pos = lfs_file_tell(lfs, &file);
+    const int pos = acc.tell();
     if (pos < 0)
         return pos;
 
     // skip 2 more lines (skip over the entry to be deleted)
-    lfsutil::skip_lines(lfs, &file, 2);
-    const int pos_after = lfs_file_tell(lfs, &file);
+    acc.skip_lines(2);
+    const int pos_after = acc.tell();
     if (pos_after < 0)
         return pos_after;
 
@@ -82,14 +85,14 @@ int remove(lfs_t* lfs, int index) {
     int read;
     while (true) {
         // read at new position
-        read = lfs_file_read(lfs, &file, buf, LIST_MAX_LINE_LENGTH);
+        read = acc.read_raw(buf, LIST_MAX_LINE_LENGTH);
         if (read < 0)
             return read;
 
         // rewind to old position
-        lfs_file_seek(lfs, &file, -(read + skip), LFS_SEEK_CUR);
+        acc.seek(-(read + skip), LFS_SEEK_CUR);
 
-        int write = lfs_file_write(lfs, &file, buf, read);
+        int write = acc.write_raw(buf, read);
         if (write < 0)
             return write;
 
@@ -100,13 +103,13 @@ int remove(lfs_t* lfs, int index) {
             break;
 
         // skip to new position
-        lfs_file_seek(lfs, &file, skip, LFS_SEEK_CUR);
+        acc.seek(skip, LFS_SEEK_CUR);
     }
 
     // truncate file to current position
-    lfs_file_truncate(lfs, &file, lfs_file_tell(lfs, &file));
+    acc.truncate(acc.tell());
 
-    r = lfs_file_close(lfs, &file);
+    r = acc.close();
     if (r < 0)
         return r;
 

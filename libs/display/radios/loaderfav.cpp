@@ -3,7 +3,6 @@
 #include <listm3u.hpp>
 #include <static.hpp>
 #include <fav.hpp>
-#include <lfsutil.hpp>
 
 void LoaderFav::update(const char* info) {
     if (upd_cb)
@@ -22,7 +21,7 @@ void LoaderFav::task() {
 
 retry:
     rd.begin(PATH_FAVOURITES);
-    r = rd.open();
+    r = rd.open_r();
     if (r < 0) {
         if (r == LFS_ERR_NOENT) {
             // does not exist
@@ -66,22 +65,17 @@ end:
 
 int LoaderFav::get_page_count() {
     int r;
-    lfs_file_t file;
+    rd.begin(PATH_FAVOURITES);
 
-    // open read-only
-    r = lfs_file_open(lfs, &file, PATH_FAVOURITES, LFS_O_RDONLY);
-    if (r < 0) {
-        printf("littlefs: failed to open code %d\n", r);
+    r = rd.open_r();
+    if (r < 0)
         return r;
-    }
 
-    const int lines = lfsutil::skip_all_lines(lfs, &file);
+    const int lines = rd.skip_all_lines();
 
-    r = lfs_file_close(lfs, &file);
-    if (r < 0) {
-        printf("littlefs: failed to close code %d\n", r);
+    r = rd.close();
+    if (r < 0)
         return r;
-    }
 
     const int entries = (lines - 1) / 2;
 
