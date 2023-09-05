@@ -31,7 +31,8 @@ int read_line(DataSource* ds, char* buf, int bufsize, int* line_length) {
             // or \r\n\ if \r was seen (r_seen = true)
 
             if (overrun) {
-                puts("line buffer overrun");
+                if (bufsize > 0)
+                    puts("line buffer overrun");
                 return RL_OVERRUN;
             }
 

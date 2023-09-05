@@ -1,7 +1,7 @@
 #include <i2s.pio.h>
 #include <hardware/clocks.h>
 
-const uint INSTRUCTION_PER_CLOCK = 2;
+const uint CLOCK_PER_INSTR = 2;
 
 // uses 3 pins
 // base   : CLK         side-set LSB
@@ -42,6 +42,6 @@ void i2s_program_init(PIO pio, uint sm, uint offset, uint pin_clk_channel_base, 
 
 void i2s_program_set_bit_freq(PIO pio, uint sm, uint bit_freq_hz) {
     uint sysclk = clock_get_hz(clk_sys);
-    float div = (float)sysclk / ((float)bit_freq_hz * INSTRUCTION_PER_CLOCK);
+    float div = (float)sysclk / ((float)bit_freq_hz * CLOCK_PER_INSTR);
     pio_sm_set_clkdiv(pio, sm, div);
 }
