@@ -47,4 +47,6 @@ public:
     void set_update_cb(ld_search_update_cb cb) { upd_cb = cb; }
     int get_provider_count();
     int get_station_count_per_provider();
+
+    int get_page_count() override { return -1; }
 };

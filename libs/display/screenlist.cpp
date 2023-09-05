@@ -59,8 +59,8 @@ void ScreenList::inx() {
 
         // inx -> next page
         page++;
-        if (get_max_pages() != -1)
-            page %= get_max_pages();
+        if (page_count != -1)
+            page %= page_count;
 
         // reload page
         if (page != page_orig) {
@@ -80,11 +80,11 @@ void ScreenList::dex() {
         // dex -> prev page
         page--;
         if (page < 0) {
-            if (get_max_pages() == -1)
+            if (page_count == -1)
                 // infinite, stay at 0
                 page = 0;
             else
-                page = get_max_pages() - 1;
+                page = page_count - 1;
         }
 
         // reload page
@@ -204,17 +204,17 @@ void ScreenList::begin() {
 }
 
 void ScreenList::print_page() {
-    if (get_max_pages() == 1)
+    if (page_count == 1)
         return;
 
     const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_12);
 
     char buf[10];
-    if (get_max_pages() == -1)
+    if (page_count == -1)
         // infinite pages
         sprintf(buf, "%2d / \xE2\x88\x9E", get_page()+1); // infinity sign
     else
-        sprintf(buf, "%2d / %2d", get_page()+1, get_max_pages());
+        sprintf(buf, "%2d / %2d", get_page()+1, page_count);
 
     const int width = strlen_utf8(buf) * font->W;
     const int x = (display.W - width) / 2;
@@ -231,6 +231,7 @@ void all_loaded_cb(void* arg, int errored) {
 
     // set station count
     sc->station_count = sc->get_ll().get_station_count();
+    sc->page_count =    sc->get_ll().get_page_count();
 
     if (sc->loaded) {
         // it's a reload

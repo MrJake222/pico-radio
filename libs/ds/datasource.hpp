@@ -17,4 +17,5 @@ enum ReadLineError {
 
 // reads whole line, supports both \n or \r\n endings
 // returns length of line without termination (or -1 on failure)
+// can be used to skip lines with buf==nullptr and bufsize==0
 int read_line(DataSource* ds, char* buf, int bufsize);

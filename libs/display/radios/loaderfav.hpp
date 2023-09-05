@@ -24,4 +24,7 @@ public:
         { }
 
     void set_update_cb(ld_fav_update_cb cb) { upd_cb = cb; }
+
+    // warning: resource hungry
+    int get_page_count() override;
 };

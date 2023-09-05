@@ -48,6 +48,11 @@ public:
     // can be overridden to handle *.pls format
     virtual int check_station_url(int i) { return 0; }
 
+    // should return max pages to switch to
+    // return 1 to disable, -1 to infinite pages
+    // must be called in all_loaded callback
+    virtual int get_page_count() = 0;
+
     void add_station(const struct station* st);
     void remove_station(int index);
 };

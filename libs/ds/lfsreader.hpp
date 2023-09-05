@@ -3,6 +3,8 @@
 #include <datasource.hpp>
 #include <lfs.h>
 
+// TODO rename to LfsAccess and merge helpers here
+// (from lfsutil)
 class LfsReader : public DataSource {
 
     lfs_t* lfs;
@@ -23,4 +25,6 @@ public:
 
     int read_char(char *chr) override;
     bool more_content() override;
+
+    int skip_lines(int n);
 };

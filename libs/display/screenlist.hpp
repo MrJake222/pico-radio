@@ -49,16 +49,13 @@ class ScreenList : public Screen {
     virtual ListLoader& get_ll() = 0;
 
     // pagination support
+    int page_count;
     int page;
     void print_page();
 
 protected:
     bool is_loaded() { return loaded; }
     int get_page() { return page; }
-
-    // should return max pages to switch to
-    // return 1 to disable, -1 to infinite pages
-    virtual int get_max_pages() = 0;
 
     // draws entry buttons, pass variables from draw_button
     void draw_button_entry(int y, bool selected);

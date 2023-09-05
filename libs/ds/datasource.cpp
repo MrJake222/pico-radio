@@ -1,8 +1,11 @@
 #include "datasource.hpp"
 
 #include <cstdio>
+#include <cassert>
 
 int read_line(DataSource* ds, char* buf, int bufsize) {
+
+    assert(buf != nullptr || bufsize == 0);
 
     int line_length = 0;
     int ret;

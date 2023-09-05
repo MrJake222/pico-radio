@@ -3,6 +3,7 @@
 #include <listm3u.hpp>
 #include <static.hpp>
 #include <fav.hpp>
+#include <lfsutil.hpp>
 
 void LoaderFav::update(const char* info) {
     if (upd_cb)
@@ -37,7 +38,10 @@ retry:
 
     update("Ładowanie");
 
-    // size = lfs_file_size(get_lfs(), &file);
+    // pagination support
+    // skip lines: 1 (header) + 2*page*per_page
+    rd.skip_lines(1 + 2*page*MAX_STATIONS);
+
     list->begin(stations, stations_max);
     r = list->consume_all(&rd, should_abort, error);
     if (r < 0) {
@@ -58,4 +62,33 @@ end:
 
     printf("radiofav unused stack: %ld\n", uxTaskGetStackHighWaterMark(nullptr));
     vTaskDelete(nullptr);
+}
+
+int LoaderFav::get_page_count() {
+    int r;
+    lfs_file_t file;
+
+    // open read-only
+    r = lfs_file_open(lfs, &file, PATH_FAVOURITES, LFS_O_RDONLY);
+    if (r < 0) {
+        printf("littlefs: failed to open code %d\n", r);
+        return r;
+    }
+
+    const int lines = lfsutil::skip_all_lines(lfs, &file);
+
+    r = lfs_file_close(lfs, &file);
+    if (r < 0) {
+        printf("littlefs: failed to close code %d\n", r);
+        return r;
+    }
+
+    const int entries = (lines - 1) / 2;
+
+    int pages = entries / MAX_STATIONS;
+    if (entries % MAX_STATIONS)
+        // remainder left
+        pages++;
+
+    return pages;
 }

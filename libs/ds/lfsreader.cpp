@@ -46,3 +46,17 @@ int LfsReader::read_char(char* chr) {
 bool LfsReader::more_content() {
     return bytes_read < lfs_file_size(lfs, &file);
 }
+
+int LfsReader::skip_lines(int n) {
+    while (n--) {
+        // can't use raw <lfsutil> variant here, because it won't update <bytes_read>
+        // this uses <read_char> which updates <bytes_read>
+        // <bytes_read> is used to detect EOF (and cannot be abandoned,
+        // it's the only method http server (other subclass) can tell EOF)
+        int r = read_line(this, nullptr, 0);
+        if (r == RL_ERROR)
+            return -1;
+    }
+
+    return 0;
+}
