@@ -196,6 +196,10 @@ int Screen::add_scrolled_text_or_normal(int text_x, int text_y, const char* str,
 
 void Screen::draw_progress_bar(int x, int y, int percent, int bg, int fg) {
 
+    // not to overflow the bar
+    // do not allow to display 100% (not to overflow the text)
+    percent = MIN(percent, 99);
+
     const int filled_bar_width = percent * 64 / 100;
 
     // filled bar
@@ -206,7 +210,7 @@ void Screen::draw_progress_bar(int x, int y, int percent, int bg, int fg) {
 
     // percent
     char buf[5];
-    sprintf(buf, "%02d%%", MIN(percent, 99)); // do not allow to display 100%
+    sprintf(buf, "%02d%%", percent);
     add_normal_text(
             x + 64 + 4, y - 5, buf,
             ubuntu_font_get_size(UbuntuFontSize::FONT_12),
