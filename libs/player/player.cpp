@@ -21,6 +21,7 @@
 #include <decodestream.hpp>
 
 #include <amp.hpp>
+#include <util.hpp>
 
 static volatile bool a_done_irq = false;
 static volatile bool b_done_irq = false;
@@ -213,6 +214,15 @@ static void player_task(void* arg) {
     int r;
     bool failed = false;
 
+    // create <dec> mutex to prevent stat task
+    // from running on null reference at the end
+    r = create_mutex_give(dec_mutex);
+    if (r < 0) {
+        puts("dec mutex creation failed");
+        failed = true;
+        goto clean_up_dec_null;
+    }
+
     // init decoder & format
     // this may open files + preload data/establish a connection/etc.
     switch (type) {
@@ -234,7 +244,7 @@ static void player_task(void* arg) {
         default:
             puts("format unsupported");
             failed = true;
-            goto clean_up_unsupported;
+            goto clean_up_dec_null;
     }
 
     r = dec->setup();
@@ -246,17 +256,7 @@ static void player_task(void* arg) {
         goto clean_up;
     }
 
-    // create <dec> mutex to prevent stat task
-    // from running on null reference at the end
-    dec_mutex = xSemaphoreCreateMutex();
-    if (!dec_mutex) {
-        puts("dec mutex creation failed");
-        failed = true;
-        goto clean_up;
-    }
-
-    // give mutex & start displaying stats
-    xSemaphoreGive(dec_mutex);
+    // start displaying stats
     xTaskNotifyGive(player_stat_task_h);
 
     // this starts core1
@@ -306,7 +306,11 @@ clean_up:
     dec = nullptr;
     xSemaphoreGive(dec_mutex);
 
-clean_up_unsupported:
+clean_up_dec_null:
+    // if playback didn't start, notify player stat task to exit
+    // (no effect if the playback already started)
+    xTaskNotifyGive(player_stat_task_h);
+
     if (fin_cb)
         fin_cb(cb_arg, failed);
 
@@ -384,7 +388,7 @@ static void player_stat_task(void* arg) {
     vTaskDelete(nullptr);
 }
 
-void player_start(const char* path, void* cb_arg_, player_cb_fn_err fin_cb_, player_cb_fn_dec upd_cb_) {
+int player_start(const char* path, void* cb_arg_, player_cb_fn_err fin_cb_, player_cb_fn_dec upd_cb_) {
     printf("\nplaying: %s as %s file\n", path, filetype_from_name_string(path));
 
     strcpy(filepath, path);
@@ -393,7 +397,9 @@ void player_start(const char* path, void* cb_arg_, player_cb_fn_err fin_cb_, pla
     upd_cb = upd_cb_;
     task_to_notify_end = nullptr;
 
-    xTaskCreate(
+    int r;
+
+    r = xTaskCreate(
             player_stat_task,
             "player stat",
             STACK_PLAYER_STAT,
@@ -401,13 +407,25 @@ void player_start(const char* path, void* cb_arg_, player_cb_fn_err fin_cb_, pla
             PRI_PLAYER_STAT,
             &player_stat_task_h);
 
-    xTaskCreate(
+    if (r != pdPASS) {
+        puts("out-of-memory player stat task");
+        return -1;
+    }
+
+    r = xTaskCreate(
             player_task,
             "player",
             STACK_PLAYER,
             nullptr,
             PRI_PLAYER,
             &player_task_h);
+
+    if (r != pdPASS) {
+        puts("out-of-memory player task");
+        return -1;
+    }
+
+    return 0;
 }
 
 void player_stop() {

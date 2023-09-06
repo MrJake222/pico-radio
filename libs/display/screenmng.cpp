@@ -100,3 +100,7 @@ void screenmng_input(ButtonEnum input) {
 void screenmng_backlight(bool on) {
     display.bl_set(on);
 }
+
+void screenmng_show_error(const char* err) {
+    current_screen->show_error(err);
+}

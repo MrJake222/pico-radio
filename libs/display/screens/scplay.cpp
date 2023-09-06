@@ -184,10 +184,15 @@ void ScPlay::show() {
                           COLOR_BG, COLOR_FG);
 
     if (!is_err_displayed) {
-        player_start(st.url,
-                     this,
-                     player_finished_callback,
-                     player_update_callback);
+        int r;
+        r = player_start(st.url,
+                         this,
+                         player_finished_callback,
+                         player_update_callback);
+
+        if (r < 0) {
+            show_error("odtwarzanie nie mogło się rozpocząć");
+        }
     }
 }
 

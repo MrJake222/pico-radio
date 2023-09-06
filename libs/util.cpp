@@ -35,15 +35,19 @@ void debug_print(uint8_t* buffer, int read_at, int bytes, int reverse) {
     }
 }
 
-void create_mutex_give(SemaphoreHandle_t& mutex) {
+int create_mutex_give(SemaphoreHandle_t& mutex) {
     mutex = xSemaphoreCreateMutex();
-    assert(mutex != nullptr);
-    if (mutex)
-        puts("mutex creation ok");
-    else
-        puts("mutex creation failed");
 
+    if (!mutex) {
+        puts("mutex creation failed");
+        assert(false);
+        return -1;
+    }
+
+    puts("mutex creation ok");
     xSemaphoreGive(mutex);
+
+    return 0;
 }
 
 void url_encode_string(char* dst, const char* src) {

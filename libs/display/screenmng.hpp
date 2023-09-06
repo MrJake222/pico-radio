@@ -17,3 +17,4 @@ void screenmng_init();
 void screenmng_open(Screen* new_screen);
 void screenmng_input(ButtonEnum input);
 void screenmng_backlight(bool on);
+void screenmng_show_error(const char* err);
