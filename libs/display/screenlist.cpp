@@ -193,14 +193,37 @@ void all_loaded_cb(void* arg, int errored);
 void ScreenList::begin() {
     Screen::begin();
 
-    base_y = 0;
-    page = 0;
-    station_count = 0;
-    loaded = false;
+    // start on top of first page & reload
+    set_page_pos(0);
+    set_reload();
 
-    // ll <reset> called by <begin> called by subclass
+    // <ll.reset> called by <ll.begin> called by subclass
     get_ll().set_cb_arg(this);
     get_ll().set_all_loaded_cb(all_loaded_cb);
+}
+
+void ScreenList::set_reload() {
+    loaded = false;
+    // base_y/page limited in <all_loaded_cb>
+
+    // don't draw any buttons
+    station_count = 0;
+}
+
+void ScreenList::set_page_pos(int fav_index) {
+    page = fav_index / MAX_STATIONS;
+
+    // set to last row of keyboard
+    // it's always possible, as opposed to top row (not enough stations below)
+    int offset = KB_BUTTONS_MAX - 1; // from bottom to top row
+    base_y = (fav_index % MAX_STATIONS) - offset;
+    current_y = rows_above() + offset;
+
+    if (base_y < 0) {
+        offset = -base_y;
+        base_y += offset;
+        current_y -= offset;
+    }
 }
 
 void ScreenList::print_page() {
@@ -229,59 +252,38 @@ void all_loaded_cb(void* arg, int errored) {
     // called from RadioSearch task
     auto sc = ((ScreenList*) arg);
 
-    // set station count
+    // set station & page count
     sc->station_count = sc->get_ll().get_station_count();
     sc->page_count =    sc->get_ll().get_page_count();
 
+    // limit station & page offset
+    sc->base_y = MIN(sc->base_y, sc->max_base_y()); // stations may have been removed
+    sc->page   = MIN(sc->page,   sc->page_count);   // page may have disappeared
+
     if (sc->loaded) {
-        // it's a reload
+        // it's a reload (page changed)
 
         // move to top
         sc->current_y = sc->default_y();
         sc->base_y = 0;
-
-        // reset & draw all necessary elements
-        // this does all a show() would do but no clear screen occurs
-        // probably suboptimal -> code duplication (for now disabled)
-        // sc->reset_scrolled_texts();
-        // sc->draw_buttons();
-        // sc->print_page();
-        // sc->draw_scroll_bar();
-        // return;
-    }
-
-    // it's a fresh load
-    // report errors and redraw the whole screen
-
-    sc->loaded = true;
-
-    if (errored > 0) {
-        // show error
-        char c[80];
-        snprintf(c, 80, "Błąd: nie udało się załadować %d dostawców stacji.", errored);
-        sc->show_error(c);
     }
     else {
-        // re-draw the screen
-        sc->show();
+        // it's a fresh load
+        // report errors and redraw the whole screen
+
+        sc->loaded = true;
+
+        // report errors only on fresh loads
+        if (errored > 0) {
+            // show error
+            char c[80];
+            snprintf(c, 80, "Błąd: nie udało się załadować %d dostawców stacji.", errored);
+            sc->show_error(c);
+            return;
+        }
     }
-}
 
-void ScreenList::add_entry(const struct station* st) {
-    // abort if state is reset
-    if (!loaded)
-        return;
-
-    get_ll().add_station(st);
-    station_count++;
-}
-
-void ScreenList::remove_entry(int index) {
-    // abort if state is reset
-    if (!loaded)
-        return;
-
-    get_ll().remove_station(index);
-    station_count--;
-    base_y = MIN(base_y, max_base_y());
+    // always (if no error)
+    // re-draw the screen
+    sc->show();
 }

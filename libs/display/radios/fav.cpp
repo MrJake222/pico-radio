@@ -1,6 +1,5 @@
 #include "fav.hpp"
 
-#include <lfs.h>
 #include <lfsaccess.hpp>
 #include <config.hpp>
 #include <static.hpp>
@@ -9,7 +8,7 @@ namespace fav {
 
 static LfsAccess acc(get_lfs());
 
-int create(lfs_t* lfs) {
+int create() {
     int r;
     acc.begin(PATH_FAVOURITES);
 
@@ -28,7 +27,7 @@ int create(lfs_t* lfs) {
     return 0;
 }
 
-int add(lfs_t* lfs, const struct station* st) {
+int add(const struct station* st) {
     int r;
     char buf[LIST_MAX_LINE_LENGTH];
     acc.begin(PATH_FAVOURITES);
@@ -57,7 +56,7 @@ int add(lfs_t* lfs, const struct station* st) {
     return entry_idx;
 }
 
-int remove(lfs_t* lfs, int index) {
+int remove(int index) {
     int r;
     char buf[LIST_MAX_LINE_LENGTH];
     acc.begin(PATH_FAVOURITES);

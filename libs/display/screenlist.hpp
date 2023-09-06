@@ -87,10 +87,11 @@ public:
     void begin() override;
     void show() override;
 
-    friend void all_loaded_cb(void* arg, int errored);
+    // to be used by player add/remove from favourites feature (both functions, or <begin>)
+    // on next <show>, reload the contents
+    void set_reload();
+    // set page/base_y/current_y from absolute index
+    void set_page_pos(int fav_index);
 
-    // stations get loaded from persistent storage rarely
-    // this function maintain this instance updated
-    void add_entry(const struct station* st);
-    void remove_entry(int index);
+    friend void all_loaded_cb(void* arg, int errored);
 };

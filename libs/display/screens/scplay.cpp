@@ -86,16 +86,17 @@ Screen* ScPlay::run_action(int action) {
             if (fav_index < 0) {
                 // not on fav list
                 // add to persistent storage (and get index back)
-                fav_index = fav::add(get_lfs(), &st);
-                // add to favourites screen instance
-                sc_fav.add_entry(&st);
+                fav_index = fav::add(&st);
+                // set position to newly added station and request reload
+                sc_fav.set_page_pos(fav_index);
+                sc_fav.set_reload();
             }
             else {
                 // on fav list
                 // remove from persistent storage
-                fav::remove(get_lfs(), fav_index);
-                // remove from favourites screen instance
-                sc_fav.remove_entry(fav_index);
+                fav::remove(fav_index);
+                // request reload (page might've disappeared/new stations fill in the gap)
+                sc_fav.set_reload();
                 // mark removed
                 fav_index = -1;
             }

@@ -27,7 +27,7 @@ retry:
             // does not exist
             puts("creating new favourites file");
             update("Tworzenie");
-            fav::create(lfs);
+            fav::create();
             goto retry;
         }
 

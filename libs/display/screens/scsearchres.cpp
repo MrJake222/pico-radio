@@ -105,10 +105,10 @@ void ScSearchRes::begin(const char* prompt_) {
     ll.begin(prompt);
     ll.set_update_cb(search_update_cb);
 
-    // reset favourites screen state
+    // request reload of favourites screen
     // this is important because here we are reusing
     // the same buffers for stations as the fav list
-    sc_fav.begin();
+    sc_fav.set_reload();
 
     ScreenList::begin();
 }
