@@ -21,6 +21,7 @@ void TextScrolled::begin(int text_x_, int text_y_, const char* str_, const struc
     text_x = text_x_;
     text_y = text_y_;
     max_width = max_width_;
+    max_x = text_x + max_width;
 
     font = font_;
 
@@ -28,7 +29,7 @@ void TextScrolled::begin(int text_x_, int text_y_, const char* str_, const struc
     fg = fg_;
 
     set_str(str_);
-    offset_x = 0; // force scroll reset
+    offset_x = 0; // force scroll reset (needed here because of reusing same instances of the class)
 }
 
 void TextScrolled::update(int time_passed_ms) {
@@ -38,15 +39,16 @@ void TextScrolled::update(int time_passed_ms) {
 }
 
 void TextScrolled::draw() {
-    display.write_text(text_x - (int)offset_x, text_y,
-                       str, font, bg, fg,
-                       text_x, text_x + max_width);
+    const int start = text_x - (int)offset_x;
+    const int step  = text_width + text_gap;
 
-    display.write_text(text_x - (int)offset_x + text_width + text_gap, text_y,
-                       str, font, bg, fg,
-                       text_x, text_x + max_width);
+    for (int x=start; x<max_x; x+=step) {
+        display.write_text(x, text_y,
+                           str, font, bg, fg,
+                           text_x, max_x);
+    }
 
     if ((int)offset_x >= text_width) {
-        offset_x = -text_gap;
+        offset_x = (float) -text_gap;
     }
 }

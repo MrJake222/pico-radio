@@ -10,6 +10,7 @@ class TextScrolled {
     int text_x; // also min_x
     int text_y;
     int max_width;
+    int max_x;
 
     char str[LCD_SCROLLED_TEXTS_LEN_MAX + 1];
     const struct font* font;
