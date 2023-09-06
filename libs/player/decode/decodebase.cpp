@@ -154,6 +154,7 @@ int DecodeBase::dma_preload() {
 
     whole = format->units_to_decode_whole(audio_pcm_size_words);
     decoded = format->decode_up_to_n(audio_pcm, whole);
+    printf("core1: preloaded %d/%d frames\n", decoded, whole);
     if (decoded < whole) {
         // failure, couldn't decode enough frames
         // probably a user abort (buffer has enough data because of loop above)
