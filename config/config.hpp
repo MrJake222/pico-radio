@@ -76,6 +76,7 @@
 #define PRI_HW_SETUP            1
 #define PRI_WIFI_SETUP          1
 #define PRI_INPUT               1
+#define PRI_SD                  1
 
 #define MIN_FREE_STACK            100
 #define STACK_PLAYER              (220 + MIN_FREE_STACK)
@@ -86,6 +87,7 @@
 #define STACK_HW_SETUP            (225 + MIN_FREE_STACK)
 #define STACK_WIFI_SETUP          (200 + MIN_FREE_STACK)
 #define STACK_INPUT               (273 + MIN_FREE_STACK)
+#define STACK_SD                  (226 + MIN_FREE_STACK)
 
 // --------------------------------- Flash --------------------------------- //
 #define LITTLEFS_SIZE             (1<<16) // 64K, base 0x101F0000
@@ -93,7 +95,6 @@
 #define PATH_FAVOURITES           "/favourites.m3u"
 
 // --------------------------------- SD --------------------------------- //
-#define SD_ENABLE 1
 
 // --------------------------------- LCD --------------------------------- //
 #define LCD_SCROLLED_TEXTS_MAX          4

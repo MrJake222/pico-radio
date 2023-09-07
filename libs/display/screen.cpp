@@ -1,6 +1,7 @@
 #include "screen.hpp"
 #include "icons.hpp"
 #include "analog.hpp"
+#include <sd.hpp>
 
 #include <ubuntu_mono.hpp>
 #include <cstdio>
@@ -145,16 +146,26 @@ void Screen::tick_sec_disable() {
 void Screen::tick_sec() {
     // update top-of-the-screen status icons
 
+    const int x = 149;
+    const int y = 2;
+
     // battery
     const int bv = analog::battery_percentage();
-    const int bx = 149;
-    const int by = 2;
+    const int bx = x;
     if (bv >= 60)
-        display.draw_icon(bx, by, icon_battery_100, COLOR_BG, COLOR_FG_GOOD);
+        display.draw_icon(bx, y, icon_battery_100, COLOR_BG, COLOR_FG_GOOD);
     else if (bv >= 20)
-        display.draw_icon(bx, by, icon_battery_50, COLOR_BG, COLOR_FG_WARN);
+        display.draw_icon(bx, y, icon_battery_50, COLOR_BG, COLOR_FG_WARN);
     else
-        display.draw_icon(bx, by, icon_battery_0, COLOR_BG, COLOR_FG_ERR);
+        display.draw_icon(bx, y, icon_battery_0, COLOR_BG, COLOR_FG_ERR);
+
+    // sd card
+    const int sx = x - 10;
+    display.draw_icon(sx, y,
+                      sd::is_card_mounted() ? icon_sd : icon_sd_disabled,
+                      COLOR_BG, COLOR_FG);
+
+    // TODO wifi status icon
 }
 
 void Screen::tick() {

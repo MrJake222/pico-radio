@@ -16,8 +16,7 @@ static bool b_pressed[BUTTONS] = { false };
 static uint32_t b_pressed_time_us[BUTTONS] = { 0 };
 static bool b_repeat_allowed[BUTTONS] = { false };
 
-static void gpio_callback(uint gpio, uint32_t events) {
-    gpio_acknowledge_irq(gpio, events);
+void buttons_callback(uint gpio, uint32_t events) {
     char val;
 
     switch (gpio) {
@@ -65,11 +64,10 @@ static void gpio_callback(uint gpio, uint32_t events) {
         gpio_pull_up(gpio);
         gpio_set_input_hysteresis_enabled(gpio, true); // schmitt trigger
 
-        gpio_set_irq_enabled_with_callback(
+        gpio_set_irq_enabled(
                 gpio,
                 GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE,
-                true,
-                gpio_callback);
+                true);
     }
 
     puts("buttons: gpio init ok");

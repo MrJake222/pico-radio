@@ -50,6 +50,8 @@ add_library(libs
         player/icy.cpp
         player/amp.cpp
 
+        sd/sd.cpp
+
         static.cpp
         circularbuffer.cpp
         util.cpp
@@ -63,6 +65,7 @@ target_include_directories(libs PUBLIC
         mcorefifo
         player/decode
         player
+        sd
         radios
         display
         display/assets

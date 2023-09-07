@@ -24,6 +24,8 @@
 #include <mcorefifo.hpp>
 #include <screenmng.hpp>
 #include <analog.hpp>
+#include <sd.hpp>
+#include <gpio_irq.hpp>
 
 void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
@@ -32,7 +34,7 @@ void fs_err(FRESULT fr, const char* tag) {
 FRESULT scan_files(char* path, std::vector<std::string>& files) {
     FRESULT res = FR_OK;
 
-#if SD_ENABLE
+#if 0
     DIR dir;
     UINT i;
     static FILINFO fno;
@@ -108,26 +110,17 @@ void init_hardware() {
     screenmng_init();
     puts("Display configuration done");
 
+    gpio_irq::init();
+    puts("gpio irq init done");
+
     buttons_init();
     puts("buttons init ok");
 
     player_init();
     puts("player done");
 
-    // FS configuration
-    // TODO move mounting to a task (and different file)
-#if SD_ENABLE
-    FRESULT fr;
-
-    sd_card_t* pSD = sd_get_by_num(0);
-
-    fr = f_mount(&pSD->fatfs, pSD->pcName, 1);
-    if (fr != FR_OK) {
-        fs_err(fr, "sd: f_mount");
-    }
-
-    puts("sd: mount ok");
-#endif
+    sd::init();
+    puts("sd init done");
 }
 
 void task_hardware_startup(void* arg) {

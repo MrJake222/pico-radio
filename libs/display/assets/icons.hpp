@@ -17,3 +17,5 @@ extern const struct icon icon_fav_back;
 extern const struct icon icon_battery_0;
 extern const struct icon icon_battery_50;
 extern const struct icon icon_battery_100;
+extern const struct icon icon_sd;
+extern const struct icon icon_sd_disabled;

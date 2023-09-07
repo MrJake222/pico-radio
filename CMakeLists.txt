@@ -29,12 +29,14 @@ pico_sdk_init()
 add_executable(${PROJECT_NAME}
         main.cpp
         config/sd_hw_config.c
+        gpio_irq.cpp
         )
 
 pico_add_extra_outputs(${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         config
+        .
         )
 
 target_link_libraries(${PROJECT_NAME}

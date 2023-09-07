@@ -1,5 +1,7 @@
 #pragma once
 
+#include <pico/platform.h>
+
 enum ButtonEnum {
     UP,
     DOWN,
@@ -9,6 +11,9 @@ enum ButtonEnum {
 };
 
 #define BUTTONS     5
+
+// called from gpio_irq
+void buttons_callback(uint gpio, uint32_t events);
 
 void buttons_init();
 void buttons_repeat_left_right(bool enable);
