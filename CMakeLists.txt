@@ -53,8 +53,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         PICO_DEBUG_MALLOC=1
         )
 
-# enable only usb stdio functions
-pico_enable_stdio_usb(${PROJECT_NAME} 1)
+# stdio output drivers
+pico_enable_stdio_usb(${PROJECT_NAME} 0)
 pico_enable_stdio_uart(${PROJECT_NAME} 1)
 
 # memory stats

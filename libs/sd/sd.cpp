@@ -61,6 +61,16 @@ static int unmount(sd_card_t* pSD) {
 }
 
 [[noreturn]] static void sd_task(void* arg) {
+    const int all[] = {SD_CD};
+    for (int gpio : all) {
+        gpio_init(gpio);
+        gpio_set_dir(gpio, false);
+        gpio_pull_up(gpio);
+        gpio_set_input_hysteresis_enabled(gpio, true); // schmitt trigger
+    }
+
+    puts("sd: detection init ok");
+
     // wait a bit for gpio to settle after boot
     vTaskDelay(500 / portTICK_PERIOD_MS);
 
@@ -68,6 +78,14 @@ static int unmount(sd_card_t* pSD) {
     // card present if gpio low
     card_present = gpio_get(SD_CD) == 0;
     card_mounted = false;
+
+    // enable interrupts
+    for (int gpio : all) {
+        gpio_set_irq_enabled(
+                gpio,
+                GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE,
+                true);
+    }
 
     sd_card_t* pSD = sd_get_by_num(0);
 
@@ -100,21 +118,6 @@ static int unmount(sd_card_t* pSD) {
 }
 
 void init() {
-    const int all[] = {SD_CD};
-    for (int gpio : all) {
-        gpio_init(gpio);
-        gpio_set_dir(gpio, false);
-        gpio_pull_up(gpio);
-        gpio_set_input_hysteresis_enabled(gpio, true); // schmitt trigger
-    }
-
-    gpio_set_irq_enabled(
-            SD_CD,
-            GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE,
-            true);
-
-    puts("sd: detection init ok");
-
     xTaskCreate(
             sd_task,
             "sd",

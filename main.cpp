@@ -80,13 +80,18 @@ void init_lowlevel() {
     // set_sys_clock_khz(140000, true);
     set_sys_clock_khz(180000, true);
 
+#if LIB_PICO_STDIO_USB
     // stdio on USB
     stdio_usb_init();
+#endif
+
+#if LIB_PICO_STDIO_UART
     // stdio on UART
     stdio_uart_init_full(STDIO_UART_ID ? uart1 : uart0, STDIO_BAUD,
                          STDIO_TX, STDIO_RX);
+#endif
 
-    printf("\n\nHello usb pico-radio!\n");
+    printf("\n\nHello pico-radio!\n");
     printf("sys clock: %lu MHz\n", clock_get_hz(clk_sys) / 1000000);
     puts("");
 
@@ -110,17 +115,21 @@ void init_hardware() {
     screenmng_init();
     puts("Display configuration done");
 
+    // before all irq-using modules
+    // interrupts can fire after modules initialize their GPIO, we need callbacks set
     gpio_irq::init();
     puts("gpio irq init done");
+
+    // all queues/task handlers need to be initialized before the modules enable interrupts
 
     buttons_init();
     puts("buttons init ok");
 
-    player_init();
-    puts("player done");
-
     sd::init();
     puts("sd init done");
+
+    player_init();
+    puts("player done");
 }
 
 void task_hardware_startup(void* arg) {

@@ -72,6 +72,17 @@ void buttons_callback(uint gpio, uint32_t events) {
 
     puts("buttons: gpio init ok");
 
+    // wait a bit for gpio to settle after boot
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+
+    // enable interrupts
+    for (int gpio : all) {
+        gpio_set_irq_enabled(
+                gpio,
+                GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE,
+                true);
+    }
+
     // only up/down repeat allowed
     b_repeat_allowed[UP] = true;
     b_repeat_allowed[DOWN] = true;

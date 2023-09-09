@@ -10,7 +10,7 @@
 namespace gpio_irq {
 
 static void gpio_irq_cb(uint gpio, uint32_t events) {
-    gpio_acknowledge_irq(gpio, events);
+    // auto-ack when using <gpio_set_irq_callback>
 
     switch (gpio) {
         case SD_CD:
@@ -26,7 +26,7 @@ static void gpio_irq_cb(uint gpio, uint32_t events) {
             break;
 
         default:
-            printf("unknown gpio interrupt source gpio=%d events=0x%lx\n", gpio, events);
+            // printf("unknown gpio interrupt source gpio=%d events=0x%lx\n", gpio, events);
             break;
     }
 }
