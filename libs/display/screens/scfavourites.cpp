@@ -4,6 +4,7 @@
 #include <ubuntu_mono.hpp>
 #include <loaderfav.hpp>
 #include <icons.hpp>
+#include <sd.hpp>
 
 // allowing to enter battery status icon from here is temporary
 // and should be moved to settings/status screen of some sort
@@ -20,6 +21,12 @@ int ScFavourites::default_y() {
 }
 
 int ScFavourites::size_x(int y) {
+    if (y == last_y()) {
+        // action icons
+        return 2;
+    }
+
+    // middle (list)
     return 1;
 }
 
@@ -27,7 +34,9 @@ enum Action {
     BATTERY,
 
     PLAY,
-    SEARCH
+    SEARCH,
+
+    LOCAL
 };
 
 int ScFavourites::get_action(int x, int y) {
@@ -38,7 +47,11 @@ int ScFavourites::get_action(int x, int y) {
 
     if (y == last_y()) {
         // action icon row
-        return SEARCH;
+
+        switch (x) {
+            case 0: return LOCAL;
+            case 1: return SEARCH;
+        }
     }
 
     return PLAY;
@@ -53,6 +66,7 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
     switch (action) {
         case BATTERY:
         case SEARCH:
+        case LOCAL:
             bg = get_btn_bg(selected, false);
             break;
 
@@ -74,6 +88,11 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
             display.fill_rect(143, 111, 15, 15, bg);
             display.draw_icon(144, 112, icon_search, bg, fg);
             break;
+
+        case LOCAL:
+            display.fill_rect(2, 111, 15, 15, bg);
+            display.draw_icon(3, 112, icon_local, bg, fg);
+            break;
     }
 }
 
@@ -85,6 +104,7 @@ Screen* ScFavourites::run_action(int action) {
             sc_bat.begin();
             return &sc_bat;
 
+        // TODO on PLAY and SEARCH display warning when no wifi connection
         case PLAY:
             i = get_selected_station_index();
             r = ll.check_station_url(i);
@@ -102,9 +122,14 @@ Screen* ScFavourites::run_action(int action) {
             sc_search.begin();
             return &sc_search;
 
-        // case BACK:
-        //     ll.load_abort();
-        //     return &sc_search;
+        case LOCAL:
+            if (!sd::is_card_mounted()) {
+                show_warn("Uwaga: brak karty SD");
+                return nullptr;
+            }
+
+            // TODO display local playback screen
+            return nullptr;
     }
 
     return nullptr;

@@ -183,7 +183,7 @@ void ScPlay::show() {
                           ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                           COLOR_BG, COLOR_FG);
 
-    if (!is_err_displayed) {
+    if (!is_overlay_displayed) {
         int r;
         r = player_start(st.url,
                          this,

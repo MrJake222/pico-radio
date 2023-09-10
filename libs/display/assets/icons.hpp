@@ -19,3 +19,4 @@ extern const struct icon icon_battery_50;
 extern const struct icon icon_battery_100;
 extern const struct icon icon_sd;
 extern const struct icon icon_sd_disabled;
+extern const struct icon icon_local;

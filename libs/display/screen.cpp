@@ -39,9 +39,9 @@ int Screen::adjust_x(int old_x, int old_y, int new_y) {
 }
 
 Screen* Screen::input(ButtonEnum btn) {
-    if (is_err_displayed) {
+    if (is_overlay_displayed) {
         show(); // redraw normal screen
-        is_err_displayed = false;
+        is_overlay_displayed = false;
         return nullptr;
     }
 
@@ -232,7 +232,7 @@ void Screen::draw_progress_bar(int x, int y, int percent, int bg, int fg) {
 void Screen::begin() {
     current_x = default_x();
     current_y = default_y();
-    is_err_displayed = false;
+    is_overlay_displayed = false;
 }
 
 void Screen::show() {
@@ -253,14 +253,14 @@ void Screen::hide() {
     reset_scrolled_texts();
 }
 
-void Screen::show_error(const char* err) {
+void Screen::show_overlay(int bg, const char* msg) {
     reset_scrolled_texts();
     tick_sec_disable();
 
-    display.clear_screen(COLOR_BG_ERR);
-    display.write_text_wrap(2, 0, err,
+    display.clear_screen(bg);
+    display.write_text_wrap(2, 0, msg,
                             ubuntu_font_get_size(UbuntuFontSize::FONT_16),
-                            COLOR_BG_ERR, COLOR_FG);
+                            bg, COLOR_FG);
 
-    is_err_displayed = true;
+    is_overlay_displayed = true;
 }

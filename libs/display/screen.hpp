@@ -12,6 +12,8 @@
 #define COLOR_BG_DARK        0xa1af9f
 #define COLOR_BG_DARK_SEL    0x55AA55
 
+#define COLOR_BG_GOOD        0x7ACC7A
+#define COLOR_BG_WARN        0xCCCC7A
 #define COLOR_BG_ERR         0xCC7A7A
 
 #define COLOR_ACC1           0x0077AC
@@ -62,10 +64,10 @@ protected:
     virtual void iny();
     virtual void dey();
 
-    // error screen
+    // overlay displayed
     // this can (and should) be used in <show>
     // to disable some actions (for ex. player playback)
-    bool is_err_displayed;
+    bool is_overlay_displayed;
 
     // passed to <run_action> but can be used by subclasses for other purposes
     virtual int get_action(int x, int y) = 0;
@@ -73,6 +75,8 @@ protected:
     virtual void button_pre_selection_change() { }
     virtual void draw_button(int x, int y, bool selected) = 0;
     void draw_buttons();
+
+    void show_overlay(int bg, const char* msg);
 
     // this can be overridden to provide snapping to other target
     // returns new x value
@@ -120,8 +124,8 @@ public:
     // called by screen manager
     virtual void hide();
 
-    // called after show on some error
-    void show_error(const char* err);
+    inline void show_error(const char* msg) { show_overlay(COLOR_BG_ERR, msg); }
+    inline void show_warn(const char* msg)  { show_overlay(COLOR_BG_WARN, msg); }
 
     // should be called periodically to update screen content
     // default implementation updates scrollable texts
