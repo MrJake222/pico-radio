@@ -23,13 +23,20 @@ add_compile_definitions(
 # libraries
 add_subdirectory(libs)
 
+list(APPEND
+        PICO_CONFIG_HEADER_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/config/lock_rtos.h)
+
 pico_sdk_init()
+
+pico_generate_pio_header(libs ${CMAKE_CURRENT_SOURCE_DIR}/libs/player/i2s.pio)
 
 # this project private files files
 add_executable(${PROJECT_NAME}
         main.cpp
         config/sd_hw_config.c
         gpio_irq.cpp
+        lock_rtos.cpp
         )
 
 pico_add_extra_outputs(${PROJECT_NAME})

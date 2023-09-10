@@ -86,7 +86,3 @@ target_link_libraries(libs
 
         pico_cyw43_arch_lwip_sys_freertos
         )
-
-include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
-pico_sdk_init()
-pico_generate_pio_header(libs ${CMAKE_CURRENT_SOURCE_DIR}/player/i2s.pio)

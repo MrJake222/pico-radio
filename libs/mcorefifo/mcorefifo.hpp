@@ -8,7 +8,10 @@
 
 enum FifoMsgType {
     // used to notify player thread
-    PLAYER
+    PLAYER,
+
+    // notify lock_rtos integration event group
+    LOCK_RTOS
 };
 
 typedef void(*FifoCallback)(void* arg, uint32_t data);
