@@ -11,7 +11,10 @@ enum FifoMsgType {
     PLAYER,
 
     // notify lock_rtos integration event group
-    LOCK_RTOS
+    LOCK_RTOS,
+
+    // enum count, do not use
+    FifoMsgType_count
 };
 
 typedef void(*FifoCallback)(void* arg, uint32_t data);

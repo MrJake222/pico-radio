@@ -16,13 +16,16 @@ struct cb_data {
     bool use_task;
 };
 
-// TODO use zero-alloc
-static std::map<FifoMsgType, struct cb_data> cbs;
+static struct cb_data cbs[FifoMsgType_count] = { nullptr };
+
+static inline bool cb_defined(FifoMsgType type) {
+    return cbs[type].cb != nullptr;
+}
 
 static bool entry_check(uint32_t val) {
     auto type = (FifoMsgType) MSG_TYPE(FIFO_MSG_BITS, FIFO_MSG_TYPE_BITS, val);
 
-    if (cbs.count(type)) {
+    if (cb_defined(type)) {
         return true;
     } else {
         printf("no callback for message type: %d in value %lu\n", type, val);

@@ -7,7 +7,10 @@ void LfsAccess::begin(const char* path_) {
 int LfsAccess::open(int flags) {
     int r;
 
-    r = lfs_file_open(lfs, &file, path, flags);
+    memset(&file_cfg, 0, sizeof(file_cfg));
+    file_cfg.buffer = &file_buf;
+
+    r = lfs_file_opencfg(lfs, &file, path, flags, &file_cfg);
     if (r < 0) {
         printf("littlefs: failed to open code %d\n", r);
         return r;

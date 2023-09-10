@@ -1,5 +1,6 @@
 #pragma once
 
+#include <config.hpp>
 #include <datasource.hpp>
 #include <lfs.h>
 
@@ -7,6 +8,8 @@ class LfsAccess : public DataSource {
 
     lfs_t* lfs;
     lfs_file_t file;
+    lfs_file_config file_cfg;
+    char file_buf[LITTLEFS_CACHES];
 
     char path[LFS_NAME_MAX];
 
