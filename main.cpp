@@ -79,8 +79,8 @@ FRESULT scan_files(char* path, std::vector<std::string>& files) {
 }
 
 void init_lowlevel() {
-    // set_sys_clock_khz(140000, true);
-    set_sys_clock_khz(180000, true);
+    set_sys_clock_khz(150000, true);
+    // set_sys_clock_khz(180000, true);
 
 #if LIB_PICO_STDIO_USB
     // stdio on USB
