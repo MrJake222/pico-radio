@@ -91,7 +91,7 @@ public:
     // on next <show>, reload the contents
     void set_reload();
     // set page/base_y/current_y from absolute index
-    void set_page_pos(int fav_index);
+    void set_fav_pos(int fav_index);
 
     friend void all_loaded_cb(void* arg, int errored);
 };

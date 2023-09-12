@@ -194,7 +194,7 @@ void ScreenList::begin() {
     Screen::begin();
 
     // start on top of first page & reload
-    set_page_pos(0);
+    set_fav_pos(0);
     set_reload();
 
     // <ll.reset> called by <ll.begin> called by subclass
@@ -210,7 +210,7 @@ void ScreenList::set_reload() {
     station_count = 0;
 }
 
-void ScreenList::set_page_pos(int fav_index) {
+void ScreenList::set_fav_pos(int fav_index) {
     page = fav_index / MAX_ENTRIES;
 
     // set to last row of keyboard
@@ -224,6 +224,8 @@ void ScreenList::set_page_pos(int fav_index) {
         base_y += offset;
         current_y -= offset;
     }
+
+    current_x = 0;
 }
 
 void ScreenList::print_page() {

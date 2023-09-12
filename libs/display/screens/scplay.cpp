@@ -92,7 +92,7 @@ Screen* ScPlay::run_action(int action) {
                 }
 
                 // set position to newly added station and request reload
-                sc_fav.set_page_pos(fav_index);
+                sc_fav.set_fav_pos(fav_index);
                 sc_fav.set_reload();
             }
             else {
