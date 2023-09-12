@@ -77,11 +77,15 @@
 #define PRI_INPUT               1
 #define PRI_SD                  1
 
+#include <ffconf.h>
+#include <FreeRTOSConfig.h>
+
 #define MIN_FREE_STACK            100
-#define STACK_PLAYER              (220 + MIN_FREE_STACK)
+#define FATFS_RESV_STACK          (((FF_MAX_LFN+1)*2 + ((FF_MAX_LFN + 44U) / 15 * 32)) / sizeof(configSTACK_DEPTH_TYPE))
+#define STACK_PLAYER              (200 + MIN_FREE_STACK + FATFS_RESV_STACK)
 #define STACK_PLAYER_STAT         (164 + MIN_FREE_STACK)
 #define STACK_FIFO_QUEUE          configMINIMAL_STACK_SIZE // currently unused
-#define STACK_LIST_LOADER         (240 + MIN_FREE_STACK)
+#define STACK_LIST_LOADER         (180 + MIN_FREE_STACK + FATFS_RESV_STACK)
 #define STACK_DISPLAY_TICKER      (160 + MIN_FREE_STACK)
 #define STACK_HW_SETUP            (225 + MIN_FREE_STACK)
 #define STACK_WIFI_SETUP          (200 + MIN_FREE_STACK)
