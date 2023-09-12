@@ -102,8 +102,6 @@ void init_lowlevel() {
 
     analog::init();
     puts("analog init ok");
-
-    lock_rtos_init();
 }
 
 void init_hardware() {
@@ -235,6 +233,7 @@ int main() {
             PRI_WIFI_SETUP,
             nullptr);
 
+    lock_rtos_init();
     vTaskStartScheduler();
 }
 

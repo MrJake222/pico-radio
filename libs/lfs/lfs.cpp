@@ -13,7 +13,7 @@
 #define FS_BASE_IN_FLASH (PICO_FLASH_SIZE_BYTES - LITTLEFS_SIZE)
 #define FS_BASE_ABS      (XIP_NOCACHE_NOALLOC_BASE + FS_BASE_IN_FLASH)
 
-static bool lockout;
+static bool core1_running;
 
 // Read a region in a block. Negative error codes are propagated
 // to the user.
@@ -28,16 +28,17 @@ static int pico_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t of
 // Program a region in a block. The block must have previously
 // been erased. Negative error codes are propagated to the user.
 // May return LFS_ERR_CORRUPT if the block should be considered bad.
+// First lock out core1, then disable interrupts
 static int pico_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
+    if (core1_running) multicore_lockout_start_blocking();
     uint32_t ints = save_and_disable_interrupts();
-    if (lockout) multicore_lockout_start_blocking();
 
     flash_range_program(FS_BASE_IN_FLASH + block * FLASH_SECTOR_SIZE + off,
                         (const uint8_t*)buffer,
                         size);
 
-    if (lockout) multicore_lockout_end_blocking();
     restore_interrupts(ints);
+    if (core1_running) multicore_lockout_end_blocking();
     return 0;
 }
 
@@ -45,15 +46,16 @@ static int pico_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t of
 // The state of an erased block is undefined. Negative error codes
 // are propagated to the user.
 // May return LFS_ERR_CORRUPT if the block should be considered bad.
+// First lock out core1, then disable interrupts
 static int pico_erase(const struct lfs_config *c, lfs_block_t block) {
+    if (core1_running) multicore_lockout_start_blocking();
     uint32_t ints = save_and_disable_interrupts();
-    if (lockout) multicore_lockout_start_blocking();
 
     flash_range_erase(FS_BASE_IN_FLASH + block * FLASH_SECTOR_SIZE,
                       1);
 
-    if (lockout) multicore_lockout_end_blocking();
     restore_interrupts(ints);
+    if (core1_running) multicore_lockout_end_blocking();
     return 0;
 }
 
@@ -64,12 +66,12 @@ static int pico_sync(const struct lfs_config *c) { return 0; }
 // locking mechanisms for thread-safety
 static SemaphoreHandle_t lfs_mutex;
 
-int pico_freertos_lock(const struct lfs_config *c) {
+static int pico_freertos_lock(const struct lfs_config *c) {
     xSemaphoreTake(lfs_mutex, portMAX_DELAY);
     return 0;
 }
 
-int pico_freertos_unlock(const struct lfs_config *c) {
+static int pico_freertos_unlock(const struct lfs_config *c) {
     xSemaphoreGive(lfs_mutex);
     return 0;
 }
@@ -108,7 +110,7 @@ const struct lfs_config pico_lfs_config = {
 };
 
 void pico_lfs_init() {
-    lockout = false;
+    core1_running = false;
     create_mutex_give(lfs_mutex);
 }
 
@@ -134,14 +136,14 @@ void pico_lfs_mount_format() {
 
 void pico_lfs_launch_core1(entry_fn entry) {
     pico_freertos_lock(nullptr);
-    lockout = true;
+    core1_running = true;
     multicore_launch_core1(entry);
     pico_freertos_unlock(nullptr);
 }
 
 void pico_lfs_reset_core1() {
     pico_freertos_lock(nullptr);
-    lockout = false;
+    core1_running = false;
     multicore_reset_core1();
     pico_freertos_unlock(nullptr);
 }

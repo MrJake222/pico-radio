@@ -98,5 +98,3 @@ void fifo_rx_irq() {
             entry_handle(val);
     }
 }
-
-void fifo_send(FifoMsgType type) { fifo_send_with_data(type, 0); }

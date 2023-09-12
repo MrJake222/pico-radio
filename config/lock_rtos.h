@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-// call before RTOS starts
+// call right before rtos starts
 void lock_rtos_init();
 
 /**
