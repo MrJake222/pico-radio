@@ -86,6 +86,11 @@ Screen* ScPlay::run_action(int action) {
                 // not on fav list
                 // add to persistent storage (and get index back)
                 fav_index = fav::add(&ent);
+                if (fav_index < 0) {
+                    show_error("Nie udało się dodać do ulubionych");
+                    return nullptr;
+                }
+
                 // set position to newly added station and request reload
                 sc_fav.set_page_pos(fav_index);
                 sc_fav.set_reload();
@@ -93,7 +98,12 @@ Screen* ScPlay::run_action(int action) {
             else {
                 // on fav list
                 // remove from persistent storage
-                fav::remove(fav_index);
+                int r = fav::remove(fav_index);
+                if (r < 0) {
+                    show_error("Nie udało się usunąć z ulubionych");
+                    return nullptr;
+                }
+
                 // request reload (page might've disappeared/new stations fill in the gap)
                 sc_fav.set_reload();
                 // mark removed
@@ -128,8 +138,11 @@ void player_update_callback(void* arg, DecodeBase* dec) {
     // called from player stat task
     // each call is a new current time value
     auto sc = (ScPlay*) arg;
-
     char buf[PLAYER_META_BUF_LEN];
+
+    if (sc->is_overlay_displayed)
+        // don't update stats if something covers them
+        return;
 
     // current playback time
     int c = dec->current_time();
