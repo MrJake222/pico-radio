@@ -26,6 +26,10 @@ protected:
 
     int page;
 
+    // get how many entries are there (don't care about pagination)
+    // -1 is infinite pages (or failed to determine)
+    virtual int get_entry_count_whole() = 0;
+
 public:
     Loader(ListEntry* entries_, int entries_max_)
         : entries(entries_)
@@ -51,5 +55,6 @@ public:
     // should return max pages to switch to
     // return 1 to disable, -1 to infinite pages
     // must be called in all_loaded callback
-    virtual int get_page_count() = 0;
+    // warning: can be resource hungry
+    int get_page_count();
 };

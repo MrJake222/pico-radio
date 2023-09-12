@@ -60,7 +60,7 @@ end_noclose:
         call_all_loaded(errored);
 }
 
-int LoaderFav::get_page_count() {
+int LoaderFav::get_entry_count_whole() {
     int r;
     rd.begin(PATH_FAVOURITES);
 
@@ -74,12 +74,5 @@ int LoaderFav::get_page_count() {
     if (r < 0)
         return r;
 
-    const int entries = (lines - 1) / 2;
-
-    int pages = entries / MAX_ENTRIES;
-    if (entries % MAX_ENTRIES)
-        // remainder left
-        pages++;
-
-    return pages;
+    return (lines - 1) / 2;
 }

@@ -38,3 +38,16 @@ void Loader::load(int page_) {
 void Loader::load_abort() {
     should_abort = true;
 }
+
+int Loader::get_page_count() {
+    int cnt = get_entry_count_whole();
+    if (cnt < 0)
+        return cnt;
+
+    int pages = cnt / entries_max;
+    if (cnt % entries_max)
+        // remainder left
+        pages++;
+
+    return pages;
+}

@@ -9,6 +9,7 @@ void LoaderLocal::begin(const char* path_) {
 void LoaderLocal::task() {
     FRESULT res;
     int errored = 0;
+    int to_skip = page * entries_max;
 
     res = f_opendir(&dir, path);
     if (res != FR_OK) {
@@ -26,6 +27,11 @@ void LoaderLocal::task() {
         if (!fileinfo.fname[0]) {
             // empty string -> end of folder
             break;
+        }
+
+        if (to_skip) {
+            to_skip--;
+            continue;
         }
 
         set_file(fileinfo.fname, fileinfo.fattrib & AM_DIR);
@@ -50,6 +56,31 @@ void LoaderLocal::set_file(const char* path_, bool is_dir) {
     entries_offset++;
 }
 
-int LoaderLocal::get_page_count() {
-    return 1;
+int LoaderLocal::get_entry_count_whole() {
+    FRESULT res;
+
+    res = f_opendir(&dir, path);
+    if (res != FR_OK) {
+        return -1;
+    }
+
+    int files_dirs = 0;
+
+    while (!should_abort) {
+        res = f_readdir(&dir, &fileinfo);
+        if (res != FR_OK) {
+            f_closedir(&dir);
+            return -1;
+        }
+
+        if (!fileinfo.fname[0]) {
+            // empty string -> end of folder
+            break;
+        }
+
+        files_dirs++;
+    }
+
+    f_closedir(&dir);
+    return files_dirs;
 }
