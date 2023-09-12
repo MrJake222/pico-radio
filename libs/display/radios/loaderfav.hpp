@@ -1,12 +1,12 @@
 #pragma once
 
-#include <listloader.hpp>
+#include <loader.hpp>
 #include <lfsaccess.hpp>
 #include <lfs.h>
 
 typedef void(*ld_fav_update_cb)(void* arg, const char* info);
 
-class LoaderFav : public ListLoader {
+class LoaderFav : public Loader {
 
     lfs_t* lfs;
     LfsAccess rd;
@@ -17,9 +17,9 @@ class LoaderFav : public ListLoader {
     void update(const char* info);
 
 public:
-    LoaderFav(struct station* stations_, int stations_count_,
+    LoaderFav(ListEntry* entries_, int entries_count_,
               lfs_t* lfs_)
-        : ListLoader(stations_, stations_count_)
+        : Loader(entries_, entries_count_)
         , lfs(lfs_), rd(lfs_)
         { }
 

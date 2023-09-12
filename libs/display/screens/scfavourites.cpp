@@ -115,7 +115,7 @@ Screen* ScFavourites::run_action(int action) {
 
             // <i> equals position on the fav list (in relation to loaded stations)
             // need to adjust fav_index for current page
-            sc_play.begin(ll.get_station(i), i + get_page()*MAX_STATIONS, this);
+            sc_play.begin(ll.get_station(i), i + get_page() * MAX_ENTRIES, this);
             return &sc_play;
 
         case SEARCH:

@@ -3,22 +3,19 @@
 #include <config.hpp>
 #include <httpclientpico.hpp>
 #include <list.hpp>
-#include <listloader.hpp>
-
-#include <FreeRTOS.h>
-#include <task.h>
+#include <loader.hpp>
 
 typedef void(*ld_search_update_cb)(void* arg, int provider_idx, int server_idx, int max_servers);
 
-class LoaderSearch : public ListLoader {
+class LoaderSearch : public Loader {
 
     HttpClientPico& client;
 
     char query_enc[PROMPT_URL_BUF_LEN];
     char url_buf[SEARCH_URL_BUF_LEN];
 
-    struct station* const stations_pls;
-    const int stations_pls_count;
+    ListEntry* const entries_pls;
+    const int entries_pls_count;
 
     void task() override;
 
@@ -30,13 +27,13 @@ class LoaderSearch : public ListLoader {
     void update(int provider_idx, int server_idx, int max_servers);
 
 public:
-    LoaderSearch(struct station* stations_, int stations_count_,
-                 struct station* stations_pls_, int stations_pls_count_,
+    LoaderSearch(ListEntry* entries_, int entries_count_,
+                 ListEntry* entries_pls_, int entries_pls_count_,
                  HttpClientPico& client_)
-        : ListLoader(stations_, stations_count_)
+        : Loader(entries_, entries_count_)
         , client(client_)
-        , stations_pls(stations_pls_)
-        , stations_pls_count(stations_pls_count_)
+        , entries_pls(entries_pls_)
+        , entries_pls_count(entries_pls_count_)
         { }
 
     void begin(const char* query_);

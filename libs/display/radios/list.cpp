@@ -21,12 +21,12 @@ ListError List::consume(DataSource* ds) {
         return ListError::OK;
     }
 
-    if (stations_found == stations_len) {
+    if (entries_found == entries_len) {
         return ListError::ABORT;
     }
 
     // not empty line
-    // not maxed out stations
+    // not maxed out entries
 
     return consume_format(line);
 }
@@ -48,7 +48,7 @@ int List::consume_all(DataSource* ds, volatile bool& abort, volatile bool& error
 
         else if (lr == ListError::ABORT) {
             // buffer maxed out, don't waste more time
-            puts("ds: maxed out stations");
+            puts("ds: maxed out entries");
             break;
         }
 
@@ -61,30 +61,26 @@ int List::consume_all(DataSource* ds, volatile bool& abort, volatile bool& error
     return 0;
 }
 
-void List::set_current_uuid(const char* p) {
-    // printf("uuid: '%s'\n", p);
-    strncpy(stations[stations_found].uuid, p, ST_UUID_LEN);
-    stations[stations_found].uuid[ST_UUID_LEN] = '\0';
-}
-
 void List::set_current_name(const char* p) {
     // skip spaces
     while (*p == ' ') p++;
 
     //printf("name: '%s'\n", p);
-    strncpy(stations[stations_found].name, p, ST_NAME_LEN);
-    stations[stations_found].name[ST_NAME_LEN] = '\0';
+    entries[entries_found].set_name(p);
 }
 
 void List::set_current_url(const char* p) {
     // printf("url: '%s'\n", p);
-    strncpy(stations[stations_found].url, p, ST_URL_LEN);
-    stations[stations_found].url[ST_URL_LEN] = '\0';
+    entries[entries_found].set_url(p);
 }
 
-void List::select_random(station* ts) {
-    const struct station* ss = &stations[random() % stations_found];
+void List::set_next_entry() {
+    entries_found++;
+}
+
+void List::select_random(ListEntry* ts) {
+    const ListEntry* ss = &entries[random() % entries_found];
 
     // can't copy name because listpls doesn't parse names
-    strcpy(ts->url, ss->url);
+    ts->set_url(ss->get_url());
 }

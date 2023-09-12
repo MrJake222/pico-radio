@@ -23,7 +23,7 @@ class ScSearchRes : public ScreenList {
     char subtitle[10 + MAX_PROMPT_LEN + 1]; // null
 
     LoaderSearch& ll;
-    ListLoader & get_ll() override { return ll; }
+    Loader & get_ll() override { return ll; }
 
     friend void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers);
 

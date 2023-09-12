@@ -64,7 +64,7 @@ void ScreenList::inx() {
 
         // reload page
         if (page != page_orig) {
-            get_ll().load_stations(page);
+            get_ll().load(page);
         }
     }
     else {
@@ -89,7 +89,7 @@ void ScreenList::dex() {
 
         // reload page
         if (page != page_orig) {
-            get_ll().load_stations(page);
+            get_ll().load(page);
         }
     }
     else {
@@ -160,7 +160,7 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
     xs = s_base_x;
     ys = s_base_y + (s_res_h + s_res_mar) * y;
-    name = get_ll().get_station(base_y + y)->name;
+    name = get_ll().get_station(base_y + y)->get_name();
 
     bg = get_btn_bg(selected, true);
     display.fill_rect(xs, ys, s_res_w, s_res_h, bg);
@@ -180,7 +180,7 @@ void ScreenList::show() {
                         COLOR_BG, COLOR_FG,
                         display.W);
 
-        get_ll().load_stations(page);
+        get_ll().load(page);
     }
     else {
         draw_scroll_bar();
@@ -211,12 +211,12 @@ void ScreenList::set_reload() {
 }
 
 void ScreenList::set_page_pos(int fav_index) {
-    page = fav_index / MAX_STATIONS;
+    page = fav_index / MAX_ENTRIES;
 
     // set to last row of keyboard
     // it's always possible, as opposed to top row (not enough stations below)
     int offset = KB_BUTTONS_MAX - 1; // from bottom to top row
-    base_y = (fav_index % MAX_STATIONS) - offset;
+    base_y = (fav_index % MAX_ENTRIES) - offset;
     current_y = rows_above() + offset;
 
     if (base_y < 0) {

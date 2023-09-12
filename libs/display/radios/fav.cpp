@@ -27,7 +27,7 @@ int create() {
     return 0;
 }
 
-int add(const struct station* st) {
+int add(const ListEntry* entry) {
     int r;
     char buf[LIST_MAX_LINE_LENGTH];
     acc.begin(PATH_FAVOURITES);
@@ -39,12 +39,12 @@ int add(const struct station* st) {
     const int lines = acc.skip_all_lines();
     const int entry_idx = (lines - 1) / 2;
 
-    sprintf(buf, "#EXTINF:-1,%s\n", st->name);
+    sprintf(buf, "#EXTINF:-1,%s\n", entry->get_name());
     r = acc.write_str(buf);
     if (r < 0)
         return r;
 
-    sprintf(buf, "%s\n", st->url);
+    sprintf(buf, "%s\n", entry->get_url());
     r = acc.write_str(buf);
     if (r < 0)
         return r;

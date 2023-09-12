@@ -19,7 +19,7 @@ ListError ListPLS::consume_format(char* line) {
         val++;
 
         set_current_url(val);
-        set_next_station();
+        set_next_entry();
     }
 
     return ListError::OK;

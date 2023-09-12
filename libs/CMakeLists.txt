@@ -16,9 +16,10 @@ add_library(libs
 
         display/radios/fav.cpp
         display/radios/list.cpp
+        display/radios/listentry.cpp
         display/radios/listm3u.cpp
         display/radios/listpls.cpp
-        display/radios/listloader.cpp
+        display/radios/loader.cpp
         display/radios/loadersearch.cpp
         display/radios/loaderfav.cpp
 

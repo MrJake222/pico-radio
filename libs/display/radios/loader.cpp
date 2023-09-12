@@ -1,27 +1,31 @@
-#include "listloader.hpp"
+#include "loader.hpp"
 
+#include <cstdio>
 #include <config.hpp>
 
 #include <FreeRTOS.h>
 #include <task.h>
 
 void ll_task(void* arg) {
-    ((ListLoader*) arg)->task();
+    ((Loader*) arg)->task();
+
+    printf("list loader unused stack: %ld\n", uxTaskGetStackHighWaterMark(nullptr));
+    vTaskDelete(nullptr);
 }
 
-void ListLoader::begin() {
+void Loader::begin() {
     all_loaded_cb = nullptr;
 }
 
-void ListLoader::call_all_loaded(int errored) {
+void Loader::call_all_loaded(int errored) {
     if (all_loaded_cb)
         all_loaded_cb(cb_arg, errored);
 }
 
-void ListLoader::load_stations(int page_) {
+void Loader::load(int page_) {
     page = page_;
     should_abort = false;
-    stations_offset = 0;
+    entries_offset = 0;
 
     xTaskCreate(ll_task,
                 "ll",
@@ -31,6 +35,6 @@ void ListLoader::load_stations(int page_) {
                 nullptr);
 }
 
-void ListLoader::load_abort() {
+void Loader::load_abort() {
     should_abort = true;
 }

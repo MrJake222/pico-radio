@@ -6,7 +6,6 @@
 #include <player.hpp>
 #include <cstdio>
 #include <fav.hpp>
-#include <static.hpp>
 
 #define STATS_Y     80
 
@@ -86,7 +85,7 @@ Screen* ScPlay::run_action(int action) {
             if (fav_index < 0) {
                 // not on fav list
                 // add to persistent storage (and get index back)
-                fav_index = fav::add(&st);
+                fav_index = fav::add(&ent);
                 // set position to newly added station and request reload
                 sc_fav.set_page_pos(fav_index);
                 sc_fav.set_reload();
@@ -164,7 +163,7 @@ void ScPlay::show() {
     Screen::show();
 
     add_scrolled_text_or_normal(
-            2, 13, st.name,
+            2, 13, ent.get_name(),
             ubuntu_font_get_size(UbuntuFontSize::FONT_24),
             COLOR_BG, COLOR_ACC2,
             display.W - 2*2);
@@ -185,7 +184,7 @@ void ScPlay::show() {
 
     if (!is_overlay_displayed) {
         int r;
-        r = player_start(st.url,
+        r = player_start(ent.get_url(),
                          this,
                          player_finished_callback,
                          player_update_callback);
@@ -196,8 +195,8 @@ void ScPlay::show() {
     }
 }
 
-void ScPlay::begin(const struct station* st_, int fav_index_, Screen* prev_) {
-    st = *st_;
+void ScPlay::begin(const ListEntry* ent_, int fav_index_, Screen* prev_) {
+    ent = *ent_;
     fav_index = fav_index_;
     prev = prev_;
     player_stop_requested = false;

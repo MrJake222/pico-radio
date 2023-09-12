@@ -1,7 +1,6 @@
 #include "loaderfav.hpp"
 
 #include <listm3u.hpp>
-#include <static.hpp>
 #include <fav.hpp>
 
 void LoaderFav::update(const char* info) {
@@ -32,16 +31,16 @@ retry:
         }
 
         errored++;
-        goto end;
+        goto end_noclose;
     }
 
     update("Ładowanie");
 
     // pagination support
     // skip lines: 1 (header) + 2*page*per_page
-    rd.skip_lines(1 + 2*page*MAX_STATIONS);
+    rd.skip_lines(1 + 2 * page * MAX_ENTRIES);
 
-    list->begin(stations, stations_max);
+    list->begin(entries, entries_max);
     r = list->consume_all(&rd, should_abort, error);
     if (r < 0) {
         // failed
@@ -49,18 +48,16 @@ retry:
         goto end;
     }
 
-    stations_offset += list->get_stations_found();
-    printf("done loading all favourites, loaded %d stations, error %d\n", stations_offset, errored);
+    entries_offset += list->get_entries_found();
+    printf("done loading all favourites, loaded %d stations, error %d\n", entries_offset, errored);
     update("Gotowe");
 
 end:
     rd.close();
 
+end_noclose:
     if (!should_abort)
         call_all_loaded(errored);
-
-    printf("radiofav unused stack: %ld\n", uxTaskGetStackHighWaterMark(nullptr));
-    vTaskDelete(nullptr);
 }
 
 int LoaderFav::get_page_count() {
@@ -79,8 +76,8 @@ int LoaderFav::get_page_count() {
 
     const int entries = (lines - 1) / 2;
 
-    int pages = entries / MAX_STATIONS;
-    if (entries % MAX_STATIONS)
+    int pages = entries / MAX_ENTRIES;
+    if (entries % MAX_ENTRIES)
         // remainder left
         pages++;
 

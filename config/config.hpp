@@ -57,11 +57,10 @@
 #define LIST_MAX_LINE_LENGTH 128
 
 // Max stations per query
-#define MAX_STATIONS          16 // max stations returned from search
-#define MAX_STATIONS_PLS       2 // max stations to resolve from *.pls file
-#define ST_UUID_LEN            0 // disabled
-#define ST_NAME_LEN           32
-#define ST_URL_LEN            64
+#define MAX_ENTRIES          16 // max stations returned from search
+#define MAX_ENTRIES_PLS       2 // max stations to resolve from *.pls file
+#define ENT_NAME_LEN         32
+#define ENT_URL_LEN         128
 
 // ICY metadata
 #define ICY_BUF_LEN           128

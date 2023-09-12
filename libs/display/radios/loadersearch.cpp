@@ -41,7 +41,7 @@ int LoaderSearch::get_provider_count() {
 }
 
 int LoaderSearch::get_station_count_per_provider() {
-    return MAX_STATIONS / get_provider_count();
+    return MAX_ENTRIES / get_provider_count();
 }
 
 void client_err_cb(void* arg, int err) {
@@ -49,7 +49,7 @@ void client_err_cb(void* arg, int err) {
     ((LoaderSearch*) arg)->client_errored = true;
 }
 
-static List* query_url(HttpClientPico& client, const char* url, struct station* stations, int max_stations,
+static List* query_url(HttpClientPico& client, const char* url, ListEntry* entries, int max_entries,
         volatile bool& should_abort, volatile bool& client_errored) {
     client_errored = false;
     int r = client.get(url);
@@ -75,7 +75,7 @@ static List* query_url(HttpClientPico& client, const char* url, struct station* 
         return nullptr;
     }
 
-    list->begin(stations, max_stations);
+    list->begin(entries, max_entries);
     r = list->consume_all(&client, should_abort, client_errored);
     if (r < 0) {
         // failed
@@ -120,9 +120,9 @@ void LoaderSearch::task() {
 
             client_begin_set_callback();
             list = query_url(client, url_buf,
-                                   stations + stations_offset,
-                                   stations_max - stations_offset,
-                                   should_abort, client_errored);
+                             entries + entries_offset,
+                             entries_max - entries_offset,
+                             should_abort, client_errored);
 
             // when done server
             update(pi,
@@ -141,26 +141,21 @@ void LoaderSearch::task() {
         }
 
         // printf("done loading url, loaded %d stations\n", list->stations_found);
-        stations_offset += list->get_stations_found();
+        entries_offset += list->get_entries_found();
 
-        if (stations_offset == stations_max) {
+        if (entries_offset == entries_max) {
             puts("rs: maxed out stations, done");
             break;
         }
     }
 
-    printf("done loading all, loaded %d stations, %d providers errored\n", stations_offset, errored);
-    // for (int i=0; i<stations_offset; i++) {
-    //     printf("uuid %s name %32s url %s\n", stations[i].uuid, stations[i].name, stations[i].url);
+    printf("done loading all, loaded %d stations, %d providers errored\n", entries_offset, errored);
+    // for (int i=0; i<entries_offset; i++) {
+    //     printf("uuid %s name %32s url %s\n", entries[i].uuid, entries[i].name, entries[i].url);
     // }
 
     if (!should_abort)
         call_all_loaded(errored);
-
-    uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
-    printf("radiosearch unused stack: %ld\n", min_free_stack);
-
-    vTaskDelete(nullptr);
 }
 
 void LoaderSearch::client_begin_set_callback() {
@@ -169,12 +164,12 @@ void LoaderSearch::client_begin_set_callback() {
 }
 
 void LoaderSearch::begin(const char* query_) {
-    ListLoader::begin();
+    Loader::begin();
     url_encode_string(query_enc, query_);
 }
 
 void LoaderSearch::load_abort() {
-    ListLoader::load_abort();
+    Loader::load_abort();
     client.try_abort();
 }
 
@@ -183,19 +178,19 @@ int LoaderSearch::check_station_url(int i) {
     // some of the stations are in *.pls format (playlist, a couple of different streams)
     // we need to load this files and choose random stream from them
 
-    const char* url = stations[i].url;
+    const char* url = entries[i].get_url();
     const char* ext = url + strlen(url) - 4;
     if (strcmp(ext, ".pls") == 0) {
         client_begin_set_callback();
         List* list = query_url(client, url,
-                               stations_pls, stations_pls_count,
+                               entries_pls, entries_pls_count,
                                should_abort, client_errored);
 
         if (!list)
             return -1;
 
         // printf("done loading pls, loaded %d stations\n", list->stations_found);
-        list->select_random(&stations[i]);
+        list->select_random(&entries[i]);
     }
 
     return 0;

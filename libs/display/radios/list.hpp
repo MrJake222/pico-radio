@@ -3,13 +3,7 @@
 #include <config.hpp>
 #include <circularbuffer.hpp>
 #include <datasource.hpp>
-#include <config.hpp>
-
-struct station {
-    char uuid[ST_UUID_LEN + 1];
-    char name[ST_NAME_LEN + 1];
-    char  url[ST_URL_LEN + 1];
-};
+#include <listentry.hpp>
 
 enum class ListError {
     ERROR,
@@ -21,28 +15,29 @@ class List {
 
     char line[LIST_MAX_LINE_LENGTH + 1];
 
-    struct station* stations;
-    int stations_len;
-    int stations_found;
+    ListEntry* entries;
+    int entries_len;
+    int entries_found;
 
     ListError consume(DataSource* ds);
     virtual ListError consume_format(char* line) = 0;
 
 protected:
-    void set_current_uuid(const char* p);
     void set_current_name(const char* p);
     void set_current_url(const char* p);
-    void set_next_station() { stations_found++; }
+    void set_next_entry();
 
 public:
-    virtual void begin(struct station* stations_, int stations_len_) {
-        stations = stations_;
-        stations_len = stations_len_;
-        stations_found = 0;
+    virtual void begin(ListEntry* entries_, int entries_len_) {
+        entries = entries_;
+        entries_len = entries_len_;
+        entries_found = 0;
     }
 
     int consume_all(DataSource* ds, volatile bool& abort, volatile bool& error);
 
-    int get_stations_found() { return stations_found; }
-    void select_random(struct station* ts);
+    int get_entries_found() { return entries_found; }
+
+    // select random station from this List instance and copy it into <ts>
+    void select_random(ListEntry* ts);
 };

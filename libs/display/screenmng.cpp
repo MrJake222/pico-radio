@@ -30,12 +30,12 @@ static SemaphoreHandle_t mutex_ticker;
 
 // list loaders
 static LoaderSearch sl(
-        get_stations(), MAX_STATIONS,
-        get_stations_pls(), MAX_STATIONS_PLS,
+        get_entries(), MAX_ENTRIES,
+        get_entries_pls(), MAX_ENTRIES_PLS,
         get_http_client());
 
 static LoaderFav favl(
-        get_stations(), MAX_STATIONS,
+        get_entries(), MAX_ENTRIES,
         get_lfs());
 
 ScFavourites sc_fav(display, mutex_ticker, favl);

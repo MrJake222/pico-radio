@@ -1,6 +1,6 @@
 #pragma once
 
-#include <list.hpp>
+#include <listentry.hpp>
 #include <lfs.h>
 
 // in-place operators on favourites list
@@ -10,7 +10,7 @@ namespace fav {
 
 int create();
 // returns index of the new station or -1 on failure
-int add(const struct station* st);
+int add(const ListEntry* st);
 int remove(int index);
 
 }

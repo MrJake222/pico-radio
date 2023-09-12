@@ -5,8 +5,8 @@ static volatile CircularBuffer cbuf(BUF_MP3_SIZE_BYTES, BUF_HIDDEN_MP3_SIZE_BYTE
 
 static HttpClientPico http_client(cbuf);
 
-static struct station stations[MAX_STATIONS];
-static struct station stations_pls[MAX_STATIONS_PLS];
+static ListEntry entries[MAX_ENTRIES];
+static ListEntry entries_pls[MAX_ENTRIES_PLS];
 
 static lfs_t lfs;
 
@@ -18,12 +18,12 @@ HttpClientPico& get_http_client() {
     return http_client;
 }
 
-struct station* get_stations() {
-    return stations;
+ListEntry* get_entries() {
+    return entries;
 }
 
-struct station* get_stations_pls() {
-    return stations_pls;
+ListEntry* get_entries_pls() {
+    return entries_pls;
 }
 
 lfs_t* get_lfs() {

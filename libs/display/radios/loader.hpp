@@ -4,7 +4,7 @@
 
 typedef void(*all_ld_cb_fn)(void* arg, int errored);
 
-class ListLoader {
+class Loader {
 
     void* cb_arg;
     all_ld_cb_fn all_loaded_cb;
@@ -20,16 +20,16 @@ protected:
 
     volatile bool should_abort;
 
-    struct station* const stations;
-    const int stations_max;
-    int stations_offset;
+    ListEntry* const entries;
+    const int entries_max;
+    int entries_offset;
 
     int page;
 
 public:
-    ListLoader(struct station* stations_, int stations_max_)
-        : stations(stations_)
-        , stations_max(stations_max_)
+    Loader(ListEntry* entries_, int entries_max_)
+        : entries(entries_)
+        , entries_max(entries_max_)
         { }
 
     void begin();
@@ -38,13 +38,13 @@ public:
     void set_cb_arg(void* arg) { cb_arg = arg; }
     void set_all_loaded_cb(all_ld_cb_fn cb) { all_loaded_cb = cb; }
 
-    // start loading stations
-    virtual void load_stations(int page_);
-    // stop loading stations
+    // start loading
+    virtual void load(int page_);
+    // stop loading
     virtual void load_abort();
 
-    int get_station_count() { return stations_offset; }
-    const struct station* get_station(int i) { return &stations[i]; }
+    int get_station_count() { return entries_offset; }
+    const ListEntry* get_station(int i) { return &entries[i]; }
     // can be overridden to handle *.pls format
     virtual int check_station_url(int i) { return 0; }
 

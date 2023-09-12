@@ -18,7 +18,8 @@ ListError ListM3U::consume_format(char* line) {
             *val++ = '\0';
 
             if (strcmp(line, "RADIOBROWSERUUID") == 0) {
-                set_current_uuid(val);
+                // set_current_uuid(val);
+                // radio-browser-specific uuid -- ignored
             }
             else if (strcmp(line, "EXTINF") == 0) {
                 char* name = strchr(val, ',');
@@ -32,7 +33,7 @@ ListError ListM3U::consume_format(char* line) {
         set_current_url(line);
 
         // url marks the end of station definition
-        set_next_station();
+        set_next_entry();
     }
 
     return ListError::OK;

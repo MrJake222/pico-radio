@@ -1,7 +1,7 @@
 #pragma once
 
 #include <screen.hpp>
-#include <listloader.hpp>
+#include <loader.hpp>
 
 #define KB_BUTTONS_MAX    4
 
@@ -46,7 +46,7 @@ class ScreenList : public Screen {
 
     int size_y() override { return kb_buttons() + rows_above() + rows_below(); }
 
-    virtual ListLoader& get_ll() = 0;
+    virtual Loader& get_ll() = 0;
 
     // pagination support
     int page_count;

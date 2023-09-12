@@ -19,7 +19,7 @@ class ScFavourites : public ScreenList {
     Screen* run_action(int action) override;
 
     LoaderFav& ll;
-    ListLoader & get_ll() override { return ll; }
+    Loader & get_ll() override { return ll; }
 
     friend void fav_update_cb(void* arg, const char* info);
 
