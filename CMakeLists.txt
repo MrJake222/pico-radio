@@ -23,9 +23,9 @@ add_compile_definitions(
 # libraries
 add_subdirectory(libs)
 
-list(APPEND
-        PICO_CONFIG_HEADER_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/libs/external/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/include/freertos_sdk_config.h)
+#list(APPEND
+#        PICO_CONFIG_HEADER_FILES
+#        ${CMAKE_CURRENT_SOURCE_DIR}/libs/external/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/include/freertos_sdk_config.h)
 
 pico_sdk_init()
 
