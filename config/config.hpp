@@ -94,6 +94,7 @@
 #define PATH_FAVOURITES           "/favourites.m3u"
 
 // --------------------------------- SD --------------------------------- //
+#define FATFS_MAX_PATH_LEN        (128*4)
 
 // --------------------------------- LCD --------------------------------- //
 #define LCD_SCROLLED_TEXTS_MAX          4

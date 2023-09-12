@@ -128,8 +128,8 @@ Screen* ScFavourites::run_action(int action) {
                 return nullptr;
             }
 
-            // TODO display local playback screen
-            return nullptr;
+            sc_local.begin("/");
+            return &sc_local;
     }
 
     return nullptr;

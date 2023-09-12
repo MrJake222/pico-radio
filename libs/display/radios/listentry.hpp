@@ -7,6 +7,8 @@ class ListEntry {
     char url[ENT_URL_LEN + 1];
 
 public:
+    bool is_dir;
+
     void set_name(const char* name_);
     void set_url(const char* url_);
 

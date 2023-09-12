@@ -9,6 +9,7 @@ add_library(libs
         display/screens/scplay.cpp
         display/screens/scsearch.cpp
         display/screens/scsearchres.cpp
+        display/screens/sclocal.cpp
 
         display/assets/ubuntu_mono.cpp
         display/assets/font.cpp
@@ -22,6 +23,7 @@ add_library(libs
         display/radios/loader.cpp
         display/radios/loadersearch.cpp
         display/radios/loaderfav.cpp
+        display/radios/loaderlocal.cpp
 
         display/tft/st7735s.cpp
         display/textscrolled.cpp
