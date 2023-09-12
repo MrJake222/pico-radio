@@ -75,7 +75,7 @@ static DecodeStream dec_stream(
         core1_entry);
 
 static DecodeBase* dec;
-static SemaphoreHandle_t dec_mutex;
+static SemaphoreHandle_t dec_mutex = nullptr;
 
 // player tasks
 xTaskHandle player_task_h;
@@ -216,11 +216,13 @@ static void player_task(void* arg) {
 
     // create <dec> mutex to prevent stat task
     // from running on null reference at the end
-    r = create_mutex_give(dec_mutex);
-    if (r < 0) {
-        puts("dec mutex creation failed");
-        failed = true;
-        goto clean_up_dec_null;
+    if (!dec_mutex) {
+        r = create_mutex_give(dec_mutex);
+        if (r < 0) {
+            puts("dec mutex creation failed");
+            failed = true;
+            goto clean_up_dec_null;
+        }
     }
 
     // init decoder & format
@@ -369,8 +371,10 @@ static void player_stat_task(void* arg) {
 
     while (true) {
         xSemaphoreTake(dec_mutex, portMAX_DELAY);
-        if (!player_is_started())
+        if (!player_is_started()) {
+            xSemaphoreGive(dec_mutex);
             break;
+        }
 
         const int current = dec->current_time();
 
