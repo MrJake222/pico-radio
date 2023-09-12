@@ -69,15 +69,15 @@ static int unmount(sd_card_t* pSD) {
         gpio_set_input_hysteresis_enabled(gpio, true); // schmitt trigger
     }
 
-    puts("sd: detection init ok");
-
     // wait a bit for gpio to settle after boot
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
 
     // check if card is present on boot
     // card present if gpio low
     card_present = gpio_get(SD_CD) == 0;
     card_mounted = false;
+
+    printf("sd: detection init ok, on-boot: %s\n", card_present ? "PRESENT" : "MISSING");
 
     // enable interrupts
     for (int gpio : all) {
@@ -90,9 +90,6 @@ static int unmount(sd_card_t* pSD) {
     sd_card_t* pSD = sd_get_by_num(0);
 
     while (true) {
-        // wait a bit for card to securely be inserted
-        vTaskDelay(500 / portTICK_PERIOD_MS);
-
         if (card_present) {
             puts("mounting sd card");
             int r = mount(pSD);
@@ -114,6 +111,9 @@ static int unmount(sd_card_t* pSD) {
         // wait for changes
         // (check at least once before waiting)
         ulTaskNotifyTake(true, portMAX_DELAY);
+
+        // wait a bit for card to securely be inserted
+        vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }
 

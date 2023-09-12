@@ -25,7 +25,7 @@ add_subdirectory(libs)
 
 list(APPEND
         PICO_CONFIG_HEADER_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/config/lock_rtos.h)
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/external/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/include/freertos_sdk_config.h)
 
 pico_sdk_init()
 
@@ -36,7 +36,6 @@ add_executable(${PROJECT_NAME}
         main.cpp
         config/sd_hw_config.c
         gpio_irq.cpp
-        lock_rtos.cpp
         )
 
 pico_add_extra_outputs(${PROJECT_NAME})

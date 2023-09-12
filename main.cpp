@@ -27,8 +27,6 @@
 #include <sd.hpp>
 #include <gpio_irq.hpp>
 
-#include <lock_rtos.h>
-
 void fs_err(FRESULT fr, const char* tag) {
     panic("%s: %s (id=%d)\n", tag, FRESULT_str(fr), fr);
 }
@@ -233,7 +231,6 @@ int main() {
             PRI_WIFI_SETUP,
             nullptr);
 
-    lock_rtos_init();
     vTaskStartScheduler();
 }
 
