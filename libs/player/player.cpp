@@ -326,17 +326,18 @@ static void player_update_stats() {
     const int current = dec->current_time();
     const int duration = dec->duration();
 
-    printf("%02d:%02d / %02d:%02d   decode %2d%%   health %2d%%  ",
+    printf("%02d:%02d / %02d:%02d   decode %3d%%   health %3d%%  ",
            current/60, current%60,
            duration/60, duration%60,
            dec->core1_usage(),
            dec->buf_health()
     );
 
-    printf("rtos ram used: %2d%%  max %2d%%  player free stack: %ld  ",
+    printf("rtos ram used: %2d%%  max %2d%%  free stack: player=%ld/stat=%ld  ",
            (configTOTAL_HEAP_SIZE - xPortGetFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
            (configTOTAL_HEAP_SIZE - xPortGetMinimumEverFreeHeapSize()) * 100 / configTOTAL_HEAP_SIZE,
-           uxTaskGetStackHighWaterMark(nullptr));
+           uxTaskGetStackHighWaterMark(player_task_h),
+           uxTaskGetStackHighWaterMark(player_stat_task_h));
 
     // Lwip stats (all)
     // to enable/disable see DEBUG* in lwipopts.h
