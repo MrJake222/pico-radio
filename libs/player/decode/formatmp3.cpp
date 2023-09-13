@@ -4,22 +4,16 @@
 #include <cstdio>
 #include <pico/platform.h>
 
-int FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
+FormatMP3::Error FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
 
     const int max_check_len = 1024;
     int tries_left = raw_buf.size / max_check_len;
     int matched;
     do {
         if (raw_buf.data_left() < MP3_HEADER_SIZE) {
-            int ret = wrap_buffer_wait_for_data();
-            if (ret == -1)
-                // failed
-                return -1; // error
-
-            if (ret == -2)
-                return -2; // abort
-
-            continue;
+            Error ret = wrap_buffer_wait_for_data();
+            if (ret != Error::OK)
+                return ret;
         }
 
         int check_len = MIN(max_check_len, raw_buf.data_left_continuous());
@@ -50,19 +44,19 @@ int FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
     } while (matched < 1 && tries_left > 0);
 
     if (matched == 0)
-        return -1;
+        return Error::FAILED;
 
-    return 0;
+    return Error::OK;
 }
 
 int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
-    if (abort)
+    if (abort())
         return 0;
 
     // printf("decode o %ld  avail %ld\n", raw_buf.get_read_offset(), raw_buf.data_left_continuous());
 
     long bytes_consumed;
-    int ret;
+    Error ferr; // (format) error
 
     bool again = false;
     do {
@@ -73,14 +67,8 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
 
         if (raw_buf.data_left_continuous() < MP3_HEADER_SIZE) {
             // even the header won't fit in continuous buffer
-            ret = wrap_buffer_wait_for_data();
-            if (ret == -1)
-                // failed
-                return -1; // error
-
-            if (ret == -2)
-                // abort
-                return 0; // no frames decoded
+            ferr = wrap_buffer_wait_for_data();
+            CHECK_ERROR(ferr);
         }
 
         uint8_t* dptr_orig = raw_buf.read_ptr();
@@ -105,14 +93,8 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
                 break;
 
             case ERR_MP3_INDATA_UNDERFLOW:
-                ret = wrap_buffer_wait_for_data();
-                if (ret == -1)
-                    // failed
-                    return -1; // error
-
-                if (ret == -2)
-                    // abort
-                    return 0; // no frames decoded
+                ferr = wrap_buffer_wait_for_data();
+                CHECK_ERROR(ferr);
 
                 again = true;
                 break;
@@ -127,15 +109,8 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
                 printf("reversing buffer by %d: %ld -> %ld\n", rev, raw_buf.get_read_offset(), raw_buf.get_read_offset() - rev);
                 raw_buf.read_reverse(rev);
 #endif
-                ret = align_buffer(orig_read);
-                if (ret == -1) {
-                    puts("align_buffer failed");
-                    return -1;
-                }
-                if (ret == -2) {
-                    // abort
-                    return 0;
-                }
+                ferr = align_buffer(orig_read);
+                CHECK_ERROR(ferr);
 
                 again = true;
                 break;
@@ -193,8 +168,8 @@ int FormatMP3::decode_header() {
             break;
 
         else if (r == ERR_MP3_INVALID_FRAMEHEADER) {
-            r = align_buffer(raw_buf.read_ptr());
-            if (r == -1) {
+            Error ferr = align_buffer(raw_buf.read_ptr());
+            if (ferr != Error::OK) {
                 puts("align_buffer failed");
                 return -1;
             }

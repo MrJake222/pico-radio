@@ -52,6 +52,7 @@ class DecodeBase {
     // how much last dma feed took to decode 1 frame on average
     float frame_decode_time_ms;
     bool abort;
+    bool eof;
 
     // Main task variables
     xQueueHandle queue;
@@ -81,6 +82,8 @@ protected:
 
     // notify about natural content end occurred (dma underflow) or error
     inline void notify_playback_end(bool error) { notify(END, error); }
+
+    bool is_eof() { return eof; }
 
 public:
     DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_, volatile CircularBuffer& cbuf_, entry_fn core1_entry_)
@@ -119,9 +122,12 @@ public:
     bool decode_finished_by_A() { return decode_finished_by == FinishReason::UnderflowChanA; }
     bool decode_finished_by_B() { return decode_finished_by == FinishReason::UnderflowChanB; }
 
-    // notify playback thread that it should not expect more data and exit
-    // (from core0, ex. user abort, end-of-file/stream)
-    virtual void notify_stop() { abort = true; format->set_abort(); }
+    // notify playback thread to stop
+    // it should not expect more data and exit (after using up the buffer)
+    virtual void notify_eof() { eof = true; }
+    // end playback as soon as possible
+    virtual void notify_abort() { abort = true; }
+
 
     // Media information
     // return source medium size in bytes

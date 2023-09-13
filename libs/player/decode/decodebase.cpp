@@ -25,7 +25,7 @@ void DecodeBase::begin(const char* path_, Format* format_) {
     path = path_;
     format = format_;
 
-    format->begin();
+    format->begin(&abort, &eof);
     cbuf.reset_with_cb();
     // callback set was moved to play()
     // (it pushes to queue and nothing reads from it here)
@@ -34,6 +34,7 @@ void DecodeBase::begin(const char* path_, Format* format_) {
     decode_finished_by = FinishReason::NoFinish;
     frame_decode_time_ms = 0;
     abort = false;
+    eof = false;
 }
 
 int DecodeBase::setup() {

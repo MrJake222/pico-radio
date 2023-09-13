@@ -18,7 +18,7 @@ class FormatMP3 : public Format {
     bool stats_print;
     void calculate_stats();
 
-    int align_buffer(uint8_t *orig_read_ptr);
+    FormatMP3::Error align_buffer(uint8_t *orig_read_ptr);
     int decode_up_to_one_frame(uint32_t* audio_pcm_buf);
 
     unsigned long long bitrate_sum;
@@ -30,8 +30,8 @@ public:
         , hMP3Decoder(hMP3Decoder_)
         { }
 
-    void begin() override {
-        Format::begin();
+    void begin(bool* abort_, bool* eof_) override {
+        Format::begin(abort_, eof_);
 
         MP3ClearBuffers(hMP3Decoder);
         stats_print = true;

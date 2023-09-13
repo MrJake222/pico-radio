@@ -13,7 +13,6 @@ class DecodeFile : public DecodeBase {
     // returns number of bytes loaded or -1 on error
     int load_buffer(int bytes);
 
-    bool eof;
     int check_buffer();
 
     int source_size_bytes() override { return f_size(&fp); }

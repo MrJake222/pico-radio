@@ -6,9 +6,22 @@
 
 class Format {
 
+    // stop playback immediately
+    bool* abort_;
+    // stop playback after reading whole buffer
+    bool* eof_;
+
 protected:
-    // used to abort playback as fast as possible
-    bool abort;
+
+    bool abort() { return *abort_; }
+    bool eof()   { return *eof_; }
+
+    enum class Error {
+        OK,
+        FAILED,
+        ABORT,
+        ENDOFSTREAM
+    };
 
     volatile CircularBuffer& raw_buf;
 
@@ -17,18 +30,16 @@ public:
         : raw_buf(raw_buf_)
         { }
 
-    // used on end-of-file/stream and on user abort
-    void set_abort() { abort = true; }
-
     // call every time before decoding starts
-    virtual void begin() {
-        abort = false;
+    virtual void begin(bool* abort, bool* eof) {
+        abort_ = abort;
+        eof_ = eof;
     }
 
     // tries to wrap buffer but on data underflow waits for
     // incoming data (busy waiting). Returns immediately on user abort.
-    // Returns 0 on success -1 on failure (not enough "hidden" section in CircularBuffer), -2 on user abort
-    int wrap_buffer_wait_for_data();
+    // Returns Error::OK on success Error::Error on failure, Error::ABORT on user abort, Error:EOF on eof
+    Error wrap_buffer_wait_for_data();
 
     // returns number of units to decode to fill whole PCM buffer (size passed down)
     // (wav bytes or mp3 frames)
@@ -51,3 +62,17 @@ public:
 
     virtual int bitrate_in() = 0;
 };
+
+#define CHECK_ERROR(ferr)           \
+    switch (ferr) {                 \
+        case Error::OK:             \
+            break;                  \
+        case Error::FAILED:         \
+            /* severe error */      \
+            /* pass upward */       \
+            return -1;              \
+        case Error::ABORT:          \
+        case Error::ENDOFSTREAM:    \
+            /* no frames decoded */ \
+            return 0;               \
+    }

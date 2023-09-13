@@ -23,7 +23,7 @@ int FormatWAV::decode_header() {
 }
 
 int FormatWAV::decode_up_to_n(uint32_t *audio_pcm_buf, int n) {
-    if (abort)
+    if (abort())
         return 0;
 
     int copied = 0;

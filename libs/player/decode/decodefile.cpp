@@ -11,7 +11,6 @@ static void fs_err(FRESULT fr, const char* tag) {
 void DecodeFile::begin(const char* path_, Format* format_) {
     DecodeBase::begin(path_, format_);
 
-    eof = false;
     file_open = false;
 }
 
@@ -57,7 +56,7 @@ int DecodeFile::load_buffer(int bytes) {
 
     if (read < bytes) {
         printf("EOF\n");
-        eof = true;
+        notify_eof();
     }
 
     cbuf.write_ack(read);
@@ -67,9 +66,8 @@ int DecodeFile::load_buffer(int bytes) {
 }
 
 int DecodeFile::check_buffer() {
-    if (eof) {
+    if (is_eof()) {
         // no more data to read
-        notify_stop();
         return 0;
     }
 

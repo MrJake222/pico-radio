@@ -18,7 +18,7 @@ public:
     void begin(const char* path_, Format* format_) override;
     int play() override;
     void end() override;
-    void notify_stop() override;
+    void notify_abort() override;
 
     // callback called from core0
     void ack_bytes(uint16_t bytes) override;
