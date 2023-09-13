@@ -168,6 +168,8 @@ void ScreenList::draw_button_entry(int y, bool selected) {
     bg = get_btn_bg(selected, true);
     display.fill_rect(xs, ys, s_res_w, s_res_h, bg);
 
+    int pad_right = 0;
+
     switch (ent->type) {
         case ListEntry::le_type_radio:
         case ListEntry::le_type_local:
@@ -179,16 +181,16 @@ void ScreenList::draw_button_entry(int y, bool selected) {
             display.draw_icon(xs + s_res_pad, ys + pad, icon_folder, bg, COLOR_FG);
 
             // move text
-            xs += 16;
+            pad_right += 16;
 
             break;
     }
 
     const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);
     const int pad = (s_res_h - font->H) / 2;
-    add_scrolled_text_or_normal(xs + s_res_pad, ys + pad - 1, name, font,
+    add_scrolled_text_or_normal(xs + s_res_pad + pad_right, ys + pad - 1, name, font,
                                 bg, COLOR_FG,
-                                s_res_w - s_res_pad * 2, selected);
+                                s_res_w - s_res_pad * 2 - pad_right, selected);
 }
 
 void ScreenList::show() {
