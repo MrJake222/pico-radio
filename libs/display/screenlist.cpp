@@ -1,6 +1,7 @@
 #include <ubuntu_mono.hpp>
 #include <cstdio>
 #include "screenlist.hpp"
+#include <icons.hpp>
 
 // #define s_base_x      3
 // #define s_base_y     31
@@ -152,6 +153,7 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
     unsigned char xs;
     unsigned char ys;
+    const ListEntry* ent;
     const char* name;
     int bg;
 
@@ -160,12 +162,31 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
     xs = s_base_x;
     ys = s_base_y + (s_res_h + s_res_mar) * y;
-    name = get_ll().get_station(base_y + y)->get_name();
+    ent = get_ll().get_station(base_y + y);
+    name = ent->get_name();
 
     bg = get_btn_bg(selected, true);
     display.fill_rect(xs, ys, s_res_w, s_res_h, bg);
-    add_scrolled_text_or_normal(xs + s_res_pad, ys + 1, name,
-                                ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+
+    switch (ent->type) {
+        case ListEntry::le_type_radio:
+        case ListEntry::le_type_local:
+            break;
+
+        case ListEntry::le_type_dir:
+            const struct icon* icon = &icon_folder;
+            const int pad = (s_res_h - icon->h) / 2;
+            display.draw_icon(xs + s_res_pad, ys + pad, icon_folder, bg, COLOR_FG);
+
+            // move text
+            xs += 16;
+
+            break;
+    }
+
+    const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);
+    const int pad = (s_res_h - font->H) / 2;
+    add_scrolled_text_or_normal(xs + s_res_pad, ys + pad - 1, name, font,
                                 bg, COLOR_FG,
                                 s_res_w - s_res_pad * 2, selected);
 }

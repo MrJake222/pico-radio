@@ -10,6 +10,7 @@ class LoaderLocal : public Loader {
     FILINFO fileinfo;
 
     char path[FATFS_MAX_PATH_LEN];
+    char buf[FATFS_MAX_PATH_LEN];
 
     void task() override;
     void set_file(const char* path_, bool is_dir);
@@ -22,4 +23,6 @@ public:
     { }
 
     void begin(const char* path_);
+
+    int check_entry_url(int i) override;
 };

@@ -36,19 +36,38 @@ void ScLocal::draw_button(int x, int y, bool selected) {
 
 Screen* ScLocal::run_action(int action) {
     int i, r;
+    const ListEntry* ent;
 
     switch ((Action) action) {
         case PLAY:
             i = get_selected_station_index();
-            r = ll.check_station_url(i);
-            if (r < 0) {
-                show_error("Błąd: nie można otworzyć strumienia");
-                return nullptr;
+            ent = ll.get_station(i);
+
+            switch (ent->type) {
+                case ListEntry::le_type_local:
+                    // play local file
+
+                    r = ll.check_entry_url(i);
+                    if (r < 0) {
+                        show_error("Błąd: nie można otworzyć strumienia");
+                        return nullptr;
+                    }
+
+                    // <i> equals position on search list (not fav list)
+                    sc_play.begin(ent, -1, this);
+                    return &sc_play;
+
+                case ListEntry::le_type_dir:
+                    // open folder recursively
+                    begin(ent->get_url());
+                    show();
+                    break;
+
+                // radio is impossible here
+                case ListEntry::le_type_radio: break;
             }
 
-            // <i> equals position on search list (not fav list)
-            sc_play.begin(ll.get_station(i), -1, this);
-            return &sc_play;
+            break;
 
         case BACK:
             ll.load_abort();

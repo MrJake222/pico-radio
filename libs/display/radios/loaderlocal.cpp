@@ -53,6 +53,7 @@ void LoaderLocal::set_file(const char* path_, bool is_dir) {
     entry->set_url(path_);
     entry->type = is_dir ? ListEntry::le_type_dir
                          : ListEntry::le_type_local;
+    entry->dir_added = false;
 
     entries_offset++;
 }
@@ -84,4 +85,18 @@ int LoaderLocal::get_entry_count_whole() {
 
     f_closedir(&dir);
     return files_dirs;
+}
+
+int LoaderLocal::check_entry_url(int i) {
+    if (entries[i].dir_added)
+        return 0;
+
+    // same as strcpy but returns end pointer
+    char* end = stpcpy(buf, path);
+    *end++ = '/'; // set & skip
+    strcpy(end, entries[i].get_url());
+    entries[i].set_url(buf);
+    entries[i].dir_added = true;
+
+    return 0;
 }

@@ -41,7 +41,7 @@ public:
     void begin(const char* query_);
     void load_abort() override;
 
-    int check_station_url(int i) override;
+    int check_entry_url(int i) override;
 
     void set_update_cb(ld_search_update_cb cb) { upd_cb = cb; }
     int get_provider_count();

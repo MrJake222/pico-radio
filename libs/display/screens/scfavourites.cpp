@@ -107,7 +107,7 @@ Screen* ScFavourites::run_action(int action) {
         // TODO on PLAY and SEARCH display warning when no wifi connection
         case PLAY:
             i = get_selected_station_index();
-            r = ll.check_station_url(i);
+            r = ll.check_entry_url(i);
             if (r < 0) {
                 show_error("Błąd: nie można otworzyć strumienia");
                 return nullptr;

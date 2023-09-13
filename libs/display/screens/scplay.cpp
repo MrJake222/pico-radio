@@ -175,8 +175,8 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 
             // scrolling "progress bar" of the song
             sc->draw_progress_bar(2, 45, sc->display.W - 4,
-                                  d == 0 ? 100
-                                         : c * 100 / d,
+                                  d == 0 ? 0    // probably beginning of the playback
+                                                 : c * 100 / d,
                                   COLOR_BG_DARK, COLOR_ACC1, false);
 
             // song time / total time

@@ -49,8 +49,9 @@ public:
 
     int get_station_count() { return entries_offset; }
     const ListEntry* get_station(int i) { return &entries[i]; }
-    // can be overridden to handle *.pls format
-    virtual int check_station_url(int i) { return 0; }
+    // can be overridden to handle special url updates
+    // such as *.pls format or recursive path updates
+    virtual int check_entry_url(int i) { return 0; }
 
     // should return max pages to switch to
     // return 1 to disable, -1 to infinite pages

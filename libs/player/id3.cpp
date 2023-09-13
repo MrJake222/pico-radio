@@ -30,6 +30,12 @@ int ID3::try_parse() {
     // now the read pointer is past any headers
 
     while (size_left > 0) {
+        if (*cbuf.read_ptr() == 0x00) {
+            // padding
+            cbuf.read_ack(size_left);
+            break;
+        }
+
         memcpy(&frame, cbuf.read_ptr(), sizeof(id3_frame));
         const uint32_t frame_size = decode_synchsafe(frame.size_ss, 4);
         const char frame_name[5] = { frame.id[0], frame.id[1], frame.id[2], frame.id[3], '\0' };
