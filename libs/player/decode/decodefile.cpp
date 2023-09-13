@@ -73,12 +73,12 @@ int DecodeFile::check_buffer() {
         return 0;
     }
 
-    if (cbuf.health() > load_max_health)
+    if (cbuf.health() >= BUF_HEALTH_MIN)
         // data chunk too small
         return 0;
 
 
-    int data_len = cbuf.space_left();
+    int data_len = (100 - BUF_HEALTH_MIN) * cbuf.size / 100;
 
     // this is kind of thread-safe because space_left_continuous is either
     // constant or only growing (then its limited by data_len)

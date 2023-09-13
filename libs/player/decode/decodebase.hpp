@@ -105,7 +105,7 @@ public:
     // does the heavy work (connect/open file)
     // blocks calling task or fails
     // subclasses should override and call base class
-    // but not before buffer health is at least <min_buffer>%
+    // but not before buffer health is at least <BUF_HEALTH_MIN>%
     virtual int play();
 
     // called after play

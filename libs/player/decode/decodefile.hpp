@@ -6,10 +6,6 @@
 #include <format.hpp>
 
 class DecodeFile : public DecodeBase {
-
-    // maximum buffer health when the load will take place
-    static const int load_max_health = 80;
-
     FRESULT fr;
     FIL fp;
     bool file_open;
