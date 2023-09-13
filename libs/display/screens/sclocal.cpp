@@ -46,7 +46,6 @@ Screen* ScLocal::run_action(int action) {
             switch (ent->type) {
                 case ListEntry::le_type_local:
                     // play local file
-
                     r = ll.check_entry_url(i);
                     if (r < 0) {
                         show_error("Błąd: nie można otworzyć strumienia");
@@ -59,7 +58,14 @@ Screen* ScLocal::run_action(int action) {
 
                 case ListEntry::le_type_dir:
                     // open folder recursively
-                    begin(ent->get_url());
+                    r = ll.go(ent->get_url());
+                    if (r < 0) {
+                        show_error("Błąd: nie można otworzyć strumienia");
+                        return nullptr;
+                    }
+
+                    set_reload();
+                    set_fav_pos(0);
                     show();
                     break;
 
@@ -71,7 +77,17 @@ Screen* ScLocal::run_action(int action) {
 
         case BACK:
             ll.load_abort();
-            return &sc_fav;
+
+            r = ll.up();
+            if (r < 0)
+                // already top-level
+                // close and go to fav screen
+                return &sc_fav;
+
+            // path updated
+            set_reload();
+            set_fav_pos(0);
+            show();
     }
 
     return nullptr;

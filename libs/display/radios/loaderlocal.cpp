@@ -93,10 +93,61 @@ int LoaderLocal::check_entry_url(int i) {
 
     // same as strcpy but returns end pointer
     char* end = stpcpy(buf, path);
-    *end++ = '/'; // set & skip
-    strcpy(end, entries[i].get_url());
+    // end points to null terminator
+
+    const int buf_left = BUF_LEN - (end - buf);
+
+    strncpy(end, entries[i].get_url(), buf_left);
     entries[i].set_url(buf);
     entries[i].dir_added = true;
+
+    return 0;
+}
+
+int LoaderLocal::go(const char* dirpath) {
+    if (strlen(path) + strlen(dirpath) + 1 >= PATH_LEN)
+        // buffer will overflow
+        return -1;
+
+    char* end = strrchr(path, '/');
+    if (!end)
+        // no separator found
+        return -1;
+
+    // skip separator
+    end += 1;
+
+    // same as strcpy but returns end pointer
+    end = stpcpy(end, dirpath);
+    // add trailing slash
+    *end++ = '/';
+    *end++ = '\0';
+
+    return 0;
+}
+
+int LoaderLocal::up() {
+    if (strcmp(path, "/") == 0)
+        // top-level directory
+        return -1;
+
+    int slash_seen = 0;
+    char* end;
+
+    // iterate from end to begin
+    // return pointer to second-last
+    for (end = path+strlen(path); end != path; end--) {
+        if (*end == '/')
+            slash_seen++;
+
+        // trailing + second-last
+        if (slash_seen == 2)
+            break;
+    }
+
+    // cut off at last dividing part (not counting trailing)
+    end++;       // skip slash
+    *end = '\0'; // trim right after
 
     return 0;
 }
