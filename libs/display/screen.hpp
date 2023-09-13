@@ -96,7 +96,7 @@ protected:
     // returns index of scrolled text or -1 if normal text
     int add_scrolled_text_or_normal(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width, bool allow_scroll=true);
 
-    void draw_progress_bar(int x, int y, int percent, int bg, int fg);
+    void draw_progress_bar(int x, int y, int w, int percent, int bg, int fg, bool draw_text);
 
     // slow ticks (1 s)
     bool tick_sec_enabled; // protects from writing over the error screen

@@ -205,28 +205,31 @@ int Screen::add_scrolled_text_or_normal(int text_x, int text_y, const char* str,
     }
 }
 
-void Screen::draw_progress_bar(int x, int y, int percent, int bg, int fg) {
+void Screen::draw_progress_bar(int x, int y, int w, int percent, int bg, int fg, bool draw_text) {
 
     // not to overflow the bar
-    // do not allow to display 100% (not to overflow the text)
-    percent = MIN(percent, 99);
+    percent = MIN(percent, 100);
+    const int filled_bar_width = percent * w / 100;
 
-    const int filled_bar_width = percent * 64 / 100;
+    // no to overflow the display
+    percent = MIN(percent, 99);
 
     // filled bar
     display.fill_rect(x, y, filled_bar_width, 4, fg);
 
     // empty bar
-    display.fill_rect(x + filled_bar_width, y, 64 - filled_bar_width, 4, bg);
+    display.fill_rect(x + filled_bar_width, y, w - filled_bar_width, 4, bg);
 
-    // percent
-    char buf[5];
-    sprintf(buf, "%02d%%", percent);
-    add_normal_text(
-            x + 64 + 4, y - 5, buf,
-            ubuntu_font_get_size(UbuntuFontSize::FONT_12),
-            COLOR_BG, COLOR_FG,
-            display.W - (x + 64 + 4));
+    if (draw_text) {
+        // percent
+        char buf[5];
+        sprintf(buf, "%02d%%", percent);
+        add_normal_text(
+                x + w + 4, y - 5, buf,
+                ubuntu_font_get_size(UbuntuFontSize::FONT_12),
+                COLOR_BG, COLOR_FG,
+                display.W - (x + w + 4));
+    }
 }
 
 void Screen::begin() {

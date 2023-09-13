@@ -145,12 +145,18 @@ void player_update_callback(void* arg, DecodeBase* dec) {
         return;
 
     // current playback time
-    int c = dec->current_time();
-    sprintf(buf, "%02d:%02d", c/60, c%60);
+    const int c = dec->current_time();
+    const int d = dec->duration();
+    sprintf(buf, "%02d:%02d / %02d:%02d", c/60, c%60, d/60, d%60);
     sc->add_normal_text_ljust(
-            159, 55, buf,
+            159, 65, buf,
             ubuntu_font_get_size(UbuntuFontSize::FONT_12),
             COLOR_BG, COLOR_ACC1);
+
+    sc->draw_progress_bar(2, 60, sc->display.W - 4,
+                          d == 0 ? 100
+                                         : c*100 / d,
+                          COLOR_BG_DARK, COLOR_ACC1, false);
 
     // currently playing song (from metadata)
     int r = dec->get_meta_str(buf, PLAYER_META_BUF_LEN);
@@ -159,10 +165,10 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 
     // current CPU usage
     // sc->draw_progress_bar(74, 76, dec->core0_usage(), COLOR_BG_DARK, COLOR_ACC2);
-    sc->draw_progress_bar(74, STATS_Y + 5, dec->core1_usage(), COLOR_BG_DARK, COLOR_ACC2);
+    sc->draw_progress_bar(74, STATS_Y + 5, 64, dec->core1_usage(), COLOR_BG_DARK, COLOR_ACC2, true);
 
     // current buffer health
-    sc->draw_progress_bar(74, STATS_Y + 16, dec->buf_health(), COLOR_BG_DARK, COLOR_ACC2);
+    sc->draw_progress_bar(74, STATS_Y + 16, 64, dec->buf_health(), COLOR_BG_DARK, COLOR_ACC2, true);
 
     // current bitrate
     sprintf(buf, "%d kbps", dec->bitrate() / 1000);
