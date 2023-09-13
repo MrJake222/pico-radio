@@ -9,6 +9,8 @@
 
 typedef void(*icy_new_cb)();
 
+#define ICY_BUF_LEN   (PLAYER_META_BUF_LEN)
+
 class ICY {
 
     char buf[ICY_BUF_LEN];

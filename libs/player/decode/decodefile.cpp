@@ -99,3 +99,7 @@ void DecodeFile::ack_bytes(uint16_t bytes) {
         notify_playback_end(true);
     }
 }
+
+int DecodeFile::get_meta_str(char* meta, int meta_len) {
+    return get_meta_str_format(meta, meta_len);
+}

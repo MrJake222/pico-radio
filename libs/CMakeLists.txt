@@ -51,6 +51,7 @@ add_library(libs
         player/player.cpp
         player/filetype.cpp
         player/icy.cpp
+        player/id3.cpp
         player/amp.cpp
 
         sd/sd.cpp

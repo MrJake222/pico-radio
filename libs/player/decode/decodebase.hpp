@@ -85,6 +85,9 @@ protected:
 
     bool is_eof() { return eof; }
 
+    // used by subclasses to access format's decoded header metadata
+    int get_meta_str_format(char* meta, int meta_len) { return format->get_meta_str(meta, meta_len); }
+
 public:
     DecodeBase(uint32_t* const audio_pcm_, int audio_pcm_size_words_, volatile bool& a_done_irq_, volatile bool& b_done_irq_, volatile CircularBuffer& cbuf_, entry_fn core1_entry_)
             : audio_pcm(audio_pcm_)

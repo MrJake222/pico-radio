@@ -62,9 +62,6 @@
 #define ENT_NAME_LEN         32
 #define ENT_URL_LEN         128
 
-// ICY metadata
-#define ICY_BUF_LEN           128
-
 // --------------------------------- RTOS --------------------------------- //
 #define PRI_PLAYER              3  // handles player's buffer ack & playback stop
 #define PRI_PLAYER_STAT         2  // handles player's statistics updates

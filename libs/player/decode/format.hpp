@@ -61,6 +61,8 @@ public:
     virtual int bytes_to_sec(b_type bytes) = 0;
 
     virtual int bitrate_in() = 0;
+
+    virtual int get_meta_str(char* meta, int meta_len) = 0;
 };
 
 #define CHECK_ERROR(ferr)           \

@@ -39,4 +39,6 @@ public:
     int bytes_to_sec(b_type bytes) override;
 
     int bitrate_in() override;
+
+    int get_meta_str(char* meta, int meta_len) override { return -1; }
 };

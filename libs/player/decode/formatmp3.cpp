@@ -3,6 +3,7 @@
 
 #include <cstdio>
 #include <pico/platform.h>
+#include <cstring>
 
 FormatMP3::Error FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
 
@@ -162,6 +163,8 @@ int FormatMP3::decode_up_to_n(uint32_t* audio_pcm_buf, int n) {
 
 int FormatMP3::decode_header() {
 
+    id3.try_parse();
+
     while (true) {
         int r = MP3GetNextFrameInfo(hMP3Decoder, &frame_info, raw_buf.read_ptr());
         if (r == ERR_MP3_NONE)
@@ -234,4 +237,21 @@ int FormatMP3::bitrate_in() {
         return 0;
 
     return (int)(bitrate_sum / bitrate_count);
+}
+
+int FormatMP3::get_meta_str(char* meta, int meta_len) {
+    if (id3.get_title()[0] == '\0') {
+        // no title tag -> abort
+        return -1;
+    }
+
+    if (id3.get_artist()[0] == '\0') {
+        // no artist tag -> copy only song title
+        strncpy(meta, id3.get_title(), meta_len);
+        return 0;
+    }
+
+    // artist and title present -> copy all
+    snprintf(meta, meta_len, "%s - %s", id3.get_artist(), id3.get_title());
+    return 0;
 }

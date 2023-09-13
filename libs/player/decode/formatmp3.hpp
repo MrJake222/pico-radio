@@ -5,6 +5,7 @@
 #include <config.hpp>
 
 #include <mp3dec.h>
+#include <id3.hpp>
 
 class FormatMP3 : public Format {
 
@@ -24,10 +25,13 @@ class FormatMP3 : public Format {
     unsigned long long bitrate_sum;
     unsigned long long bitrate_count;
 
+    ID3 id3;
+
 public:
     FormatMP3(volatile CircularBuffer& raw_buf_, HMP3Decoder hMP3Decoder_)
         : Format(raw_buf_)
         , hMP3Decoder(hMP3Decoder_)
+        , id3(raw_buf_)
         { }
 
     void begin(bool* abort_, bool* eof_) override {
@@ -37,6 +41,8 @@ public:
         stats_print = true;
         bitrate_sum = 0;
         bitrate_count = 0;
+
+        id3.begin();
     }
 
     int decode_up_to_n(uint32_t *audio_pcm_buf, int n) override;
@@ -52,5 +58,7 @@ public:
 
     int bitrate_in() override;
     int byterate_in() { return bitrate_in() / 8; }
+
+    int get_meta_str(char *meta, int meta_len) override;
 };
 
