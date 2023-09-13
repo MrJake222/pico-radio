@@ -51,7 +51,8 @@ void LoaderLocal::set_file(const char* path_, bool is_dir) {
     ListEntry* entry = &entries[entries_offset];
     entry->set_name("");
     entry->set_url(path_);
-    entry->is_dir = is_dir;
+    entry->type = is_dir ? ListEntry::le_type_dir
+                         : ListEntry::le_type_local;
 
     entries_offset++;
 }

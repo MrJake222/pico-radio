@@ -147,21 +147,52 @@ void player_update_callback(void* arg, DecodeBase* dec) {
     // current playback time
     const int c = dec->current_time();
     const int d = dec->duration();
-    sprintf(buf, "%02d:%02d / %02d:%02d", c/60, c%60, d/60, d%60);
-    sc->add_normal_text_ljust(
-            159, 65, buf,
-            ubuntu_font_get_size(UbuntuFontSize::FONT_12),
-            COLOR_BG, COLOR_ACC1);
-
-    sc->draw_progress_bar(2, 60, sc->display.W - 4,
-                          d == 0 ? 100
-                                         : c*100 / d,
-                          COLOR_BG_DARK, COLOR_ACC1, false);
 
     // currently playing song (from metadata)
     int r = dec->get_meta_str(buf, PLAYER_META_BUF_LEN);
-    sc->update_scrolled_text(sc->meta_idx,
-                             r < 0 ? "brak danych" : buf);
+
+    switch (sc->ent.type) {
+
+        case ListEntry::le_type_radio:
+            // update bottom text
+            sc->update_scrolled_text(sc->meta_idx,
+                                     r < 0 ? "brak danych" : buf);
+
+            // station time
+            sprintf(buf, "%02d:%02d", c/60, c%60);
+            sc->add_normal_text_ljust(
+                    159, 55, buf,
+                    ubuntu_font_get_size(UbuntuFontSize::FONT_12),
+                    COLOR_BG, COLOR_ACC1);
+
+            break;
+
+        case ListEntry::le_type_local:
+            // update top text (only if meta available)
+            if (r == 0) {
+                sc->update_scrolled_text(sc->meta_idx, buf);
+            }
+
+            // scrolling "progress bar" of the song
+            sc->draw_progress_bar(2, 45, sc->display.W - 4,
+                                  d == 0 ? 100
+                                         : c * 100 / d,
+                                  COLOR_BG_DARK, COLOR_ACC1, false);
+
+            // song time / total time
+            sprintf(buf, "%02d:%02d / %02d:%02d", c/60, c%60, d/60, d%60);
+            sc->add_normal_text_ljust(
+                    159, 50, buf,
+                    ubuntu_font_get_size(UbuntuFontSize::FONT_12),
+                    COLOR_BG, COLOR_ACC1);
+
+
+
+            break;
+
+        // impossible
+        case ListEntry::le_type_dir: break;
+    }
 
     // current CPU usage
     // sc->draw_progress_bar(74, 76, dec->core0_usage(), COLOR_BG_DARK, COLOR_ACC2);
@@ -181,17 +212,40 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 void ScPlay::show() {
     Screen::show();
 
-    add_scrolled_text_or_normal(
-            2, 13, ent.get_name(),
-            ubuntu_font_get_size(UbuntuFontSize::FONT_24),
-            COLOR_BG, COLOR_ACC2,
-            display.W - 2*2);
+    switch (ent.type) {
 
-    meta_idx = add_scrolled_text(
-            2, 39, "brak danych",
-            ubuntu_font_get_size(UbuntuFontSize::FONT_16),
-            COLOR_BG, COLOR_ACC1,
-            display.W - 2*2);
+        case ListEntry::le_type_radio:
+            // top text -- station name: scrolled or normal (not changeable)
+            add_scrolled_text_or_normal(
+                    2, 13, ent.get_name(),
+                    ubuntu_font_get_size(UbuntuFontSize::FONT_24),
+                    COLOR_BG, COLOR_ACC2,
+                    display.W - 2*2);
+
+            // bottom text -- station song: scrolled (save id to change later from metadata)
+            meta_idx = add_scrolled_text(
+                    2, 39, "brak danych",
+                    ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+                    COLOR_BG, COLOR_ACC1,
+                    display.W - 2*2);
+
+            break;
+
+        case ListEntry::le_type_local:
+            // top text -- song name: scrolled (save id to change later from metadata)
+            meta_idx = add_scrolled_text(
+                    2, 13, ent.get_name(),
+                    ubuntu_font_get_size(UbuntuFontSize::FONT_24),
+                    COLOR_BG, COLOR_ACC2,
+                    display.W - 2*2);
+
+            // no bottom text
+
+            break;
+
+        // impossible
+        case ListEntry::le_type_dir: break;
+    }
 
     add_normal_text_ljust(71, STATS_Y, "CPU",
                           ubuntu_font_get_size(UbuntuFontSize::FONT_12),

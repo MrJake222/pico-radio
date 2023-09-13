@@ -7,7 +7,13 @@ class ListEntry {
     char url[ENT_URL_LEN + 1];
 
 public:
-    bool is_dir;
+    enum le_type {
+        le_type_radio,  // radio stream
+        le_type_local,  // local file
+        le_type_dir     // local dir (not playable, but present on the list)
+    };
+
+    le_type type;
 
     void set_name(const char* name_);
     void set_url(const char* url_);
