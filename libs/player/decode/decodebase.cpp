@@ -11,7 +11,8 @@ void cbuf_read_cb(void* arg, unsigned int bytes) {
 
     // don't let large reads happen
     // (threads must have time to top up the buffer)
-    assert(bytes <= dec->cbuf.size / 10);
+    // wave reads half of buffer
+    assert(bytes <= dec->cbuf.size / 2);
 
     auto b16 = (uint16_t) bytes;
     assert(b16 == bytes);
