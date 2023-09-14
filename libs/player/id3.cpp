@@ -3,6 +3,8 @@
 #include <cstring>
 #include <cstdio>
 
+static const bool FALSE = false;
+
 void ID3::begin() {
     // init as empty strings
     artist[0] = '\0';
@@ -32,13 +34,18 @@ int ID3::try_parse() {
     while (size_left > 0) {
         if (*cbuf.read_ptr() == 0x00) {
             // padding
-            cbuf.read_ack(size_left);
+            cbuf.read_ack_large(size_left, FALSE);
             break;
         }
 
         memcpy(&frame, cbuf.read_ptr(), sizeof(id3_frame));
-        const uint32_t frame_size = decode_synchsafe(frame.size_ss, 4);
         const char frame_name[5] = { frame.id[0], frame.id[1], frame.id[2], frame.id[3], '\0' };
+
+        // only id3v2.4 encodes frame sizes as sync-safe integers
+        const uint32_t frame_size =
+                hdr.v_major >= 4
+                    ? decode_synchsafe(frame.size, 4)
+                    : big_to_little_endian(frame.size);
 
         printf("  found frame '%s' len=%lu: ", frame_name, frame_size);
         cbuf.read_ack(10); // ack header
@@ -62,7 +69,7 @@ int ID3::try_parse() {
         }
 
         // ack frame
-        cbuf.read_ack(frame_size);
+        cbuf.read_ack_large(frame_size, FALSE);
         size_left -= frame_size + 10; // + header size
     }
 
@@ -160,4 +167,11 @@ void ID3::utf16_to_utf8(const uint16_t utf16, uint8_t* utf8, int* utf8_len) {
         utf8[2] = utf16 & 0x3F;        // last   6/16 bytes
         *utf8_len = 3;
     }
+}
+
+uint32_t ID3::big_to_little_endian(const uint8_t data[4]) {
+    return data[0] << 24
+         | data[1] << 16
+         | data[2] << 8
+         | data[3];
 }

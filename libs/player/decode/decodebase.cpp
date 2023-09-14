@@ -7,10 +7,15 @@
 #include <cstring>
 
 void cbuf_read_cb(void* arg, unsigned int bytes) {
+    auto dec = (DecodeBase*) arg;
+
+    // don't let large reads happen
+    // (threads must have time to top up the buffer)
+    assert(bytes <= dec->cbuf.size / 10);
+
     auto b16 = (uint16_t) bytes;
     assert(b16 == bytes);
-
-    ((DecodeBase*) arg)->notify_ack(b16);
+    dec->notify_ack(b16);
 }
 
 void player_msg(void* arg, uint32_t msg) {
@@ -137,10 +142,9 @@ int DecodeBase::dma_preload() {
 
     // wait for data in buffer
     puts("core1: waiting for data");
-    while (cbuf.health() < BUF_HEALTH_MIN) {
-        if (abort)
-            goto fail;
-    }
+    r = cbuf.wait_for_health(BUF_HEALTH_MIN, abort);
+    if (r < 0)
+        goto fail;
 
     puts("core1: data loaded");
     cbuf.debug_read(32, 0);

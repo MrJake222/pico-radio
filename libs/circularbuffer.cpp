@@ -56,6 +56,28 @@ void CircularBuffer::read_reverse(unsigned int bytes) volatile {
     read_bytes -= (b_type) bytes;
 }
 
+void CircularBuffer::read_ack_large(unsigned int bytes, const bool& abort) volatile {
+    // 10% of the size
+    const int max_ack = size / 10;
+
+    while (bytes > 0) {
+        const int ack = MIN(bytes, max_ack);
+        read_ack(ack);
+        bytes -= ack;
+
+        wait_for_health(50, abort);
+    }
+}
+
+int CircularBuffer::wait_for_health(int min_health, const bool& abort) const volatile {
+    while (health() < min_health) {
+        if (abort)
+            return -1;
+    }
+
+    return 0;
+}
+
 bool CircularBuffer::can_wrap_buffer() volatile const {
     return data_left_continuous() <= size_hidden;
 }

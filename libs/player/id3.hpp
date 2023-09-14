@@ -18,7 +18,7 @@ struct id3_hdr_ext {
 
 struct id3_frame {
     char id[4];
-    uint8_t size_ss[4];
+    uint8_t size[4];
     uint8_t f1;
     uint8_t f2; // "flags"
 };
@@ -60,6 +60,7 @@ class ID3 {
 
     static uint32_t decode_synchsafe(const uint8_t* b, int b_len);
     static void utf16_to_utf8(uint16_t utf16, uint8_t* utf8, int* utf8_len);
+    static uint32_t big_to_little_endian(const uint8_t data[4]);
 
 public:
     ID3(volatile CircularBuffer& cbuf_)

@@ -90,6 +90,14 @@ public:
 
     void read_reverse(unsigned int bytes) volatile;
 
+    // use to read (and probably discard) large blocks of data, acks data in small blocks (10% size)
+    // uses <wait_for_health> to not starve the buffer (waits for 50% of health), can abort waiting
+    void read_ack_large(unsigned int bytes, const bool& abort) volatile;
+
+    // waits for certain amount of data to be available
+    // uses <abort> reference for external abortion of waiting (returns -1)
+    // on success returns 0
+    int wait_for_health(int min_health, const bool& abort) volatile const;
 
     // wrapping
     // 'can' returns whether remaining data will fit into
