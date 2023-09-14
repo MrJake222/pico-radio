@@ -36,12 +36,12 @@ void ScLocal::draw_button(int x, int y, bool selected) {
 
 Screen* ScLocal::run_action(int action) {
     int i, r;
-    const ListEntry* ent;
+    ListEntry* ent;
 
     switch ((Action) action) {
         case PLAY:
             i = get_selected_station_index();
-            ent = ll.get_station(i);
+            ent = ll.get_entry(i);
 
             switch (ent->type) {
                 case ListEntry::le_type_local:

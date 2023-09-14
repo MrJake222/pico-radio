@@ -162,7 +162,7 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
     xs = s_base_x;
     ys = s_base_y + (s_res_h + s_res_mar) * y;
-    ent = get_ll().get_station(base_y + y);
+    ent = get_ll().get_entry(base_y + y);
     name = ent->get_name();
 
     bg = get_btn_bg(selected, true);
@@ -278,7 +278,7 @@ void all_loaded_cb(void* arg, int errored) {
     auto sc = ((ScreenList*) arg);
 
     // set station & page count
-    sc->station_count = sc->get_ll().get_station_count();
+    sc->station_count = sc->get_ll().get_entry_count();
     sc->page_count =    sc->get_ll().get_page_count();
 
     // limit station & page offset

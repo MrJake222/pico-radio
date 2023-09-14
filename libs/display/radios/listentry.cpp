@@ -10,9 +10,13 @@ void ListEntry::set_url(const char* url_) {
     strncpy(url, url_, ENT_URL_LEN);
 }
 
+bool ListEntry::no_name() const {
+    // if name is empty string
+    return name[0] == '\0';
+}
+
 const char* ListEntry::get_name() const {
-    // if name is empty string, return url
-    return name[0] ? name : url;
+    return no_name() ? url : name;
 }
 
 const char* ListEntry::get_url() const {

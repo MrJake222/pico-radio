@@ -47,8 +47,8 @@ public:
     // stop loading
     virtual void load_abort();
 
-    int get_station_count() { return entries_offset; }
-    const ListEntry* get_station(int i) { return &entries[i]; }
+    int get_entry_count() { return entries_offset; }
+    ListEntry* get_entry(int i) { return &entries[i]; }
     // can be overridden to handle special url updates
     // such as *.pls format or recursive path updates
     virtual int check_entry_url(int i) { return 0; }

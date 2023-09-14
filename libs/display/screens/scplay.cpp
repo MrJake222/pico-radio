@@ -85,7 +85,7 @@ Screen* ScPlay::run_action(int action) {
             if (fav_index < 0) {
                 // not on fav list
                 // add to persistent storage (and get index back)
-                fav_index = fav::add(&ent);
+                fav_index = fav::add(ent);
                 if (fav_index < 0) {
                     show_error("Nie udało się dodać do ulubionych");
                     return nullptr;
@@ -151,7 +151,7 @@ void player_update_callback(void* arg, DecodeBase* dec) {
     // currently playing song (from metadata)
     int r = dec->get_meta_str(buf, PLAYER_META_BUF_LEN);
 
-    switch (sc->ent.type) {
+    switch (sc->ent->type) {
 
         case ListEntry::le_type_radio:
             // update bottom text
@@ -171,6 +171,9 @@ void player_update_callback(void* arg, DecodeBase* dec) {
             // update top text (only if meta available)
             if (r == 0) {
                 sc->update_scrolled_text(sc->meta_idx, buf);
+                if (sc->ent->no_name()) {
+                    sc->ent->set_name(buf);
+                }
             }
 
             // scrolling "progress bar" of the song
@@ -212,12 +215,12 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 void ScPlay::show() {
     Screen::show();
 
-    switch (ent.type) {
+    switch (ent->type) {
 
         case ListEntry::le_type_radio:
             // top text -- station name: scrolled or normal (not changeable)
             add_scrolled_text_or_normal(
-                    2, 13, ent.get_name(),
+                    2, 13, ent->get_name(),
                     ubuntu_font_get_size(UbuntuFontSize::FONT_24),
                     COLOR_BG, COLOR_ACC2,
                     display.W - 2*2);
@@ -234,7 +237,7 @@ void ScPlay::show() {
         case ListEntry::le_type_local:
             // top text -- song name: scrolled (save id to change later from metadata)
             meta_idx = add_scrolled_text(
-                    2, 13, ent.get_name(),
+                    2, 13, ent->get_name(),
                     ubuntu_font_get_size(UbuntuFontSize::FONT_24),
                     COLOR_BG, COLOR_ACC2,
                     display.W - 2*2);
@@ -257,7 +260,7 @@ void ScPlay::show() {
 
     if (!is_overlay_displayed) {
         int r;
-        r = player_start(ent.get_url(),
+        r = player_start(ent->get_url(),
                          this,
                          player_finished_callback,
                          player_update_callback);
@@ -268,8 +271,8 @@ void ScPlay::show() {
     }
 }
 
-void ScPlay::begin(const ListEntry* ent_, int fav_index_, Screen* prev_) {
-    ent = *ent_;
+void ScPlay::begin(ListEntry* ent_, int fav_index_, Screen* prev_) {
+    ent = ent_;
     fav_index = fav_index_;
     prev = prev_;
     player_stop_requested = false;

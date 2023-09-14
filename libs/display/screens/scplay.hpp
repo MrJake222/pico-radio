@@ -19,7 +19,7 @@ class ScPlay : public Screen {
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
-    ListEntry ent;
+    ListEntry* ent;
     int fav_index;
     Screen* prev;
 
@@ -37,6 +37,6 @@ class ScPlay : public Screen {
 public:
     using Screen::Screen;
 
-    void begin(const ListEntry* ent_, int fav_index_, Screen* prev_);
+    void begin(ListEntry* ent_, int fav_index_, Screen* prev_);
     void show() override;
 };

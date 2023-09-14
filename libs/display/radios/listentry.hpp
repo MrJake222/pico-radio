@@ -22,6 +22,7 @@ public:
     void set_name(const char* name_);
     void set_url(const char* url_);
 
+    bool no_name() const;
     const char* get_name() const;
     const char* get_url() const;
 };

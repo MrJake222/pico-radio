@@ -64,7 +64,7 @@ Screen* ScSearchRes::run_action(int action) {
             }
 
             // <i> equals position on search list (not fav list)
-            sc_play.begin(ll.get_station(i), -1, this);
+            sc_play.begin(ll.get_entry(i), -1, this);
             return &sc_play;
 
         case BACK:
