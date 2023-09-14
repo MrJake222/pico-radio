@@ -18,6 +18,8 @@ class LoaderLocal : public Loader {
     void task() override;
     void set_file(const char* path_, bool is_dir);
 
+    bool is_valid();
+
     int get_entry_count_whole() override;
 
 public:

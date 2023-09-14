@@ -1,11 +1,12 @@
 #include "loaderlocal.hpp"
 
 #include <cstring>
+#include <filetype.hpp>
 
 void LoaderLocal::begin(const char* path_) {
     strncpy(path, path_, FATFS_MAX_PATH_LEN);
 }
-// TODO pagination
+
 void LoaderLocal::task() {
     FRESULT res;
     int errored = 0;
@@ -28,6 +29,9 @@ void LoaderLocal::task() {
             // empty string -> end of folder
             break;
         }
+
+        if (!is_valid())
+            continue;
 
         if (to_skip) {
             to_skip--;
@@ -80,11 +84,28 @@ int LoaderLocal::get_entry_count_whole() {
             break;
         }
 
+        if (!is_valid())
+            continue;
+
         files_dirs++;
     }
 
     f_closedir(&dir);
     return files_dirs;
+}
+
+bool LoaderLocal::is_valid() {
+    if (fileinfo.fname[0] == '.')
+        // hidden file/dir
+        return false;
+
+    bool is_dir = fileinfo.fattrib & AM_DIR;
+    if (!is_dir && filetype_from_name(fileinfo.fname) == FileType::UNSUPPORTED) {
+        // file not supporteed
+        return false;
+    }
+
+    return true;
 }
 
 int LoaderLocal::check_entry_url(int i) {
