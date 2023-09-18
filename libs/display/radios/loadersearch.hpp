@@ -2,7 +2,7 @@
 
 #include <config.hpp>
 #include <httpclientpico.hpp>
-#include <list.hpp>
+#include <listentry.hpp>
 #include <loader.hpp>
 
 typedef void(*ld_search_update_cb)(void* arg, int provider_idx, int server_idx, int max_servers);

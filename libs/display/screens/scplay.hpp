@@ -4,7 +4,7 @@
 #include <screen.hpp>
 #include <cstring>
 #include <decodebase.hpp>
-#include <list.hpp>
+#include <listentry.hpp>
 
 class ScPlay : public Screen {
 

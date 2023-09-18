@@ -1,7 +1,6 @@
 #pragma once
 
 #include <config.hpp>
-#include <circularbuffer.hpp>
 #include <datasource.hpp>
 #include <listentry.hpp>
 
