@@ -202,6 +202,7 @@ void task_wifi_startup(void* arg) {
     // player_start("https://0n-classicrock.radionetz.de/0n-classicrock.mp3", nullptr, nullptr);
     // player_start("http://www.radiorockfm.co.nz:8000/listenlive", nullptr, nullptr); // longest rtt 321 ms
     // player_start("https://stream.rockantenne.de/alternative/stream/mp3", nullptr, nullptr);
+    // player_start("http://173.249.21.17:8108/;", nullptr, nullptr, nullptr);   // BluesMen Channel (320kbps)
     // player_start("/Shrek l/12 Eddie Murphy - I´m A Believer.mp3");
     // sc_search_res.begin("rmf");
 
