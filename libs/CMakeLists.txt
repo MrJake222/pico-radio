@@ -15,15 +15,15 @@ add_library(libs
         display/assets/font.cpp
         display/assets/icons.cpp
 
-        display/radios/fav.cpp
-        display/radios/list.cpp
-        display/radios/listentry.cpp
-        display/radios/listm3u.cpp
-        display/radios/listpls.cpp
-        display/radios/loader.cpp
-        display/radios/loadersearch.cpp
-        display/radios/loaderfav.cpp
-        display/radios/loaderlocal.cpp
+        list/fav.cpp
+        list/list.cpp
+        list/listentry.cpp
+        list/listm3u.cpp
+        list/listpls.cpp
+        list/loader.cpp
+        list/loadersearch.cpp
+        list/loaderfav.cpp
+        list/loaderlocal.cpp
 
         display/tft/st7735s.cpp
         display/textscrolled.cpp
@@ -70,10 +70,9 @@ target_include_directories(libs PUBLIC
         player/decode
         player
         sd
-        radios
+        list
         display
         display/assets
-        display/radios
         display/tft
         ds
         .
