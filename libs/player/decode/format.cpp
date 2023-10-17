@@ -15,7 +15,7 @@ Format::Error Format::wrap_buffer_wait_for_data() {
             return Error::ENDOFSTREAM;
         }
 
-        // wait for data
+        // wait for data (TODO why do it twice? below also waits)
         while (raw_buf.health() < BUF_HEALTH_MIN) {
             if (abort())
                 return Error::ABORT;

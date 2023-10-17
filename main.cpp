@@ -155,12 +155,12 @@ void init_wifi() {
     // const char* WIFI_PASSWORD = "ForThosE4bOut";
     // const char* WIFI_SSID = "NLP";
     // const char* WIFI_SSID = "NPC";
-    const char* WIFI_SSID = "MyNet";
+    // const char* WIFI_SSID = "MyNet";
     // const char* WIFI_SSID = "BPi";
     // const char* WIFI_SSID = "NPC";
-    const char* WIFI_PASSWORD = "bequick77";
-    // const char* WIFI_SSID = "NorbertAP";
-    // const char* WIFI_PASSWORD = "fearofthedark";
+    // const char* WIFI_PASSWORD = "bequick77";
+    const char* WIFI_SSID = "NorbertAP";
+    const char* WIFI_PASSWORD = "fearofthedark";
 
     printf("Connecting to Wi-Fi...\n");
     bool connected = false;
