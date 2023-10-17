@@ -19,7 +19,7 @@ namespace sd {
 static TaskHandle_t sd_task_h;
 static bool card_present;
 static bool card_mounted;
-static int last_interrupt_time_us;
+static volatile int last_interrupt_time_us;
 
 void sd_cd_callback(uint gpio, uint32_t events) {
     if (gpio != SD_CD)
@@ -88,20 +88,21 @@ static int unmount(sd_card_t* pSD) {
 
     while (true) {
 
-        printf("\tsd: int %7lu ms ago\n", time_since_last_interrupt_ms());
+        // printf("\tsd: int %7lu ms ago\n", time_since_last_interrupt_ms());
 
         while (time_since_last_interrupt_ms() < SD_CD_DEBOUNCE_MS)
             // bouncing
             // wait a bit for card to securely be inserted / gpio pull-up to settle
             vTaskDelay((SD_CD_DEBOUNCE_MS + 100) / portTICK_PERIOD_MS);
 
-        printf("\tsd: int %7lu ms ago\n", time_since_last_interrupt_ms());
+        printf("\tsd: int %4lu ms ago ", time_since_last_interrupt_ms());
 
         // clear any pending interrupts (0 wait time)
         ulTaskNotifyTake(true, 0);
 
         // check SD status (present if shorted to ground)
         card_present = gpio_get(SD_CD) == 0;
+        printf("present=%d mounted=%d\n", card_present, card_mounted);
 
         if (card_present && !card_mounted) {
             puts("mounting sd card");
