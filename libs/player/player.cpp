@@ -357,7 +357,8 @@ static void player_update_stats() {
     // puts("");
 
     // external stats
-    upd_cb(cb_arg, dec);
+    if (upd_cb)
+        upd_cb(cb_arg, dec);
 }
 
 static void player_stat_task(void* arg) {
