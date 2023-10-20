@@ -3,7 +3,8 @@
 #include <cstdio>
 
 Format::Error Format::wrap_buffer_wait_for_data() {
-    // fixes data underflows
+    // fixes data underflow
+    // called only on data underflow (no calling on every frame decoding)
     // printf("wrap health %2d eof %d\n", raw_buf.health(), eof());
     int r;
 

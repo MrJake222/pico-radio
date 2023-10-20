@@ -47,11 +47,11 @@ add_library(libs
         player/decode/format.cpp
         player/decode/formatmp3.cpp
         player/decode/formatwav.cpp
+        player/metadata/icy.cpp
+        player/metadata/id3.cpp
         player/i2s.pio.cpp
         player/player.cpp
         player/filetype.cpp
-        player/icy.cpp
-        player/id3.cpp
         player/amp.cpp
 
         sd/sd.cpp
@@ -68,6 +68,7 @@ target_include_directories(libs PUBLIC
         lfs
         mcorefifo
         player/decode
+        player/metadata
         player
         sd
         list
