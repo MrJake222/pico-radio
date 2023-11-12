@@ -25,6 +25,14 @@ protected:
 
     volatile CircularBuffer& raw_buf;
 
+    // tries to wrap buffer but on data underflow waits for
+    // incoming data (busy waiting). Returns immediately on user abort.
+    // Returns Error::OK on success Error::Error on failure, Error::ABORT on user abort, Error:EOF on eof
+    Error wrap_buffer_wait_for_data();
+
+    // explodes one channel data into two channels
+    void mono_to_stereo(uint32_t* buf, int buf_size_words);
+
 public:
     Format(volatile CircularBuffer& raw_buf_)
         : raw_buf(raw_buf_)
@@ -35,11 +43,6 @@ public:
         abort_ = abort;
         eof_ = eof;
     }
-
-    // tries to wrap buffer but on data underflow waits for
-    // incoming data (busy waiting). Returns immediately on user abort.
-    // Returns Error::OK on success Error::Error on failure, Error::ABORT on user abort, Error:EOF on eof
-    Error wrap_buffer_wait_for_data();
 
     // returns number of units to decode to fill whole PCM buffer (size passed down)
     // (wav bytes or mp3 frames)
@@ -53,10 +56,12 @@ public:
     // this return number of units actually decoded
     // "decode" means move from <this->raw_buf> to <audio_pcm_buf> (possibly doing some work)
     // audio_pcm_buf can't be in class because it changes over time (first/second half of the buffer)
+    // <n> is passed down from <units_to_decode_half>, must output valid stereo format
     virtual int decode_up_to_n(uint32_t* audio_pcm_buf, int n) = 0;
 
-    virtual long bit_freq() = 0;
+    virtual long bit_freq_per_channel() = 0;
     virtual float ms_per_unit() = 0;
+    virtual int channels() = 0;
     virtual int bytes_to_sec(b_type bytes) = 0;
 
     virtual int bitrate_in() = 0;

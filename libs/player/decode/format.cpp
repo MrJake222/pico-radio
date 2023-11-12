@@ -35,3 +35,21 @@ Format::Error Format::wrap_buffer_wait_for_data() {
 
     return Error::OK;
 }
+
+void Format::mono_to_stereo(uint32_t* buf, int buf_size_words) {
+    // mono audio
+    // data is LLL... should be LR LR LR...
+    // need to explode one channel into two
+
+    // Indexing with 32bit elements we get 2-channel view of the buffer (as hardware supports it).
+    // Indexing with 16bit elements we get mono samples (as software outputted it).
+
+    // Going in reverse not to overwrite anything
+    for (int i=buf_size_words-1; i>=0; i--) {
+        uint32_t s = ((uint16_t*) buf)[i];
+
+        buf[i]  = s; // left channel
+        // replace missing channel with same data
+        buf[i] |= s << 16; // right channel
+    }
+}

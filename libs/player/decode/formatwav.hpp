@@ -34,8 +34,9 @@ public:
     int decode_header() override;
     int decode_up_to_n(uint32_t *audio_pcm_buf, int n) override;
 
-    long bit_freq() override;
+    long bit_freq_per_channel() override;
     float ms_per_unit() override;
+    int channels() override;
     int bytes_to_sec(b_type bytes) override;
 
     int bitrate_in() override;

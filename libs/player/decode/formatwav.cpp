@@ -44,12 +44,16 @@ int FormatWAV::decode_up_to_n(uint32_t *audio_pcm_buf, int n) {
     return copied;
 }
 
-long FormatWAV::bit_freq() {
-    return header.sample_rate * header.bits_per_sample * header.channels;
+long FormatWAV::bit_freq_per_channel() {
+    return header.sample_rate * header.bits_per_sample;
 }
 
 float FormatWAV::ms_per_unit() {
     return 1000.0f / header.bytes_per_second;
+}
+
+int FormatWAV::channels() {
+    return header.channels;
 }
 
 int FormatWAV::bytes_to_sec(b_type bytes) {
@@ -57,5 +61,5 @@ int FormatWAV::bytes_to_sec(b_type bytes) {
 }
 
 int FormatWAV::bitrate_in() {
-    return bit_freq();
+    return bit_freq_per_channel() * header.channels;
 }

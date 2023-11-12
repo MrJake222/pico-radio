@@ -51,8 +51,9 @@ public:
     int decode_header() override;
 
     int units_to_decode_whole(int audio_pcm_size_words) override;
-    long bit_freq() override;
+    long bit_freq_per_channel() override;
     float ms_per_unit() override;
+    int channels() override;
     int bytes_to_sec(b_type bytes) override;
     int samps_per_channel();
 

@@ -151,5 +151,5 @@ public:
     void dma_watch();
 
     // this becomes valid after <dma_preload>
-    long bit_freq() { return format->bit_freq(); }
+    long bit_freq_per_channel() { return format->bit_freq_per_channel(); }
 };

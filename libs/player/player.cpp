@@ -194,7 +194,8 @@ static void dma_start() {
     int r = dec->dma_preload();
     if (r == 0) {
         // all good
-        i2s_program_set_bit_freq(pio, sm, dec->bit_freq());
+        // only stereo supported (underlying hardware expects 2-channel I2C)
+        i2s_program_set_bit_freq(pio, sm, dec->bit_freq_per_channel() * 2);
         amp_unmute();
         dma_start();
 

@@ -83,6 +83,9 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
                 (short*)audio_pcm_buf,
                 0);
 
+        if (channels() == 1)
+            mono_to_stereo(audio_pcm_buf, samps_per_channel());
+
         bytes_consumed = dptr - dptr_orig;
 
         uint8_t* orig_read;
@@ -201,9 +204,10 @@ void FormatMP3::calculate_stats() {
                frame_info.samprate,
                frame_info.bitrate);
 
-        printf("\tms_per_frame: %f, bit freq: %ld\n",
+        printf("\tms_per_frame: %f, ch: %d, bit freq/ch: %ld\n",
                ms_per_unit(),
-               bit_freq());
+               frame_info.nChans,
+               bit_freq_per_channel());
     }
 }
 
@@ -213,8 +217,8 @@ int FormatMP3::units_to_decode_whole(int audio_pcm_size_words) {
     return audio_pcm_size_words / samps_per_channel();
 }
 
-long FormatMP3::bit_freq() {
-    return (long)frame_info.bitsPerSample * frame_info.nChans * frame_info.samprate;
+long FormatMP3::bit_freq_per_channel() {
+    return (long)frame_info.bitsPerSample * frame_info.samprate;
 }
 
 float FormatMP3::ms_per_unit() {
@@ -223,6 +227,10 @@ float FormatMP3::ms_per_unit() {
 
 int FormatMP3::samps_per_channel() {
     return frame_info.outputSamps / frame_info.nChans;
+}
+
+int FormatMP3::channels() {
+    return frame_info.nChans;
 }
 
 int FormatMP3::bytes_to_sec(b_type bytes) {
