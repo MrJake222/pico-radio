@@ -283,7 +283,8 @@ void all_loaded_cb(void* arg, int errored) {
 
     // limit station & page offset
     sc->base_y = MIN(sc->base_y, sc->max_base_y()); // stations may have been removed
-    sc->page   = MIN(sc->page,   sc->page_count);   // page may have disappeared
+    if (sc->page_count != -1)
+        sc->page = MIN(sc->page, sc->page_count);   // page may have disappeared
 
     if (sc->loaded) {
         // it's a reload (page changed)
