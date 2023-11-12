@@ -89,7 +89,7 @@ public:
 
     // to be used by player add/remove from favourites feature (both functions, or <begin>)
     // on next <show>, reload the contents
-    void set_reload();
+    void set_fresh_load();
     // set page/base_y/current_y from absolute index
     void set_fav_pos(int fav_index);
 

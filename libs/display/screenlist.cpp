@@ -218,14 +218,14 @@ void ScreenList::begin() {
 
     // start on top of first page & reload
     set_fav_pos(0);
-    set_reload();
+    set_fresh_load();
 
     // <ll.reset> called by <ll.begin> called by subclass
     get_ll().set_cb_arg(this);
     get_ll().set_all_loaded_cb(all_loaded_cb);
 }
 
-void ScreenList::set_reload() {
+void ScreenList::set_fresh_load() {
     loaded = false;
     // base_y/page limited in <all_loaded_cb>
 
