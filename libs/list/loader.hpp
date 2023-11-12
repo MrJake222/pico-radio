@@ -16,15 +16,16 @@ class Loader {
 
 protected:
     void* get_cb_arg() { return cb_arg; }
+    // not called when aborted
     void call_all_loaded(int errored);
 
+    int page;
     volatile bool should_abort;
+    volatile bool in_progress;
 
     ListEntry* const entries;
     const int entries_max;
     int entries_offset;
-
-    int page;
 
     // get how many entries are there (don't care about pagination)
     // -1 is infinite pages (or failed to determine)
@@ -58,4 +59,6 @@ public:
     // must be called in all_loaded callback
     // warning: can be resource hungry
     int get_page_count();
+
+    bool is_in_progress() { return in_progress; }
 };

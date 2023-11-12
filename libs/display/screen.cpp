@@ -51,6 +51,9 @@ Screen* Screen::input(ButtonEnum btn) {
 
     button_pre_selection_change();
 
+    // TODO fix button flickering on new page load
+    // currently this cannot be done with old_x/y and then if old != new
+    // because ScreenList depends on redrawing currently selected button
     draw_button(current_x, current_y, false);
 
     switch (btn) {

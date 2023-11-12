@@ -58,6 +58,9 @@ void ScreenList::inx() {
         // inside of scrolling area
         int page_orig = page;
 
+        if (get_ll().is_in_progress())
+            return;
+
         // inx -> next page
         page++;
         if (page_count != -1)
@@ -77,6 +80,9 @@ void ScreenList::dex() {
     if (scrolled_area()) {
         // inside of scrolling area
         int page_orig = page;
+
+        if (get_ll().is_in_progress())
+            return;
 
         // dex -> prev page
         page--;

@@ -7,7 +7,9 @@
 #include <task.h>
 
 void ll_task(void* arg) {
-    ((Loader*) arg)->task();
+    auto ld = (Loader*) arg;
+    ld->task();
+    ld->in_progress = false;
 
     printf("list loader unused stack: %ld\n", uxTaskGetStackHighWaterMark(nullptr));
     vTaskDelete(nullptr);
@@ -25,6 +27,8 @@ void Loader::call_all_loaded(int errored) {
 void Loader::load(int page_) {
     page = page_;
     should_abort = false;
+    in_progress = true;
+
     entries_offset = 0;
 
     xTaskCreate(ll_task,
