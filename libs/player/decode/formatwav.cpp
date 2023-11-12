@@ -22,26 +22,50 @@ int FormatWAV::decode_header() {
     return 0;
 }
 
+int FormatWAV::units_to_decode_whole(int audio_pcm_size_words) {
+    // returns number of stereo samples (16bit x 2)
+    return audio_pcm_size_words;
+}
+
 int FormatWAV::decode_up_to_n(uint32_t *audio_pcm_buf, int n) {
     if (abort())
         return 0;
 
-    int copied = 0;
+    // <n> is stereo samples left to be decoded
+    int n_read = 0;
 
-    while (copied < n) {
-        int cpy = raw_buf.data_left_continuous();
-        cpy = MIN(cpy, n - copied);
+    // is source stereo
+    bool stereo = channels() == 2;
+
+    while (n_read < n) {
+        int read = stereo ? (n - n_read) * 4  // source is stereo (4 bytes per sample 16bit x 2)
+                          : (n - n_read) * 2; // source is mono   (2 bytes per sample 16bit x 1)
+
+        read = MIN(read, raw_buf.data_left_continuous());
+        // always multiple of 4
+        read -= read % 4;
 
         // handles end-of-file
-        if (cpy == 0)
+        if (read == 0)
             break;
 
-        memcpy(audio_pcm_buf + copied/4, raw_buf.read_ptr(), cpy);
-        raw_buf.read_ack(cpy); // this does implicit wrap
-        copied += cpy;
+        memcpy(audio_pcm_buf, raw_buf.read_ptr(), read);
+        int written = read;
+        if (!stereo) {
+            // expected number of bytes is 2 times read bytes
+            mono_to_stereo(audio_pcm_buf, (read*2) / 4);
+            written *= 2;
+        }
+
+        const int n_written = written / 4;
+        audio_pcm_buf += n_written;
+        n_read += n_written;
+
+        raw_buf.read_ack(read);
+        raw_buf.try_wrap_buffer();
     }
 
-    return copied;
+    return n_read;
 }
 
 long FormatWAV::bit_freq_per_channel() {
