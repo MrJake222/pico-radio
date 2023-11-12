@@ -48,7 +48,6 @@ public:
     int units_to_decode_half(int audio_pcm_size_words) { return units_to_decode_whole(audio_pcm_size_words) / 2; }
 
     // called upon first interaction with the buffer
-    // has default implementation as not all formats have headers
     virtual int decode_header() = 0;
 
     // this return number of units actually decoded
