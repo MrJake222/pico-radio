@@ -1,12 +1,12 @@
 #pragma once
 
 #include <screen.hpp>
-#include <screens/scsearch.hpp>
-#include <screens/scsearchres.hpp>
-#include <screens/scplay.hpp>
-#include <screens/scfavourites.hpp>
-#include <screens/scbattery.hpp>
-#include <screens/sclocal.hpp>
+#include <scsearch.hpp>
+#include <scsearchres.hpp>
+#include <scplay.hpp>
+#include <scfavourites.hpp>
+#include <scbattery.hpp>
+#include <sclocal.hpp>
 
 extern ScFavourites sc_fav;
 extern ScSearch sc_search;

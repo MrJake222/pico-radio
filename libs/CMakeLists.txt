@@ -12,6 +12,7 @@ add_library(libs
         display/screens/sclocal.cpp
 
         display/screenvirt/screenlist.cpp
+        display/screenvirt/screenkb.cpp
 
         display/assets/ubuntu_mono.cpp
         display/assets/font.cpp
@@ -74,6 +75,8 @@ target_include_directories(libs PUBLIC
         sd
         list
         display
+        display/screens
+        display/screenvirt
         display/assets
         display/tft
         ds

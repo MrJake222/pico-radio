@@ -1,6 +1,6 @@
 #pragma once
 
-#include <screenvirt/screenlist.hpp>
+#include <screenlist.hpp>
 #include <loaderlocal.hpp>
 
 class ScLocal : public ScreenList {
