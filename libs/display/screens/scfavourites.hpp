@@ -1,6 +1,6 @@
 #pragma once
 
-#include <screenlist.hpp>
+#include <screenvirt/screenlist.hpp>
 #include <loaderfav.hpp>
 
 class ScFavourites : public ScreenList {

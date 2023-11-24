@@ -2,7 +2,7 @@
 
 #include <config.hpp>
 #include <screen.hpp>
-#include <screenlist.hpp>
+#include <screenvirt/screenlist.hpp>
 #include <loadersearch.hpp>
 
 class ScSearchRes : public ScreenList {

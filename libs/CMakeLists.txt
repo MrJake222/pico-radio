@@ -11,9 +11,16 @@ add_library(libs
         display/screens/scsearchres.cpp
         display/screens/sclocal.cpp
 
+        display/screenvirt/screenlist.cpp
+
         display/assets/ubuntu_mono.cpp
         display/assets/font.cpp
         display/assets/icons.cpp
+
+        display/tft/st7735s.cpp
+        display/textscrolled.cpp
+        display/screen.cpp
+        display/screenmng.cpp
 
         list/fav.cpp
         list/list.cpp
@@ -24,12 +31,6 @@ add_library(libs
         list/loadersearch.cpp
         list/loaderfav.cpp
         list/loaderlocal.cpp
-
-        display/tft/st7735s.cpp
-        display/textscrolled.cpp
-        display/screen.cpp
-        display/screenlist.cpp
-        display/screenmng.cpp
 
         ds/datasource.cpp
 
