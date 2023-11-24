@@ -218,11 +218,27 @@ void ScreenKb::draw_button(int x, int y, bool selected) {
 }
 
 void ScreenKb::draw_prompt_field() {
-    display.fill_rect(5, 18, 131, 20, COLOR_BG_DARK);
-    add_normal_text(5 + 3, 18, prompt,
-                    ubuntu_font_get_size(UbuntuFontSize::FONT_16),
-                    COLOR_BG_DARK, COLOR_FG,
-                    131 - 3*2);
+    const int width = 131;
+    const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);
+
+    const int x = 5; // text field position
+    const int m = 1 + font->W/2; // margin
+    const int text_x = x+m; // text position
+    const int text_width = width - 2*m;
+
+    const int chr_fits = text_width / font->W;
+    const int chr_skips = MAX(0, ti+1 - chr_fits); // +1 prompt character
+
+    // not overflow
+    const bool nov = chr_skips == 0;
+
+    display.fill_rect(x, 18, width, 20, COLOR_BG_DARK);
+    display.write_text(nov ? text_x : text_x-font->W,       // overflow: start rendering a letter earlier
+                       18,
+                       nov ? text : text + chr_skips - 1,   // overflow: start rendering at offset - a letter to show overflow
+                       font, COLOR_BG_DARK, COLOR_FG,
+                       nov ? text_x : text_x - font->W/2,   // overflow: indicate by showing a bit of the previous letter
+                       5 + width - 3);
 }
 
 void ScreenKb::show() {
@@ -233,39 +249,45 @@ void ScreenKb::show() {
     buttons_repeat_center(true);
 }
 
+void ScreenKb::hide() {
+    buttons_repeat_left_right(false);
+    buttons_repeat_center(false);
+}
+
 Screen* ScreenKb::run_action(int action) {
+
+    const int ti_old = ti;
+
     switch ((Action) action) {
         case BACKSPACE:
-            if (pi > 0)
-                pi--;
+            if (ti > 0)
+                ti--;
             break;
 
         case SPACE:
-            if (pi < MAX_PROMPT_LEN)
-                prompt[pi++] = ' ';
+            if (ti < text_max_len())
+                text[ti++] = ' ';
             break;
 
         case BACK:
-            buttons_repeat_left_right(false);
-            buttons_repeat_center(false);
-            return &sc_fav;
+            return sc_back();
 
         case SEARCH:
-            prompt[pi] = '\0';
-            sc_search_res.begin(prompt);
-            buttons_repeat_left_right(false);
-            buttons_repeat_center(false);
-            return &sc_search_res;
+            text[ti] = '\0';
+            return sc_forward(text);
 
         case KB:
-            if (pi < MAX_PROMPT_LEN)
-                prompt[pi++] = letters[current_y - 1][current_x];
+            if (ti < text_max_len())
+                text[ti++] = letters[current_y - 1][current_x];
             break;
     }
 
-    prompt[pi] = '_';
-    prompt[pi+1] = '\0';
-    draw_prompt_field();
+    if (ti != ti_old) {
+        // prevents flickering
+        text[ti] = '_';
+        text[ti + 1] = '\0';
+        draw_prompt_field();
+    }
 
     return nullptr;
 }
@@ -273,11 +295,11 @@ Screen* ScreenKb::run_action(int action) {
 void ScreenKb::begin() {
     Screen::begin();
 
-    strcpy(prompt, "");
+    text[0] = '\0';
+    ti = 0;
 
-    pi = strlen(prompt);
-    prompt[pi] = '_';
-    prompt[pi+1] = '\0';
+    text[ti] = '_';
+    text[ti + 1] = '\0';
 
     prev_x_clear();
 }

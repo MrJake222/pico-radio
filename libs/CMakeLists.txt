@@ -11,6 +11,8 @@ add_library(libs
         display/screens/scsearchres.cpp
         display/screens/sclocal.cpp
 
+        display/screens/wifi/scwifipwd.cpp
+
         display/screenvirt/screenlist.cpp
         display/screenvirt/screenkb.cpp
 
@@ -76,6 +78,7 @@ target_include_directories(libs PUBLIC
         list
         display
         display/screens
+        display/screens/wifi
         display/screenvirt
         display/assets
         display/tft

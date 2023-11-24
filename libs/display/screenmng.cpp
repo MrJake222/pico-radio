@@ -47,6 +47,7 @@ ScSearchRes sc_search_res(display, mutex_ticker, sl);
 ScPlay sc_play(display, mutex_ticker);
 ScBattery sc_bat(display, mutex_ticker);
 ScLocal sc_local(display, mutex_ticker, locall);
+ScWifiPwd sc_wifi_pwd(display, mutex_ticker);
 
 [[noreturn]] void screen_tick_task(void* arg) {
     TickType_t last_wake;
@@ -63,7 +64,8 @@ ScLocal sc_local(display, mutex_ticker, locall);
 
 void screenmng_init() {
     display.init();
-    current_screen = &sc_fav;
+    current_screen = &sc_fav; // first screen to open
+    // current_screen = &sc_wifi_pwd; // test screen0
 
     create_mutex_give(mutex_display);
     create_mutex_give(mutex_ticker);

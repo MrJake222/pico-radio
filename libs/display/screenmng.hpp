@@ -8,12 +8,15 @@
 #include <scbattery.hpp>
 #include <sclocal.hpp>
 
+#include <scwifipwd.hpp>
+
 extern ScFavourites sc_fav;
 extern ScSearch sc_search;
 extern ScSearchRes sc_search_res;
 extern ScPlay sc_play;
 extern ScBattery sc_bat;
 extern ScLocal sc_local;
+extern ScWifiPwd sc_wifi_pwd;
 
 void screenmng_init();
 void screenmng_open(Screen* new_screen);

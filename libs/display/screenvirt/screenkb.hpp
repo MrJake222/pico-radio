@@ -27,9 +27,20 @@ class ScreenKb : public Screen {
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
+    // can be used by subclasses to limit input
+    // (ScSearch limits it because space explode to %20)
+    virtual int text_max_len() { return LCD_MAX_KB_INPUT; }
+
+    // which screen to return to
+    virtual Screen* sc_back() = 0;
+    // which screen to go to
+    // (subclass can initialize it with provided text before returning)
+    virtual Screen* sc_forward(const char* text) = 0;
+
     // text input field
-    size_t pi;
-    char prompt[MAX_PROMPT_LEN + 2]; // cursor + null
+    // where to insert next character
+    int ti;
+    char text[LCD_MAX_KB_INPUT + 2]; // cursor + null
     void draw_prompt_field();
 
 public:
@@ -37,4 +48,5 @@ public:
 
     void begin() override;
     void show() override;
+    void hide() override;
 };

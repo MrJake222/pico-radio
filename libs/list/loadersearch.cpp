@@ -5,6 +5,9 @@
 #include <util.hpp>
 
 void LoaderSearch::update(int provider_idx, int server_idx, int max_servers) {
+    if (should_abort)
+        return;
+
     if (upd_cb)
         upd_cb(get_cb_arg(), provider_idx, server_idx, max_servers);
 }
