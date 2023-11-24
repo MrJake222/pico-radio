@@ -8,19 +8,28 @@
 #define KB_BNT_W   14
 
 #define ROWS             6
-#define ROWS_CHARACTERS  4    // actual characters A-Z, 0-9
+#define ROWS_KEYBOARD    4
 
-static const char* letters[ROWS_CHARACTERS] = {
-        "1234567890",
-        "QWERTYUIOP",
-        "ASDFGHJKL",
-        "ZXCVBNM",
+static const char* letters[2][ROWS_KEYBOARD] = {
+        { // letters[0] -- no shift
+            "1234567890",
+            "qwertyuiop",
+            "asdfghjkl",
+            "zxcvbnm",
+        },
+
+        { // letters[1] -- with shift
+            "!@#$%^&*()",
+            "QWERTYUIOP",
+            "ASDFGHJKL",
+            "ZXCVBNM",
+        },
 };
 
 // offsets of rows
-static const int8_t xoff[ROWS_CHARACTERS] = {5, 5, 8, 16};
+static const int8_t xoff[ROWS_KEYBOARD] = {5, 5, 8, 16};
 // number of character in rows
-static const int8_t xlen[ROWS] = {1, 10, 10, 9, 7, 3};
+static const int8_t xlen[ROWS] = {1, 10, 10, 9, 7+1, 3}; // +1 shift
 
 int ScreenKb::size_x(int y) {
     return xlen[y];
@@ -32,6 +41,7 @@ int ScreenKb::size_y() {
 
 enum Action {
     BACKSPACE,
+    SHIFT,
     SPACE,
     BACK,
     SEARCH,
@@ -148,6 +158,10 @@ int ScreenKb::get_action(int x, int y) {
         return BACKSPACE;
     }
 
+    else if ((y == (size_y() - 2)) && (x == (size_x(y) - 1))) {
+        return SHIFT;
+    }
+
     else if (y == (size_y() - 1)) {
         if (x == 0)
             return BACK;
@@ -165,8 +179,6 @@ int ScreenKb::get_action(int x, int y) {
 void ScreenKb::draw_button(int x, int y, bool selected) {
 
     auto action = (Action) get_action(x, y);
-    unsigned char xs, ys;
-    char letter;
     int bg;
     const int fg = COLOR_FG;
 
@@ -180,6 +192,13 @@ void ScreenKb::draw_button(int x, int y, bool selected) {
         default:
             bg = get_btn_bg(selected, true);
     }
+
+    // used in KB/SHIFT
+    // adjust for backspace row
+    const int ym = y - 1;
+    // screen coordinates
+    const int xs = xoff[ym] + (KB_BNT_W + 1)*x;
+    const int ys = 42 + (KB_BNT_H + 1)*ym;
 
     switch (action) {
         case BACKSPACE:
@@ -201,16 +220,19 @@ void ScreenKb::draw_button(int x, int y, bool selected) {
             display.draw_icon(144, 112, icon_search, bg, fg);
             break;
 
-        case KB:
-            y--; // backspace row
-
-            // screen coordinates
-            xs = xoff[y] + (KB_BNT_W + 1)*x;
-            ys = 42 + (KB_BNT_H + 1)*y;
-            letter = letters[y][x];
-
+        case SHIFT:
+            // TODO shift draw as selected when active
+            // TODO shift icon
+            // TODO shift wider
             display.fill_rect(xs, ys, KB_BNT_W, KB_BNT_H, bg);
-            display.write_char(xs + 3, ys, &letter,
+            display.write_char(xs + 3, ys, "S",
+                               ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+                               bg, fg, 0, 0);
+            break;
+
+        case KB:
+            display.fill_rect(xs, ys, KB_BNT_W, KB_BNT_H, bg);
+            display.write_char(xs + 3, ys, &letters[shift][ym][x],
                                ubuntu_font_get_size(UbuntuFontSize::FONT_16),
                                bg, fg, 0, 0);
             break;
@@ -264,6 +286,11 @@ Screen* ScreenKb::run_action(int action) {
                 ti--;
             break;
 
+        case SHIFT:
+            shift ^= true;  // xor
+            draw_buttons(); // redraw keyboard
+            break;
+
         case SPACE:
             if (ti < text_max_len())
                 text[ti++] = ' ';
@@ -278,7 +305,7 @@ Screen* ScreenKb::run_action(int action) {
 
         case KB:
             if (ti < text_max_len())
-                text[ti++] = letters[current_y - 1][current_x];
+                text[ti++] =  letters[shift][current_y - 1][current_x];
             break;
     }
 
@@ -295,6 +322,7 @@ Screen* ScreenKb::run_action(int action) {
 void ScreenKb::begin() {
     Screen::begin();
 
+    shift = false;
     text[0] = '\0';
     ti = 0;
 

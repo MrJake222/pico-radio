@@ -4,7 +4,12 @@
 #include <screen.hpp>
 #include <cstring>
 
+// TODO keyboard add special characters
+// TODO keyboard test search with special characters
+
 class ScreenKb : public Screen {
+
+    bool shift;
 
     // navigation ux
     int8_t prev_x_first_to_kb;
