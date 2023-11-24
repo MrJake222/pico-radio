@@ -80,7 +80,6 @@ public:
     // 24-bit RGB format as input
     uint16_t from_rgb(int rgb);
     void fill_rect(int x, int y, int w, int h, int bg);
-    void fill_rect(int x, int y, int w, int h, bool fill_with_bg) = delete;
     void clear_screen(int bg);
 
     // may try to access 2 bytes (for unicode), returns number of bytes consumed
