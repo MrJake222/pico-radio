@@ -21,3 +21,5 @@ extern const struct icon icon_sd;
 extern const struct icon icon_sd_disabled;
 extern const struct icon icon_local;
 extern const struct icon icon_folder;
+extern const struct icon icon_shift_empty;
+extern const struct icon icon_shift_filled;

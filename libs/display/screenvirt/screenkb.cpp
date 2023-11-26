@@ -221,13 +221,10 @@ void ScreenKb::draw_button(int x, int y, bool selected) {
             break;
 
         case SHIFT:
-            // TODO shift draw as selected when active
-            // TODO shift icon
-            // TODO shift wider
-            display.fill_rect(xs, ys, KB_BNT_W, KB_BNT_H, bg);
-            display.write_char(xs + 3, ys, "S",
-                               ubuntu_font_get_size(UbuntuFontSize::FONT_16),
-                               bg, fg, 0, 0);
+            display.fill_rect(xs, ys, KB_BNT_W + 7, KB_BNT_H, bg);
+            display.draw_icon(xs + 4, ys + 4,
+                              shift ? icon_shift_filled : icon_shift_empty,
+                              bg, fg);
             break;
 
         case KB:
