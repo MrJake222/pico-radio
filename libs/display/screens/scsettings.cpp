@@ -2,6 +2,7 @@
 
 #include <screenmng.hpp>
 #include <icons.hpp>
+#include <settings.hpp>
 
 enum Action {
     PLAY,
@@ -40,6 +41,19 @@ Screen* ScSettings::run_action(int action) {
 
     switch ((Action) action) {
         case PLAY:
+            i = get_selected_station_index();
+            ent = ll.get_entry(i);
+
+            switch (ent->idx) {
+                case settings::me_wifi_idx:
+                    sc_wifi_pwd.begin();
+                    return &sc_wifi_pwd; // TODO change to real wifi screen
+
+                case settings::me_bat_idx:
+                    sc_bat.begin();
+                    return &sc_bat;
+            }
+
             break;
 
         case BACK:

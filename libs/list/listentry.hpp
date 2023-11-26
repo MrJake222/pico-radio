@@ -7,6 +7,8 @@ class ListEntry {
     char url[ENT_URL_LEN + 1];
 
 public:
+    int idx;
+
     enum le_type {
         le_type_radio,  // radio stream
         le_type_local,  // local file

@@ -11,8 +11,10 @@ void LoaderConst::task() {
         if (should_abort)
             break;
 
+        const struct const_entry* const_entry = &const_entries[const_entries_offset];
         ListEntry* entry = &entries[entries_offset];
-        entry->set_name(const_entries[const_entries_offset]);
+        entry->idx = const_entry->idx;
+        entry->set_name(const_entry->display_name);
     }
 
     call_all_loaded(false);

@@ -11,8 +11,6 @@ int ScFavourites::default_y() {
 }
 
 enum Action {
-    BATTERY,
-
     PLAY,
 
     LOCAL,
@@ -21,11 +19,6 @@ enum Action {
 };
 
 int ScFavourites::get_action(int x, int y) {
-    if (y == 0) {
-        // status icon row
-        return BATTERY;
-    }
-
     if (y == last_y()) {
         // action icon row
 
@@ -56,11 +49,6 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
     }
 
     switch (action) {
-        case BATTERY:
-            display.fill_rect(148, 1, 10, 13, bg);
-            display.draw_icon(149, 2, icon_battery_100, bg, COLOR_FG_GOOD);
-            break;
-
         case PLAY:
             draw_button_entry(y, selected);
             break;
@@ -86,10 +74,6 @@ Screen* ScFavourites::run_action(int action) {
     int i, r;
 
     switch ((Action) action) {
-        case BATTERY:
-            sc_bat.begin();
-            return &sc_bat;
-
         // TODO on PLAY and SEARCH display warning when no wifi connection
         case PLAY:
             i = get_selected_station_index();

@@ -7,6 +7,7 @@
 #include <task.h>
 #include <static.hpp>
 #include <util.hpp>
+#include <settings.hpp>
 
 #include <loadersearch.hpp>
 #include <loaderfav.hpp>
@@ -44,14 +45,9 @@ static LoaderFav favl(
 static LoaderLocal locall(
         get_entries(), MAX_ENTRIES);
 
-static const char* settings_entries[] = {
-        "Połączenie Wi-Fi",
-        "Poziom baterii"
-};
-
 static LoaderConst setcl(
         get_entries(), MAX_ENTRIES,
-        settings_entries, sizeof(settings_entries) / sizeof(const char*)
+        settings::menu_entries, settings::menu_entry_count
         );
 
 ScFavourites sc_fav(display, mutex_ticker, favl);

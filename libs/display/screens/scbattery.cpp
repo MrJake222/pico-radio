@@ -44,7 +44,7 @@ int ScBattery::get_action(int x, int y) {
 Screen* ScBattery::run_action(int action) {
     switch ((Action) action) {
         case BACK:
-            return &sc_fav;
+            return &sc_settings;
     }
 
     return nullptr;

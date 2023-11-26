@@ -65,6 +65,7 @@ add_library(libs
         static.cpp
         circularbuffer.cpp
         util.cpp
+        settings.cpp
         )
 
 target_include_directories(libs PUBLIC
