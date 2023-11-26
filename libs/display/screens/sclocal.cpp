@@ -100,6 +100,8 @@ Screen* ScLocal::run_action(int action) {
             set_fresh_load();
             set_fav_pos(0);
             show();
+
+            break;
     }
 
     return nullptr;
@@ -108,9 +110,4 @@ Screen* ScLocal::run_action(int action) {
 void ScLocal::begin(const char* path_) {
     ll.begin(path_);
     ScreenList::begin();
-
-    // request reload of favourites screen
-    // this is important because here we are reusing
-    // the same buffers for stations as the fav list
-    sc_fav.set_fresh_load();
 }

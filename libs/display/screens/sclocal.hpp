@@ -6,10 +6,7 @@
 class ScLocal : public ScreenList {
 
     const char* get_title() override;
-
-    int rows_above() override  { return 0; }
-    int rows_below() override  { return 1; }
-    int size_x(int y) override { return 1; }
+    int action_icons() override { return 1; }
 
     void draw_button(int x, int y, bool selected) override;
     int get_action(int x, int y) override;

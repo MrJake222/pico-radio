@@ -8,11 +8,7 @@
 class ScSearchRes : public ScreenList {
 
     const char* get_title() override { return "Wyniki"; }
-
-    int rows_above() override;
-    int rows_below() override;
-
-    int size_x(int y) override;
+    int action_icons() override { return 1; }
 
     void draw_button(int x, int y, bool selected) override;
 

@@ -6,12 +6,13 @@
 class ScFavourites : public ScreenList {
 
     const char* get_title() override { return "Ulubione stacje"; }
+    int action_icons() override { return 3; }
 
-    int rows_above() override;
-    int rows_below() override;
+    // allowing to enter battery status icon from here is temporary
+    // and should be moved to settings/status screen of some sort
+    int rows_above() override { return 1; }
 
     int default_y() override;
-    int size_x(int y) override;
 
     void draw_button(int x, int y, bool selected) override;
 

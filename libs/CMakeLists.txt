@@ -10,6 +10,7 @@ add_library(libs
         display/screens/scsearch.cpp
         display/screens/scsearchres.cpp
         display/screens/sclocal.cpp
+        display/screens/scsettings.cpp
 
         display/screens/wifi/scwifipwd.cpp
 
@@ -34,6 +35,7 @@ add_library(libs
         list/loadersearch.cpp
         list/loaderfav.cpp
         list/loaderlocal.cpp
+        list/loaderconst.cpp
 
         ds/datasource.cpp
 

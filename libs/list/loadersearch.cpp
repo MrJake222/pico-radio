@@ -157,8 +157,7 @@ void LoaderSearch::task() {
     //     printf("uuid %s name %32s url %s\n", entries[i].uuid, entries[i].name, entries[i].url);
     // }
 
-    if (!should_abort)
-        call_all_loaded(errored);
+    call_all_loaded(errored);
 }
 
 void LoaderSearch::client_begin_set_callback() {
@@ -186,7 +185,7 @@ int LoaderSearch::check_entry_url(int i) {
     if (strcmp(ext, ".pls") == 0) {
         client_begin_set_callback();
         List* list = query_url(client, url,
-                               entries_pls, entries_pls_count,
+                               entries_pls, entries_pls_max,
                                should_abort, client_errored);
 
         if (!list)

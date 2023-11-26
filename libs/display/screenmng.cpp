@@ -5,10 +5,13 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
-#include <loadersearch.hpp>
 #include <static.hpp>
 #include <util.hpp>
+
+#include <loadersearch.hpp>
 #include <loaderfav.hpp>
+#include <loaderlocal.hpp>
+#include <loaderconst.hpp>
 
 // protects screen from mutual usage
 static SemaphoreHandle_t mutex_display;
@@ -41,12 +44,23 @@ static LoaderFav favl(
 static LoaderLocal locall(
         get_entries(), MAX_ENTRIES);
 
+static const char* settings_entries[] = {
+        "Połączenie Wi-Fi",
+        "Poziom baterii"
+};
+
+static LoaderConst setcl(
+        get_entries(), MAX_ENTRIES,
+        settings_entries, sizeof(settings_entries) / sizeof(const char*)
+        );
+
 ScFavourites sc_fav(display, mutex_ticker, favl);
 ScSearch sc_search(display, mutex_ticker);
 ScSearchRes sc_search_res(display, mutex_ticker, sl);
 ScPlay sc_play(display, mutex_ticker);
 ScBattery sc_bat(display, mutex_ticker);
 ScLocal sc_local(display, mutex_ticker, locall);
+ScSettings sc_settings(display, mutex_ticker, setcl);
 ScWifiPwd sc_wifi_pwd(display, mutex_ticker);
 
 [[noreturn]] void screen_tick_task(void* arg) {

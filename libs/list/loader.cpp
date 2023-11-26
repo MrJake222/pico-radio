@@ -20,7 +20,7 @@ void Loader::begin() {
 }
 
 void Loader::call_all_loaded(int errored) {
-    if (all_loaded_cb)
+    if (all_loaded_cb && !should_abort)
         all_loaded_cb(cb_arg, errored);
 }
 

@@ -8,18 +8,6 @@
 #define STATUS_X    60
 #define STATUS_Y    70
 
-int ScSearchRes::rows_above() {
-    return 0;
-}
-
-int ScSearchRes::rows_below() {
-    return 1;
-}
-
-int ScSearchRes::size_x(int y) {
-    return 1;
-}
-
 enum Action {
     PLAY,
     BACK,
@@ -104,11 +92,6 @@ void ScSearchRes::begin(const char* prompt_) {
     prompt = prompt_;
     ll.begin(prompt);
     ll.set_update_cb(search_update_cb);
-
-    // request reload of favourites screen
-    // this is important because here we are reusing
-    // the same buffers for stations as the fav list
-    sc_fav.set_fresh_load();
 
     ScreenList::begin();
 }

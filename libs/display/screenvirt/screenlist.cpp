@@ -1,7 +1,10 @@
-#include <ubuntu_mono.hpp>
-#include <cstdio>
 #include "screenlist.hpp"
+
+#include <cstdio>
+
+#include <ubuntu_mono.hpp>
 #include <icons.hpp>
+#include <screenmng.hpp>
 
 // #define s_base_x      3
 // #define s_base_y     31
@@ -222,6 +225,11 @@ void all_loaded_cb(void* arg, int errored);
 
 void ScreenList::begin() {
     Screen::begin();
+
+    // request reload of favourites screen
+    // this is important because here we are reusing
+    // the same buffers for stations as the fav list
+    sc_fav.set_fresh_load();
 
     // start on top of first page & reload
     set_fav_pos(0);

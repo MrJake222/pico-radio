@@ -47,8 +47,7 @@ end:
     f_closedir(&dir);
 
 end_noclose:
-    if (!should_abort)
-        call_all_loaded(errored);
+    call_all_loaded(errored);
 }
 
 void LoaderLocal::set_file(const char* path_, bool is_dir) {

@@ -15,7 +15,7 @@ class LoaderSearch : public Loader {
     char url_buf[SEARCH_URL_BUF_LEN];
 
     ListEntry* const entries_pls;
-    const int entries_pls_count;
+    const int entries_pls_max;
 
     void task() override;
 
@@ -29,13 +29,13 @@ class LoaderSearch : public Loader {
     int get_entry_count_whole() override { return -1; }
 
 public:
-    LoaderSearch(ListEntry* entries_, int entries_count_,
-                 ListEntry* entries_pls_, int entries_pls_count_,
+    LoaderSearch(ListEntry* entries_, int entries_max_,
+                 ListEntry* entries_pls_, int entries_pls_max_,
                  HttpClientPico& client_)
-        : Loader(entries_, entries_count_)
+        : Loader(entries_, entries_max_)
         , client(client_)
         , entries_pls(entries_pls_)
-        , entries_pls_count(entries_pls_count_)
+        , entries_pls_max(entries_pls_max_)
         { }
 
     void begin(const char* query_);

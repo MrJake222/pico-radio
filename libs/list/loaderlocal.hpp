@@ -30,8 +30,8 @@ class LoaderLocal : public Loader {
     int get_entry_count_whole() override;
 
 public:
-    LoaderLocal(ListEntry* entries_, int entries_count_)
-            : Loader(entries_, entries_count_)
+    LoaderLocal(ListEntry* entries_, int entries_max_)
+            : Loader(entries_, entries_max_)
     { }
 
     void begin(const char* path_);

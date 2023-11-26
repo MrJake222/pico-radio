@@ -8,9 +8,18 @@
 class ScreenList : public Screen {
 
     // method should return how many rows are above the list
-    virtual int rows_above() = 0;
+    // default 0 (status icons not clickable)
+    virtual int rows_above() { return 0; }
     // rows below the list
-    virtual int rows_below() = 0;
+    // default 0 (action icons like back/forward)
+    virtual int rows_below() { return 1; }
+
+    // how many action icons available
+    // number of last row entries
+    virtual int action_icons() = 0;
+
+    // how many list entry buttons are there
+    int kb_buttons();
 
     int first_list_row() { return rows_above(); }
     int last_list_row()  { return last_y() - rows_below(); }
@@ -44,11 +53,6 @@ class ScreenList : public Screen {
     // gated count, only updated after all stations are loaded
     int station_count;
 
-    // how many entry buttons are there
-    int kb_buttons();
-
-    int size_y() override { return kb_buttons() + rows_above() + rows_below(); }
-
     virtual Loader& get_ll() = 0;
 
     // pagination support
@@ -57,6 +61,9 @@ class ScreenList : public Screen {
     void print_page();
 
 protected:
+    int size_x(int y) override final { return y == last_y() ? action_icons() : 1; }
+    int size_y() override final { return kb_buttons() + rows_above() + rows_below(); }
+
     bool is_loaded() { return loaded; }
     int get_page() { return page; }
 

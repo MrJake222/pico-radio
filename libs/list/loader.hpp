@@ -11,12 +11,13 @@ class Loader {
 
     // wrapper to call task() from rtos
     friend void ll_task(void* arg);
-    // real task, should respect <should_abort>
+    // real task, should respect <should_abort>, <page>
+    // must run <call_all_loaded> when finished
     virtual void task() = 0;
 
 protected:
     void* get_cb_arg() { return cb_arg; }
-    // not called when aborted
+    // when called with no callback or when aborted, does nothing
     void call_all_loaded(int errored);
 
     int page;

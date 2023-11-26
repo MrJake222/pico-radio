@@ -19,9 +19,9 @@ class LoaderFav : public Loader {
     int get_entry_count_whole() override;
 
 public:
-    LoaderFav(ListEntry* entries_, int entries_count_,
+    LoaderFav(ListEntry* entries_, int entries_max_,
               lfs_t* lfs_)
-        : Loader(entries_, entries_count_)
+        : Loader(entries_, entries_max_)
         , lfs(lfs_), rd(lfs_)
         { }
 

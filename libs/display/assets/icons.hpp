@@ -23,3 +23,4 @@ extern const struct icon icon_local;
 extern const struct icon icon_folder;
 extern const struct icon icon_shift_empty;
 extern const struct icon icon_shift_filled;
+extern const struct icon icon_settings;

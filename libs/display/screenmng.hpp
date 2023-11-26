@@ -7,6 +7,7 @@
 #include <scfavourites.hpp>
 #include <scbattery.hpp>
 #include <sclocal.hpp>
+#include <scsettings.hpp>
 
 #include <scwifipwd.hpp>
 
@@ -16,6 +17,7 @@ extern ScSearchRes sc_search_res;
 extern ScPlay sc_play;
 extern ScBattery sc_bat;
 extern ScLocal sc_local;
+extern ScSettings sc_settings;
 extern ScWifiPwd sc_wifi_pwd;
 
 void screenmng_init();

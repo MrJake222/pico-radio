@@ -6,27 +6,7 @@
 #include <icons.hpp>
 #include <sd.hpp>
 
-// allowing to enter battery status icon from here is temporary
-// and should be moved to settings/status screen of some sort
-int ScFavourites::rows_above() {
-    return 1;
-}
-
-int ScFavourites::rows_below() {
-    return 1;
-}
-
 int ScFavourites::default_y() {
-    return 1;
-}
-
-int ScFavourites::size_x(int y) {
-    if (y == last_y()) {
-        // action icons
-        return 2;
-    }
-
-    // middle (list)
     return 1;
 }
 
@@ -34,9 +14,10 @@ enum Action {
     BATTERY,
 
     PLAY,
-    SEARCH,
 
-    LOCAL
+    LOCAL,
+    SETTINGS,
+    SEARCH,
 };
 
 int ScFavourites::get_action(int x, int y) {
@@ -50,7 +31,8 @@ int ScFavourites::get_action(int x, int y) {
 
         switch (x) {
             case 0: return LOCAL;
-            case 1: return SEARCH;
+            case 1: return SETTINGS;
+            case 2: return SEARCH;
         }
     }
 
@@ -64,14 +46,13 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
     const int fg = COLOR_FG;
 
     switch (action) {
-        case BATTERY:
-        case SEARCH:
-        case LOCAL:
-            bg = get_btn_bg(selected, false);
+        case PLAY:
+            bg = get_btn_bg(selected, true);
             break;
 
         default:
-            bg = get_btn_bg(selected, true);
+            // all icons
+            bg = get_btn_bg(selected, false);
     }
 
     switch (action) {
@@ -84,14 +65,19 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
             draw_button_entry(y, selected);
             break;
 
-        case SEARCH:
-            display.fill_rect(143, 111, 15, 15, bg);
-            display.draw_icon(144, 112, icon_search, bg, fg);
-            break;
-
         case LOCAL:
             display.fill_rect(2, 111, 15, 15, bg);
             display.draw_icon(3, 112, icon_local, bg, fg);
+            break;
+
+        case SETTINGS:
+            display.fill_rect(2+15, 111, 15, 15, bg);
+            display.draw_icon(3+15, 112, icon_settings, bg, fg);
+            break;
+
+        case SEARCH:
+            display.fill_rect(143, 111, 15, 15, bg);
+            display.draw_icon(144, 112, icon_search, bg, fg);
             break;
     }
 }
@@ -118,10 +104,6 @@ Screen* ScFavourites::run_action(int action) {
             sc_play.begin(ll.get_entry(i), i + get_page() * MAX_ENTRIES, this);
             return &sc_play;
 
-        case SEARCH:
-            sc_search.begin();
-            return &sc_search;
-
         case LOCAL:
             if (!sd::is_card_mounted()) {
                 show_warn("Uwaga: brak karty SD");
@@ -130,6 +112,14 @@ Screen* ScFavourites::run_action(int action) {
 
             sc_local.begin("/");
             return &sc_local;
+
+        case SETTINGS:
+            sc_settings.begin();
+            return &sc_settings;
+
+        case SEARCH:
+            sc_search.begin();
+            return &sc_search;
     }
 
     return nullptr;
