@@ -26,6 +26,8 @@
 
 class Screen {
 
+    // first icon coordinate
+    int icon_x;
     virtual const char* get_title() = 0;
 
     // called on input (CENTER button)
@@ -90,6 +92,14 @@ protected:
     void add_normal_text_ljust(int text_x_r, int text_y, const char *str, const struct font* font, int bg, int fg);
     int add_scrolled_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width);
     void update_scrolled_text(int idx, const char *str);
+
+    void remove_scrolled_text(int idx);
+    // TODO implement remove_scrolled_text
+    // requires heavy rewrites, possibly nice occasion to implement heap-like structure
+    // which consists of classes implementing is_busy() method
+
+    // TODO remove reset_scrolled_texts
+    // it enables bad practices when subclass can remove texts which are not owned by that subclass
     void reset_scrolled_texts();
     // this adds scrolling text if the text won't fit in max_width
     // can attach additional check (scrolling will only occur when allow_scroll is true)

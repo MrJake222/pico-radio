@@ -32,6 +32,9 @@ class ScreenList : public Screen {
     void draw_bottom_buttons();
     void draw_scroll_bar();
 
+    // scrolled text id of currently selected item
+    int text_idx;
+
     // was the loading at least called once (the interface was displayed)?
     // set to false in <begin>
     // set to true in <show>

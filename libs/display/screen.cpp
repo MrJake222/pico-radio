@@ -149,22 +149,22 @@ void Screen::tick_sec_disable() {
 void Screen::tick_sec() {
     // update top-of-the-screen status icons
 
-    const int x = 149;
+    // important for drawing title
+    icon_x = 149;
     const int y = 2;
 
     // battery
-    const int bv = analog::battery_percentage();
-    const int bx = x;
-    if (bv >= 60)
-        display.draw_icon(bx, y, icon_battery_100, COLOR_BG, COLOR_FG_GOOD);
-    else if (bv >= 20)
-        display.draw_icon(bx, y, icon_battery_50, COLOR_BG, COLOR_FG_WARN);
+    const int p = analog::battery_percentage();
+    if (p >= 60)
+        display.draw_icon(icon_x, y, icon_battery_100, COLOR_BG, COLOR_FG_GOOD);
+    else if (p >= 20)
+        display.draw_icon(icon_x, y, icon_battery_50, COLOR_BG, COLOR_FG_WARN);
     else
-        display.draw_icon(bx, y, icon_battery_0, COLOR_BG, COLOR_FG_ERR);
+        display.draw_icon(icon_x, y, icon_battery_0, COLOR_BG, COLOR_FG_ERR);
 
     // sd card
-    const int sx = x - 10;
-    display.draw_icon(sx, y,
+    icon_x -= 10; // width=8 + margin=2
+    display.draw_icon(icon_x, y,
                       sd::is_card_mounted() ? icon_sd : icon_sd_disabled,
                       COLOR_BG, COLOR_FG);
 
@@ -245,14 +245,17 @@ void Screen::show() {
     reset_scrolled_texts();
 
     display.clear_screen(COLOR_BG);
-    add_normal_text(2, 0, get_title(),
-                    ubuntu_font_get_size(UbuntuFontSize::FONT_16),
-                    COLOR_BG, COLOR_FG,
-                    display.W - 2*2);
 
     draw_buttons();
     tick_sec_enable();
     tick_sec(); // first tick
+
+    // after tick_sec() because it sets icon_x
+    add_scrolled_text_or_normal(
+            2, 0, get_title(),
+            ubuntu_font_get_size(UbuntuFontSize::FONT_16),
+            COLOR_BG, COLOR_FG,
+            icon_x - 2*2, false); // TODO enable scroll when remove_scrolled_text() implemented
 }
 
 void Screen::hide() {

@@ -125,6 +125,26 @@ int LoaderLocal::check_entry_url(int i) {
     return 0;
 }
 
+char* LoaderLocal::path_get_last_entered() {
+    int slash_seen = 0;
+    char* end;
+
+    // iterate from end to begin
+    // return pointer to second-last slash
+    for (end = path+strlen(path); end != path; end--) {
+        if (*end == '/')
+            slash_seen++;
+
+        // trailing + second-last
+        if (slash_seen == 2)
+            break;
+    }
+
+    // either because of break (second-last slash)
+    // or end == start (top-level)
+    return end;
+}
+
 int LoaderLocal::go(const char* dirpath) {
     if (strlen(path) + strlen(dirpath) + 1 >= PATH_LEN)
         // buffer will overflow
@@ -152,23 +172,12 @@ int LoaderLocal::up() {
         // top-level directory
         return -1;
 
-    int slash_seen = 0;
-    char* end;
-
-    // iterate from end to begin
-    // return pointer to second-last
-    for (end = path+strlen(path); end != path; end--) {
-        if (*end == '/')
-            slash_seen++;
-
-        // trailing + second-last
-        if (slash_seen == 2)
-            break;
-    }
+    // not top-level, will return second-last slash pointer
+    char* slash = path_get_last_entered();
 
     // cut off at last dividing part (not counting trailing)
-    end++;       // skip slash
-    *end = '\0'; // trim right after
+    slash++;       // skip slash
+    *slash = '\0'; // trim right after
 
     return 0;
 }

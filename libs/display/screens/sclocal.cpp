@@ -3,6 +3,18 @@
 #include <icons.hpp>
 #include <screenmng.hpp>
 
+const char* ScLocal::get_title() {
+    const char* path = ll.path_leaf();
+    if (!*path) {
+        // empty string -> root folder
+        return "Pliki lokalne";
+    }
+
+    // It'd be nice to strip trailing slash,
+    // but this would require copying
+    return path;
+}
+
 enum Action {
     PLAY,
     BACK,
@@ -60,7 +72,7 @@ Screen* ScLocal::run_action(int action) {
                     // open folder recursively
                     r = ll.go(ent->get_url());
                     if (r < 0) {
-                        show_error("Błąd: nie można otworzyć strumienia");
+                        show_error("Błąd: nie można otworzyć katalogu");
                         return nullptr;
                     }
 

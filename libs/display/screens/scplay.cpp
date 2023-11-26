@@ -18,6 +18,21 @@ int ScPlay::size_y() {
     return 1;
 }
 
+const char* ScPlay::get_title() {
+    switch (ent->type) {
+        case ListEntry::le_type_radio:
+            return "Radio";
+
+        case ListEntry::le_type_local:
+            return "Odtwarzacz";
+
+        case ListEntry::le_type_dir:
+            return ""; // impossible
+    }
+
+    return "";
+}
+
 enum Action {
     BACK,
     FAV,

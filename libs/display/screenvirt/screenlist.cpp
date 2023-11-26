@@ -152,7 +152,7 @@ void ScreenList::dey() {
 }
 
 void ScreenList::button_pre_selection_change() {
-    reset_scrolled_texts();
+    reset_scrolled_texts(); // TODO only remove text that we own (text_idx)
 }
 
 void ScreenList::draw_button_entry(int y, bool selected) {
@@ -194,9 +194,10 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
     const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);
     const int pad = (s_res_h - font->H) / 2;
-    add_scrolled_text_or_normal(xs + s_res_pad + pad_right, ys + pad - 1, name, font,
-                                bg, COLOR_FG,
-                                s_res_w - s_res_pad * 2 - pad_right, selected);
+    text_idx = add_scrolled_text_or_normal(
+            xs + s_res_pad + pad_right, ys + pad - 1, name, font,
+            bg, COLOR_FG,
+            s_res_w - s_res_pad * 2 - pad_right, selected);
 }
 
 void ScreenList::show() {

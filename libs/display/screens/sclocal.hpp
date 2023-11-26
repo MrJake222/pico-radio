@@ -5,7 +5,7 @@
 
 class ScLocal : public ScreenList {
 
-    const char* get_title() override { return "Wyniki"; }
+    const char* get_title() override;
 
     int rows_above() override  { return 0; }
     int rows_below() override  { return 1; }

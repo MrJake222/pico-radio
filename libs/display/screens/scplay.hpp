@@ -8,7 +8,7 @@
 
 class ScPlay : public Screen {
 
-    const char* get_title() override { return "Radio"; }
+    const char* get_title() override;
 
     int size_x(int y) override;
     int size_y() override;
