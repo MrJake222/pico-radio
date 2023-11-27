@@ -38,7 +38,7 @@ public:
     int skip_line();
     // returns sum of skipped line lengths or -1 on failure
     int skip_lines(int n);
-    // retunrs number of skipped lines or -1 on failure
+    // returns number of skipped lines or -1 on failure
     int skip_all_lines();
 
     // writing interface

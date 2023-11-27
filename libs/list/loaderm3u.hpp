@@ -6,7 +6,12 @@
 
 typedef void(*ld_fav_update_cb)(void* arg, const char* info);
 
-class LoaderFav : public Loader {
+// This class loads M3U format
+// loads EXTINF=dummy,<name> and the following line as <url>
+// can be used for favs or wifi
+class LoaderM3U : public Loader {
+
+    char path[LFS_NAME_MAX + 1];
 
     lfs_t* lfs;
     LfsAccess rd;
@@ -19,11 +24,13 @@ class LoaderFav : public Loader {
     int get_entry_count_whole() override;
 
 public:
-    LoaderFav(ListEntry* entries_, int entries_max_,
+    LoaderM3U(ListEntry* entries_, int entries_max_,
               lfs_t* lfs_)
         : Loader(entries_, entries_max_)
         , lfs(lfs_), rd(lfs_)
         { }
+
+    void begin(const char* path_);
 
     void set_update_cb(ld_fav_update_cb cb) { upd_cb = cb; }
 };

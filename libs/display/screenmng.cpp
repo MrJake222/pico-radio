@@ -10,7 +10,7 @@
 #include <settings.hpp>
 
 #include <loadersearch.hpp>
-#include <loaderfav.hpp>
+#include <loaderm3u.hpp>
 #include <loaderlocal.hpp>
 #include <loaderconst.hpp>
 
@@ -38,7 +38,7 @@ static LoaderSearch sl(
         get_entries_pls(), MAX_ENTRIES_PLS,
         get_http_client());
 
-static LoaderFav favl(
+static LoaderM3U m3ul(
         get_entries(), MAX_ENTRIES,
         get_lfs());
 
@@ -50,7 +50,7 @@ static LoaderConst setcl(
         settings::menu_entries, settings::menu_entry_count
         );
 
-ScFavourites sc_fav(display, mutex_ticker, favl);
+ScFavourites sc_fav(display, mutex_ticker, m3ul);
 ScSearch sc_search(display, mutex_ticker);
 ScSearchRes sc_search_res(display, mutex_ticker, sl);
 ScPlay sc_play(display, mutex_ticker);

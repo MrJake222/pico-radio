@@ -26,14 +26,14 @@ add_library(libs
         display/screen.cpp
         display/screenmng.cpp
 
-        list/fav.cpp
+        list/m3u.cpp
         list/list.cpp
         list/listentry.cpp
         list/listm3u.cpp
         list/listpls.cpp
         list/loader.cpp
         list/loadersearch.cpp
-        list/loaderfav.cpp
+        list/loaderm3u.cpp
         list/loaderlocal.cpp
         list/loaderconst.cpp
 

@@ -1,16 +1,16 @@
-#include "fav.hpp"
+#include "m3u.hpp"
 
 #include <lfsaccess.hpp>
 #include <config.hpp>
 #include <static.hpp>
 
-namespace fav {
+namespace m3u {
 
 static LfsAccess acc(get_lfs());
 
-int create() {
+int create(const char* path) {
     int r;
-    acc.begin(PATH_FAVOURITES);
+    acc.begin(path);
 
     r = acc.open_w_create();
     if (r < 0)
@@ -27,10 +27,10 @@ int create() {
     return 0;
 }
 
-int add(const ListEntry* entry) {
+int add(const char* path, const ListEntry* entry) {
     int r;
     char buf[LIST_MAX_LINE_LENGTH];
-    acc.begin(PATH_FAVOURITES);
+    acc.begin(path);
 
     r = acc.open_rw();
     if (r < 0)
@@ -56,10 +56,10 @@ int add(const ListEntry* entry) {
     return entry_idx;
 }
 
-int remove(int index) {
+int remove(const char* path, int index) {
     int r;
     char buf[LIST_MAX_LINE_LENGTH];
-    acc.begin(PATH_FAVOURITES);
+    acc.begin(path);
 
     r = acc.open_rw();
     if (r < 0)

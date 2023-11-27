@@ -2,7 +2,7 @@
 
 #include <screenmng.hpp>
 #include <ubuntu_mono.hpp>
-#include <loaderfav.hpp>
+#include <loaderm3u.hpp>
 #include <icons.hpp>
 #include <sd.hpp>
 
@@ -118,7 +118,7 @@ void fav_update_cb(void* arg, const char* info);
 
 void ScFavourites::begin() {
     // called from previous screen (on input)
-    ll.begin();
+    ll.begin(PATH_FAVOURITES);
 
     ScreenList::begin();
     ll.set_update_cb(fav_update_cb);

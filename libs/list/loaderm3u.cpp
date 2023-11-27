@@ -1,14 +1,18 @@
-#include "loaderfav.hpp"
+#include "loaderm3u.hpp"
 
 #include <listm3u.hpp>
-#include <fav.hpp>
+#include <m3u.hpp>
 
-void LoaderFav::update(const char* info) {
+void LoaderM3U::begin(const char* path_) {
+    strncpy(path, path_, LFS_NAME_MAX);
+}
+
+void LoaderM3U::update(const char* info) {
     if (upd_cb)
         upd_cb(get_cb_arg(), info);
 }
 
-void LoaderFav::task() {
+void LoaderM3U::task() {
 
     // load favourites from lfs
     int r;
@@ -19,14 +23,14 @@ void LoaderFav::task() {
     update("Przygotowanie");
 
 retry:
-    rd.begin(PATH_FAVOURITES);
+    rd.begin(path);
     r = rd.open_r();
     if (r < 0) {
         if (r == LFS_ERR_NOENT) {
             // does not exist
             puts("creating new favourites file");
             update("Tworzenie");
-            fav::create();
+            m3u::create(path);
             goto retry;
         }
 
@@ -60,9 +64,9 @@ end_noclose:
         call_all_loaded(errored);
 }
 
-int LoaderFav::get_entry_count_whole() {
+int LoaderM3U::get_entry_count_whole() {
     int r;
-    rd.begin(PATH_FAVOURITES);
+    rd.begin(path);
 
     r = rd.open_r();
     if (r < 0)
