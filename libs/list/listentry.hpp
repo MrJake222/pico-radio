@@ -3,12 +3,12 @@
 #include <config.hpp>
 
 class ListEntry {
+
+    // only these fields are getting saved
     char name[ENT_NAME_LEN + 1];
     char url[ENT_URL_LEN + 1];
 
 public:
-    int idx;
-
     enum le_type {
         le_type_radio,  // radio stream
         le_type_local,  // local file
@@ -17,9 +17,12 @@ public:
 
     le_type type;
 
-    // local-playback specific
+    // loader-local specific
     // entry url was already prepended with directory info
     bool dir_added;
+
+    // loader-const specific
+    int idx;
 
     void set_name(const char* name_);
     void set_url(const char* url_);

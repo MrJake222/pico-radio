@@ -4,6 +4,7 @@
 #include <filetype.hpp>
 
 void LoaderLocal::begin(const char* path_) {
+    Loader::begin();
     strncpy(path, path_, FATFS_MAX_PATH_LEN);
 }
 

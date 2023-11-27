@@ -4,6 +4,7 @@
 #include <m3u.hpp>
 
 void LoaderM3U::begin(const char* path_) {
+    Loader::begin();
     strncpy(path, path_, LFS_NAME_MAX);
 }
 
@@ -44,7 +45,8 @@ retry:
     // skip lines: 1 (header) + 2*page*per_page
     rd.skip_lines(1 + 2 * page * MAX_ENTRIES);
 
-    list->begin(entries, entries_max);
+    list->begin(entries + entries_offset,
+                entries_max - entries_offset);
     r = list->consume_all(&rd, should_abort, error);
     if (r < 0) {
         // failed

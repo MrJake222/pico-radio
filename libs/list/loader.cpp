@@ -29,6 +29,9 @@ void Loader::load(int page_) {
     should_abort = false;
     in_progress = true;
 
+    // set here because begin() is only called on entering the screen
+    // when loading a new page all previous results are discarded,
+    // hence loading from offset=0
     entries_offset = 0;
 
     xTaskCreate(ll_task,
