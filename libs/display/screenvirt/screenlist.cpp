@@ -203,6 +203,8 @@ void ScreenList::draw_button_entry(int y, bool selected) {
             s_res_w - s_res_pad * 2 - pad_right, selected);
 }
 
+void all_loaded_cb(void* arg, int errored);
+
 void ScreenList::show() {
     // called from input
     Screen::show();
@@ -213,6 +215,12 @@ void ScreenList::show() {
                         COLOR_BG, COLOR_FG,
                         display.W);
 
+        // <ll.begin> called by subclass
+        // setup list loading
+        // (done in show() because sub-screens can override this,
+        //  and won't call begin() by design)
+        get_ll().set_cb_arg(this);
+        get_ll().set_all_loaded_cb(all_loaded_cb);
         get_ll().load(page);
     }
     else {
@@ -220,8 +228,6 @@ void ScreenList::show() {
         print_page();
     }
 }
-
-void all_loaded_cb(void* arg, int errored);
 
 void ScreenList::begin() {
     Screen::begin();
@@ -234,10 +240,6 @@ void ScreenList::begin() {
     // start on top of first page & reload
     set_fav_pos(0);
     set_fresh_load();
-
-    // <ll.reset> called by <ll.begin> called by subclass
-    get_ll().set_cb_arg(this);
-    get_ll().set_all_loaded_cb(all_loaded_cb);
 }
 
 void ScreenList::set_fresh_load() {

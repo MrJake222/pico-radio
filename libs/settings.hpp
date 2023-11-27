@@ -9,7 +9,7 @@ enum {
     me_bat_idx
 };
 
-extern const struct const_entry menu_entries[];
-extern const int menu_entry_count;
+const struct const_entry* get_menu_entries();
+int get_menu_entry_count();
 
 } // namespace

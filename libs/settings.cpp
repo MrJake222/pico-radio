@@ -10,6 +10,12 @@ const struct const_entry menu_entries[] = {
         me_bat
 };
 
-const int menu_entry_count = sizeof(menu_entries) / sizeof(menu_entries[0]);
+const struct const_entry* get_menu_entries() {
+    return menu_entries;
+}
+
+int get_menu_entry_count() {
+    return sizeof(menu_entries) / sizeof(menu_entries[0]);
+}
 
 } // namespace

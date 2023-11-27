@@ -93,6 +93,7 @@
 #define LITTLEFS_SIZE             (1<<16) // 64K, base 0x101F0000
 #define LITTLEFS_CACHES           1024    // 3 blocks of this size
 #define PATH_FAVOURITES           "/favourites.m3u"
+#define PATH_WIFI                 "/wifi.m3u"
 
 // --------------------------------- SD --------------------------------- //
 #define FATFS_MAX_PATH_LEN        (128*4)

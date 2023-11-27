@@ -1,15 +1,16 @@
-#include "scsettings.hpp"
+#include "scwifiscan.hpp"
 
 #include <screenmng.hpp>
 #include <icons.hpp>
-#include <settings.hpp>
+
+#include <screenmng.hpp>
 
 enum Action {
     PLAY,
     BACK,
 };
 
-int ScSettings::get_action(int x, int y) {
+int ScWifiScan::get_action(int x, int y) {
     if (y == last_y()) {
         return BACK;
     }
@@ -17,7 +18,7 @@ int ScSettings::get_action(int x, int y) {
     return PLAY;
 }
 
-void ScSettings::draw_button(int x, int y, bool selected) {
+void ScWifiScan::draw_button(int x, int y, bool selected) {
 
     auto action = (Action) get_action(x, y);
     int bg;
@@ -35,7 +36,7 @@ void ScSettings::draw_button(int x, int y, bool selected) {
     }
 }
 
-Screen* ScSettings::run_action(int action) {
+Screen* ScWifiScan::run_action(int action) {
     int i, r;
     ListEntry* ent;
 
@@ -44,22 +45,18 @@ Screen* ScSettings::run_action(int action) {
             i = get_selected_station_index();
             ent = ll.get_entry(i);
 
-            switch (ent->idx) {
-                case settings::me_wifi_idx:
-                    sc_wifi_saved.begin();
-                    return &sc_wifi_saved;
-
-                case settings::me_bat_idx:
-                    sc_bat.begin();
-                    return &sc_bat;
-            }
-
             break;
 
         case BACK:
             ll.load_abort();
-            return &sc_fav;
+            return &sc_wifi_saved;
     }
 
     return nullptr;
+}
+
+void ScWifiScan::begin() {
+    ll.begin();
+
+    ScreenList::begin();
 }

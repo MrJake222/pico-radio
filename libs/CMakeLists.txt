@@ -13,6 +13,8 @@ add_library(libs
         display/screens/scsettings.cpp
 
         display/screens/wifi/scwifipwd.cpp
+        display/screens/wifi/scwifisaved.cpp
+        display/screens/wifi/scwifiscan.cpp
 
         display/screenvirt/screenlist.cpp
         display/screenvirt/screenkb.cpp
@@ -36,6 +38,7 @@ add_library(libs
         list/loaderm3u.cpp
         list/loaderlocal.cpp
         list/loaderconst.cpp
+        list/loaderwifiscan.cpp
 
         ds/datasource.cpp
 

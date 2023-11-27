@@ -47,8 +47,10 @@ static LoaderLocal locall(
 
 static LoaderConst setcl(
         get_entries(), MAX_ENTRIES,
-        settings::menu_entries, settings::menu_entry_count
-        );
+        settings::get_menu_entries(), settings::get_menu_entry_count());
+
+static LoaderWifiScan scanl(
+        get_entries(), MAX_ENTRIES);
 
 ScFavourites sc_fav(display, mutex_ticker, m3ul);
 ScSearch sc_search(display, mutex_ticker);
@@ -58,6 +60,8 @@ ScBattery sc_bat(display, mutex_ticker);
 ScLocal sc_local(display, mutex_ticker, locall);
 ScSettings sc_settings(display, mutex_ticker, setcl);
 ScWifiPwd sc_wifi_pwd(display, mutex_ticker);
+ScWifiSaved sc_wifi_saved(display, mutex_ticker, m3ul);
+ScWifiScan sc_wifi_scan(display, mutex_ticker, scanl);
 
 [[noreturn]] void screen_tick_task(void* arg) {
     TickType_t last_wake;

@@ -109,19 +109,19 @@ Screen* ScFavourites::run_action(int action) {
     return nullptr;
 }
 
-void ScFavourites::show() {
-    // called from input
-    ScreenList::show();
-}
-
 void fav_update_cb(void* arg, const char* info);
 
-void ScFavourites::begin() {
-    // called from previous screen (on input)
-    ll.begin(PATH_FAVOURITES);
+void ScFavourites::show() {
+    // called from input
 
-    ScreenList::begin();
+    // setup list-loader first
+    // (done in show() because sub-screens can override this,
+    //  and won't call begin() by design)
+    ll.begin(PATH_FAVOURITES);
     ll.set_update_cb(fav_update_cb);
+
+    // call superclass (can possibly start loading the list)
+    ScreenList::show();
 }
 
 void fav_update_cb(void* arg, const char* info) {
