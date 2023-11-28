@@ -30,6 +30,8 @@ protected:
 
     // get how many entries are there (don't care about pagination)
     // -1 is infinite pages (or failed to determine)
+    // it gets called only once in <get_page_count> from <all_loaded_cb>
+    // can assume the <task> has completed
     virtual int get_entry_count_whole() = 0;
 
 public:

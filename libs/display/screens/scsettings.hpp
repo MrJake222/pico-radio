@@ -25,4 +25,6 @@ public:
                , ll(ll_)
     { }
 
+    void show() override;
+
 };

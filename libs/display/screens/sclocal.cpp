@@ -108,6 +108,14 @@ Screen* ScLocal::run_action(int action) {
 }
 
 void ScLocal::begin(const char* path_) {
-    ll.begin(path_);
+    path = path_;
     ScreenList::begin();
+}
+
+void ScLocal::show() {
+    if (!is_loaded()) {
+        ll.begin(path);
+    }
+
+    ScreenList::show();
 }

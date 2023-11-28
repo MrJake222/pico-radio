@@ -68,8 +68,10 @@ Screen* ScWifiSaved::run_action(int action) {
     return nullptr;
 }
 
-void ScWifiSaved::begin() {
-    ll.begin(PATH_WIFI);
+void ScWifiSaved::show() {
+    if (!is_loaded()) {
+        ll.begin(PATH_WIFI);
+    }
 
-    ScreenList::begin();
+    ScreenList::show();
 }

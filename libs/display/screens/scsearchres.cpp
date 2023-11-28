@@ -67,8 +67,6 @@ Screen* ScSearchRes::run_action(int action) {
 void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers);
 
 void ScSearchRes::show() {
-    // called from input
-    ScreenList::show();
 
     sprintf(subtitle, "\"%s\"", prompt);
     add_normal_text(8, 15, subtitle,
@@ -91,6 +89,8 @@ void ScSearchRes::show() {
         ll.begin(PATH_FAVOURITES);
         ll.set_update_cb(search_update_cb);
     }
+
+    ScreenList::show();
 }
 
 void ScSearchRes::begin(const char* prompt_) {

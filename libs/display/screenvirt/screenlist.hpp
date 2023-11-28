@@ -92,9 +92,11 @@ public:
         , s_scr_w(s_scr_w_), s_scr_pad(s_scr_pad_)
         { }
 
+    void begin() override;
     // subclasses should call different ll.begin() methods
     // before calling to this super-method
-    void begin() override;
+    // (moved to show() because sub-screens can change loader settings this,
+    //  and won't call begin() by design)
     void show() override;
 
     // to be used by player add/remove from favourites feature (both functions, or <begin>)

@@ -55,8 +55,10 @@ Screen* ScWifiScan::run_action(int action) {
     return nullptr;
 }
 
-void ScWifiScan::begin() {
-    ll.begin();
+void ScWifiScan::show() {
+    if (!is_loaded()) {
+        ll.begin();
+    }
 
-    ScreenList::begin();
+    ScreenList::show();
 }
