@@ -3,17 +3,23 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
+#include <util.hpp>
+
 int scan_res_cb(void* arg, const cyw43_ev_scan_result_t* res) {
     auto ld = (LoaderWifiScan*) arg;
 
     printf("  wifi: scanned %s @ ch%d\n", res->ssid, res->channel);
-
     ld->set_result((const char*) res->ssid);
 
     return 0;
 }
 
 void LoaderWifiScan::set_result(const char* ssid) {
+    // dry-run
+    if (dry_run)
+        return;
+
+    // entries maxed out
     if (entries_offset == entries_max)
         return;
 
@@ -24,15 +30,16 @@ void LoaderWifiScan::set_result(const char* ssid) {
             return;
     }
 
-    ListEntry* entry = &entries[entries_offset];
+    ListEntry e{};
+    e.set_name(ssid);
 
-    entry->set_name(ssid);
-    entry->set_url("");
+    insert_in_order(entries, entries_offset, &e,
+                    [](const ListEntry* e1, const ListEntry* e2) { return strcasecmp(e1->get_name(), e2->get_name()) < 0; });
 
     entries_offset++;
 }
 
-int LoaderWifiScan::scan_networks(bool dry_run) {
+int LoaderWifiScan::scan_networks() {
     int r;
     cyw43_wifi_scan_options_t scan_options = {0};
 
@@ -56,14 +63,17 @@ int LoaderWifiScan::scan_networks(bool dry_run) {
     return 0;
 }
 
-int LoaderWifiScan::get_entry_count_whole() {
-    return -1;
-}
+// TODO LoaderWifiScan implement pagination and entry counting
 
 void LoaderWifiScan::task() {
     int to_skip = page * entries_max;
 
-    scan_networks(false);
+    dry_run = false;
+    scan_networks();
 
     call_all_loaded(false);
+}
+
+int LoaderWifiScan::get_entry_count_whole() {
+    return -1;
 }

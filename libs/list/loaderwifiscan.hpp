@@ -7,7 +7,9 @@
 class LoaderWifiScan : public Loader {
 
     // if dry running, the results are not added to entries
-    int scan_networks(bool dry_run);
+    bool dry_run;
+
+    int scan_networks();
 
     int get_entry_count_whole() override;
     void task() override;

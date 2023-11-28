@@ -5,7 +5,7 @@
 
 class ScWifiScan : public ScreenList {
 
-    const char* get_title() override { return "Zapisane sieci"; }
+    const char* get_title() override { return "Znalezione sieci"; }
     int action_icons() override { return 1; }
 
     void draw_button(int x, int y, bool selected) override;
