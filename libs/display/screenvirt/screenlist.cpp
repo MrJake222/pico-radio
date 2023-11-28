@@ -217,7 +217,7 @@ void ScreenList::show() {
 
         // <ll.begin> called by subclass
         // setup list loading
-        // (done in show() because sub-screens can override this,
+        // (done in show() because sub-screens can change loader settings this,
         //  and won't call begin() by design)
         get_ll().set_cb_arg(this);
         get_ll().set_all_loaded_cb(all_loaded_cb);
@@ -303,6 +303,7 @@ void all_loaded_cb(void* arg, int errored) {
     if (sc->page_count != -1)
         sc->page = MIN(sc->page, sc->page_count);   // page may have disappeared
 
+    // TODO screenlist: this if is unnecessary
     if (sc->loaded) {
         // it's a reload (page changed)
 

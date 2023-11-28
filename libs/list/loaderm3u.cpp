@@ -62,8 +62,7 @@ end:
     rd.close();
 
 end_noclose:
-    if (!should_abort)
-        call_all_loaded(errored);
+    call_all_loaded(errored);
 }
 
 int LoaderM3U::get_entry_count_whole() {

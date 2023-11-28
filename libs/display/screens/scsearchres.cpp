@@ -64,6 +64,8 @@ Screen* ScSearchRes::run_action(int action) {
     return nullptr;
 }
 
+void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers);
+
 void ScSearchRes::show() {
     // called from input
     ScreenList::show();
@@ -82,17 +84,18 @@ void ScSearchRes::show() {
         add_normal_text_ljust(STATUS_X, STATUS_Y+11, "Serwer",
                               ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                               COLOR_BG, COLOR_FG);
+
+        // setup list-loader first
+        // (done in show() because sub-screens can change loader settings this,
+        //  and won't call begin() by design)
+        ll.begin(PATH_FAVOURITES);
+        ll.set_update_cb(search_update_cb);
     }
 }
-
-void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers);
 
 void ScSearchRes::begin(const char* prompt_) {
     // called from previous screen (on input)
     prompt = prompt_;
-    ll.begin(prompt);
-    ll.set_update_cb(search_update_cb);
-
     ScreenList::begin();
 }
 

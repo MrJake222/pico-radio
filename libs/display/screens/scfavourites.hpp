@@ -8,8 +8,6 @@ class ScFavourites : public ScreenList {
     const char* get_title() override { return "Ulubione stacje"; }
     int action_icons() override { return 3; }
 
-    int default_y() override;
-
     void draw_button(int x, int y, bool selected) override;
 
     int get_action(int x, int y) override;
