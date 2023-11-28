@@ -13,10 +13,9 @@ int create_mutex_give(SemaphoreHandle_t& mutex);
 // encodes character ' ' into %20
 void url_encode_string(char* dst, const char* src);
 
-// before is a function which takes two const T* pointers e1, e2
-// and returns whether e1 is before e2
-template<typename T, typename F>
-void insert_in_order(T* arr, int arr_len, T* elem, F before) {
+// before true -> e1 before e2
+template<typename T>
+void insert_in_order(T* arr, int arr_len, T* elem, bool(*before)(const T* e1, const T* e2)) {
     for (int i=arr_len; i>=0; i--) {
         if (i == 0) {
             // first element after elem

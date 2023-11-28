@@ -6,8 +6,9 @@
 
 class LoaderWifiScan : public Loader {
 
-    // if dry running, the results are not added to entries
-    bool dry_run;
+    // pagination
+    // page skips 80% because new stations might be discovered
+    int to_skip() { return page * (entries_max * 80/100); }
 
     int scan_networks();
 

@@ -14,15 +14,13 @@ int scan_res_cb(void* arg, const cyw43_ev_scan_result_t* res) {
     return 0;
 }
 
+static bool before(const ListEntry* e1, const ListEntry* e2) {
+    // case insensitive comparison
+    // sorts A-Z
+    return strcasecmp(e1->get_name(), e2->get_name()) < 0;
+}
+
 void LoaderWifiScan::set_result(const char* ssid) {
-    // dry-run
-    if (dry_run)
-        return;
-
-    // entries maxed out
-    if (entries_offset == entries_max)
-        return;
-
     // scan for duplicates
     for (int i=0; i<entries_offset; i++) {
         if (strncmp(entries[i].get_name(), ssid, ENT_NAME_LEN) == 0)
@@ -33,9 +31,22 @@ void LoaderWifiScan::set_result(const char* ssid) {
     ListEntry e{};
     e.set_name(ssid);
 
-    insert_in_order(entries, entries_offset, &e,
-                    [](const ListEntry* e1, const ListEntry* e2) { return strcasecmp(e1->get_name(), e2->get_name()) < 0; });
+    // entries are kept in order
 
+    if (entries_offset == entries_max) {
+        // entries maxed out
+        if (before(&entries[entries_offset - 1], &e))
+            // last entry before <e>
+            // discard <e>
+            return;
+
+        // <e> before last entry
+        // discard last entry
+        // (and insert <e> below)
+        entries_offset--;
+    }
+
+    insert_in_order(entries, entries_offset, &e, before);
     entries_offset++;
 }
 
@@ -63,14 +74,11 @@ int LoaderWifiScan::scan_networks() {
     return 0;
 }
 
-// TODO LoaderWifiScan implement pagination and entry counting
+// TODO LoaderWifiScan implement pagination
+// TODO LoaderWifiScan entry counting
 
 void LoaderWifiScan::task() {
-    int to_skip = page * entries_max;
-
-    dry_run = false;
     scan_networks();
-
     call_all_loaded(false);
 }
 
