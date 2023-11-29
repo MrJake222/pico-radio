@@ -56,11 +56,15 @@ class ScreenList : public Screen {
     int page;
     void print_page();
 
+    // when the load finishes, this indicates whether it was started from
+    // show (entry(also <begin> called) or re-entry, value=true) or from a page change (value=false)
+    bool load_show;
+
 protected:
     int size_x(int y) override final { return y == last_y() ? action_icons() : 1; }
     int size_y() override final { return kb_buttons() + rows_above() + rows_below(); }
 
-    void load_page(bool reload);
+    void load_page(bool load_show);
     int get_page() { return page; }
 
     // draws entry buttons, pass variables from draw_button
@@ -76,8 +80,8 @@ protected:
     const int s_res_pad;    // result item text padding (left-right)
     const int s_scr_w;      // scroll bar width
     const int s_scr_pad;    // scroll bar spacing from results
-    const bool info_load;   // show loading text on first load
-    const bool info_reload; // show loading text on reloads
+    const bool info_load_show;   // show loading text on first load
+    const bool info_load; // show loading text on reloads
 
 public:
     ScreenList(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
@@ -89,7 +93,7 @@ public:
         , s_base_x(s_base_x_), s_base_y(s_base_y_)
         , s_res_w(s_res_w_), s_res_h(s_res_h_), s_res_mar(s_res_mar_), s_res_pad(s_res_pad_)
         , s_scr_w(s_scr_w_), s_scr_pad(s_scr_pad_)
-        , info_load(info_load_), info_reload(info_reload_)
+        , info_load_show(info_load_), info_load(info_reload_)
         { }
 
     // called on forward-entry only

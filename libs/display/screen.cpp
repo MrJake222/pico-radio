@@ -71,6 +71,11 @@ Screen* Screen::input(ButtonEnum btn) {
     }
 
     if (current_x != old_x || current_y != old_y) {
+        // selection changed -> must reset old button scrolled text
+        // before any redraws (old one will draw over the scrolled garbage,
+        //                     new will potentially add a new scrolled text)
+        reset_scrolled_texts();
+
         draw_button(old_x, old_y, false);
         draw_button(current_x, current_y, true);
     }
@@ -235,6 +240,20 @@ void Screen::draw_progress_bar(int x, int y, int w, int percent, int bg, int fg,
     }
 }
 
+void Screen::draw_title() {
+    const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);
+    const int max_width = icon_x - 2*2;
+
+    display.fill_rect(2, 0,
+                      max_width, font->H,
+                      COLOR_BG);
+
+    add_scrolled_text_or_normal(
+            2, 0, get_title(), font,
+            COLOR_BG, COLOR_FG,
+            max_width, false); // TODO enable scroll when remove_scrolled_text() implemented
+}
+
 void Screen::begin() {
     current_x = default_x();
     current_y = default_y();
@@ -242,8 +261,6 @@ void Screen::begin() {
 }
 
 void Screen::show() {
-    reset_scrolled_texts();
-
     display.clear_screen(COLOR_BG);
 
     draw_buttons();
@@ -251,11 +268,7 @@ void Screen::show() {
     tick_sec(); // first tick
 
     // after tick_sec() because it sets icon_x
-    add_scrolled_text_or_normal(
-            2, 0, get_title(),
-            ubuntu_font_get_size(UbuntuFontSize::FONT_16),
-            COLOR_BG, COLOR_FG,
-            icon_x - 2*2, false); // TODO enable scroll when remove_scrolled_text() implemented
+    draw_title();
 }
 
 void Screen::hide() {

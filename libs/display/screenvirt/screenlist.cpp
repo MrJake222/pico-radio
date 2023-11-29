@@ -79,7 +79,7 @@ void ScreenList::inx() {
 
         // reload page
         if (page != page_orig) {
-            load_page(true);
+            load_page(false);
         }
     }
     else {
@@ -107,7 +107,7 @@ void ScreenList::dex() {
 
         // reload page
         if (page != page_orig) {
-            load_page(true);
+            load_page(false);
         }
     }
     else {
@@ -199,8 +199,6 @@ void ScreenList::draw_button_entry(int y, bool selected) {
             break;
     }
 
-    reset_scrolled_texts(); // TODO reset only owned
-
     const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);
     const int pad = (s_res_h - font->H) / 2;
     text_idx = add_scrolled_text_or_normal(
@@ -211,10 +209,10 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
 void all_loaded_cb(void* arg, int errored);
 
-void ScreenList::load_page(bool reload) {
-    reset_scrolled_texts(); // TODO reset only owned
+void ScreenList::load_page(bool load_show_) {
+    load_show = load_show_;
 
-    if ((!reload && info_load) || (reload && info_reload)) {
+    if ((load_show && info_load_show) || (!load_show && info_load)) {
         clear_subarea();
 
         add_normal_text(10, 40, "Ładowanie",
@@ -223,17 +221,16 @@ void ScreenList::load_page(bool reload) {
                         display.W);
     }
 
-    if (reload) {
-        // always on top of the new page
-        current_y = default_y();
-        base_y = 0;
-    }
-
     get_ll().load(page);
 }
 
 void ScreenList::show() {
     // called from input
+
+    // reset loaded stations & call show
+    // (show tries to draw a button list from old screen,
+    //  this causes flickering)
+    station_count = 0;
     Screen::show();
 
     // setup loading
@@ -241,10 +238,22 @@ void ScreenList::show() {
     get_ll().set_cb_arg(this);
     get_ll().set_all_loaded_cb(all_loaded_cb);
 
-    load_page(false);
+    load_page(true);
 }
 
 void ScreenList::show_loaded() {
+    if (!load_show) {
+        // this is executed only on new page / new directory
+
+        // don't reset position on screen re-entry
+        // (on entry it is reset by <begin>)
+        // top of the page
+        current_y = default_y();
+        base_y = 0;
+    }
+
+    reset_scrolled_texts(); // TODO reset only owned
+
     clear_subarea();
     draw_buttons();
     draw_scroll_bar();

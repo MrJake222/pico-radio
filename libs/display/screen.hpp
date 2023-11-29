@@ -74,6 +74,7 @@ protected:
     // passed to <run_action> but can be used by subclasses for other purposes
     virtual int get_action(int x, int y) = 0;
 
+    void draw_title();
     virtual void draw_button(int x, int y, bool selected) = 0;
     void draw_buttons();
 

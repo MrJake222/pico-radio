@@ -76,8 +76,10 @@ Screen* ScLocal::run_action(int action) {
                         return nullptr;
                     }
 
+                    draw_title(); // title changes as we update path
+
                     set_abs_pos(0);
-                    load_page(true);
+                    load_page(false);
                     break;
 
                 // radio is impossible here
@@ -95,9 +97,10 @@ Screen* ScLocal::run_action(int action) {
                 // close and go to fav screen
                 return &sc_fav;
 
-            // path updated
+            draw_title(); // title changes as we update path
+
             set_abs_pos(0);
-            load_page(true);
+            load_page(false);
             break;
     }
 
