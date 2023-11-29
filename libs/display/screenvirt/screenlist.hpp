@@ -55,12 +55,12 @@ class ScreenList : public Screen {
     int page_count;
     int page;
     void print_page();
-    void load_page(bool reload);
 
 protected:
     int size_x(int y) override final { return y == last_y() ? action_icons() : 1; }
     int size_y() override final { return kb_buttons() + rows_above() + rows_below(); }
 
+    void load_page(bool reload);
     int get_page() { return page; }
 
     // draws entry buttons, pass variables from draw_button

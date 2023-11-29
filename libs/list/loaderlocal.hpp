@@ -1,6 +1,8 @@
 #pragma once
 
 #include <loader.hpp>
+
+#include <path.hpp>
 #include <ff.h>
 
 #define PATH_LEN   (FATFS_MAX_PATH_LEN)
@@ -11,8 +13,8 @@ class LoaderLocal : public Loader {
     DIR dir;
     FILINFO fileinfo;
 
-    // path should always contain trailing slash
-    char path[PATH_LEN];
+    Path* path;
+
     // used in <check_entry_url> to update the path of the entry
     // to a concatenation of path and entry path
     char buf[PATH_LEN];
@@ -20,11 +22,6 @@ class LoaderLocal : public Loader {
     friend void llocal_res_cb(void* arg, const char* res);
     void task() override;
     void set_file(const char* path_, bool is_dir);
-
-    // returns pointer to second-last slash in <path>
-    // if top-level returns start of path
-    // can be interpreted as leaf directory (last entered, with leading+trailing slashes)
-    char* path_get_last_entered();
 
     // should the file be listed
     // eiter a dir or a supported file by player
@@ -37,20 +34,7 @@ public:
             : Loader(entries_, entries_max_)
     { }
 
-    void begin(const char* path_);
-
-    // returns last part of path for ex "Album 123/"
-    // skips leading slash, but leaves trailing one
-    // when top-level: empty string
-    const char* path_leaf() { return path_get_last_entered() + 1; }
-
-    // preserve trailing slash
-    // append folder path
-    int go(const char* dirpath);
-    // when possible, strip last part of path
-    // essentially going one level up in a directory tree
-    // can fail with return value -1 if already at top-level
-    int up();
+    void begin(Path* path);
 
     int check_entry_url(int i) override;
 };

@@ -39,6 +39,7 @@ add_library(libs
         list/loaderlocal.cpp
         list/loaderconst.cpp
         list/loaderwifiscan.cpp
+        list/path.cpp
 
         ds/datasource.cpp
 

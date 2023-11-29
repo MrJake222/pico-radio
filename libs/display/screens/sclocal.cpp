@@ -4,15 +4,15 @@
 #include <screenmng.hpp>
 
 const char* ScLocal::get_title() {
-    const char* path = ll.path_leaf();
-    if (!*path) {
+    const char* leaf = path.leaf();
+    if (!*leaf) {
         // empty string -> root folder
         return "Pliki lokalne";
     }
 
     // It'd be nice to strip trailing slash,
     // but this would require copying
-    return path;
+    return leaf;
 }
 
 enum Action {
@@ -70,14 +70,14 @@ Screen* ScLocal::run_action(int action) {
 
                 case ListEntry::le_type_dir:
                     // open folder recursively
-                    r = ll.go(ent->get_url());
+                    r = path.go(ent->get_url());
                     if (r < 0) {
                         show_error("Błąd: nie można otworzyć katalogu");
                         return nullptr;
                     }
 
                     set_abs_pos(0);
-                    show();
+                    load_page(true);
                     break;
 
                 // radio is impossible here
@@ -89,7 +89,7 @@ Screen* ScLocal::run_action(int action) {
         case BACK:
             ll.load_abort();
 
-            r = ll.up();
+            r = path.up();
             if (r < 0)
                 // already top-level
                 // close and go to fav screen
@@ -97,7 +97,7 @@ Screen* ScLocal::run_action(int action) {
 
             // path updated
             set_abs_pos(0);
-            show();
+            load_page(true);
             break;
     }
 
@@ -105,11 +105,11 @@ Screen* ScLocal::run_action(int action) {
 }
 
 void ScLocal::begin(const char* path_) {
-    path = path_;
+    path.begin(path_);
     ScreenList::begin();
 }
 
 void ScLocal::show() {
-    ll.begin(path);
+    ll.begin(&path);
     ScreenList::show();
 }

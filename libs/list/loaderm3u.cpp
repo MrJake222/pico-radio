@@ -5,7 +5,7 @@
 
 void LoaderM3U::begin(const char* path_) {
     Loader::begin();
-    strncpy(path, path_, LFS_NAME_MAX);
+    path = path_;
 }
 
 void LoaderM3U::update(const char* info) {

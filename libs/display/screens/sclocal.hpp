@@ -12,7 +12,7 @@ class ScLocal : public ScreenList {
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
-    const char* path;
+    Path path;
     LoaderLocal& ll;
     Loader& get_ll() override { return ll; }
 

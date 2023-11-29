@@ -11,7 +11,7 @@ typedef void(*ld_fav_update_cb)(void* arg, const char* info);
 // can be used for favs or wifi
 class LoaderM3U : public Loader {
 
-    char path[LFS_NAME_MAX + 1];
+    const char* path;
 
     lfs_t* lfs;
     LfsAccess rd;
