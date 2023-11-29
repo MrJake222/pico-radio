@@ -3,20 +3,41 @@
 #include <cstring>
 #include <filetype.hpp>
 
+#include <static.hpp>
+#include <lfsaccess.hpp>
+#include <lfsorter.hpp>
+
+static LfsAccess acc(get_lfs());
+
 void LoaderLocal::begin(const char* path_) {
     Loader::begin();
     strncpy(path, path_, FATFS_MAX_PATH_LEN);
 }
 
+void llocal_res_cb(void* arg, const char* res) {
+    auto ll = (LoaderLocal*) arg;
+
+    const char* name = res + 1;  // skip dir indicator
+    bool is_dir = res[0] == '0'; // folders were sorted first, remember?
+
+    ll->set_file(name, is_dir);
+}
+
 void LoaderLocal::task() {
     FRESULT res;
+    int r;
     int errored = 0;
-    int to_skip = page * entries_max;
 
     res = f_opendir(&dir, path);
     if (res != FR_OK) {
         errored++;
         goto end_noclose;
+    }
+
+    r = lfsorter::create_open(acc);
+    if (r) {
+        errored++;
+        goto end_close_fatfs;
     }
 
     while (!should_abort) {
@@ -34,17 +55,22 @@ void LoaderLocal::task() {
         if (!is_valid())
             continue;
 
-        if (to_skip) {
-            to_skip--;
-            continue;
+        r = lfsorter::write(acc, 2,
+                            fileinfo.fattrib & AM_DIR ? "0" : "1", // prepend 0 to folders to be sorted first
+                            fileinfo.fname);
+        if (r) {
+            errored++;
+            goto end;
         }
-
-        set_file(fileinfo.fname, fileinfo.fattrib & AM_DIR);
-        if (entries_offset == entries_max)
-            break;
     }
 
+    lfsorter::get_smallest_n_skip_k(acc, entries_max, entries_max * page,strcasecmp,
+                                    this, llocal_res_cb);
+
 end:
+    acc.close();
+
+end_close_fatfs:
     f_closedir(&dir);
 
 end_noclose:

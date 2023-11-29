@@ -27,7 +27,10 @@ public:
     int open_w()  { return open(LFS_O_WRONLY); }
     int open_rw() { return open(LFS_O_RDWR); }
     int open_w_create() { return open(LFS_O_WRONLY | LFS_O_CREAT); }
+    int open_rw_create_truncate() { return open(LFS_O_RDWR | LFS_O_CREAT | LFS_O_TRUNC); }
     int close();
+
+    int size() { return lfs_file_size(lfs, &file); }
 
     // DataSource interface
     int read_char(char *chr) override;
@@ -44,12 +47,12 @@ public:
     // writing interface
     int write_str(const char* str);
 
-    // passthrough interface (raw access to lfs)
+    // passthrough interface (raw access to lfs), but keeps <bytes_read> up-to-date
     // file pointer
     inline int tell() { return lfs_file_tell(lfs, &file); }
-    inline int seek(int off, int whence) { return lfs_file_seek(lfs, &file, off, whence); }
+    int seek(int off, int whence);
     inline int truncate(int size) { return lfs_file_truncate(lfs, &file, size); }
     // read/write
-    inline int read_raw(char* buf, int buflen) { return lfs_file_read(lfs, &file, buf, buflen); }
+    int read_raw(char* buf, int buflen);
     inline int write_raw(const char* buf, int buflen) { return lfs_file_write(lfs, &file, buf, buflen); }
 };

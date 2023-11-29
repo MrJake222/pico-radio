@@ -53,7 +53,7 @@ int LfsAccess::read_char(char* chr) {
 bool LfsAccess::more_content() {
     // <bytes_read> is used to detect EOF
     // (and cannot be abandoned, it's the only method http server (other subclass) can tell EOF)
-    return bytes_read < lfs_file_size(lfs, &file);
+    return bytes_read < size();
 }
 
 int LfsAccess::skip_line() {
@@ -104,4 +104,24 @@ int LfsAccess::write_str(const char* str) {
     assert(r == strlen(str));
 
     return 0;
+}
+
+int LfsAccess::seek(int off, int whence) {
+    int pos = lfs_file_seek(lfs, &file, off, whence);
+
+    if (pos >= 0)
+        // update only if no error
+        bytes_read = pos;
+
+    return pos;
+}
+
+int LfsAccess::read_raw(char* buf, int buflen) {
+    int read = lfs_file_read(lfs, &file, buf, buflen);
+
+    if (read >= 0)
+        // update only if no error
+        bytes_read += read;
+
+    return read;
 }

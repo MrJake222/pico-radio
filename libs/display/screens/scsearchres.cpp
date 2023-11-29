@@ -86,7 +86,7 @@ void ScSearchRes::show() {
         // setup list-loader first
         // (done in show() because sub-screens can change loader settings this,
         //  and won't call begin() by design)
-        ll.begin(PATH_FAVOURITES);
+        ll.begin(prompt);
         ll.set_update_cb(search_update_cb);
     }
 

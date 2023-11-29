@@ -45,8 +45,8 @@ class ScreenList : public Screen {
     int text_idx;
 
     // was the loading at least called once (the interface was displayed)?
-    // set to false in <begin>
-    // set to true in <show>
+    // set to false in <set_fresh_load>
+    // set to true in <all_loaded_cb>
     // remains <true> when loading a new page
     bool loaded;
 

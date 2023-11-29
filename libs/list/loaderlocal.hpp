@@ -15,6 +15,7 @@ class LoaderLocal : public Loader {
     char path[PATH_LEN];
     char buf[PATH_LEN];
 
+    friend void llocal_res_cb(void* arg, const char* res);
     void task() override;
     void set_file(const char* path_, bool is_dir);
 
