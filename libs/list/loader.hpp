@@ -57,8 +57,7 @@ public:
     // such as *.pls format or recursive path updates
     virtual int check_entry_url(int i) { return 0; }
 
-    // should return max pages to switch to
-    // return 1 to disable, -1 to infinite pages
+    // should return max pages to switch to (-1 for infinite pages)
     // must be called in all_loaded callback
     // warning: can be resource hungry
     int get_page_count();

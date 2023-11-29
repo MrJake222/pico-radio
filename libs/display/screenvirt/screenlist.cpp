@@ -277,9 +277,6 @@ void ScreenList::set_abs_pos(int abs_index) {
 }
 
 void ScreenList::print_page() {
-    if (page_count == 1)
-        return;
-
     const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_12);
 
     char buf[10];

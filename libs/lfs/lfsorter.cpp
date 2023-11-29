@@ -66,6 +66,11 @@ int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb
             }
         }
 
+        if (s_curr[0] == 0xff) {
+            // next entry not found
+            break;
+        }
+
         if (i >= k) {
             // skipped k, now report the rest
             res_cb(res_cb_arg, s_curr);
