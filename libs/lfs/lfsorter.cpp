@@ -46,7 +46,8 @@ int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb
     // previously found
     char s_prev[ENT_NAME_LEN + 10] = {0x00}; // infinitely small
 
-    uint32_t start = time_us_32();
+    int start = (int) time_us_32();
+    int disk_took = 0;
 
     // find k+n smallest elements
     for (int i=0; i<(k+n); i++) {
@@ -58,7 +59,10 @@ int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb
         // iterate over whole file line-by-line
         while (acc.more_content()) {
             int ll;
+            int disk_start = (int) time_us_32();
             read_line(&acc, line, LIST_MAX_LINE_LENGTH, &ll);
+            disk_took += ((int)time_us_32()) - disk_start;
+
 
             // must be strictly larger (implies difference)
             if (cmp(s_prev, line) < 0 && cmp(line, s_curr) < 0) {
@@ -81,7 +85,10 @@ int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb
         strcpy(s_prev, s_curr);
     }
 
-    printf("took: %5.2fms\n", (float(time_us_32() - start)) / 1000.0f);
+    int end = (int) time_us_32();
+    printf("lfsorter: took %5.2fms incl. disk %5.2fms\n",
+           (float(end - start)) / 1000.0f,
+           (float(disk_took)) / 1000.0f);
 
     return 0;
 }
