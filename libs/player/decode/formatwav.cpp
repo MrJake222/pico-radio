@@ -62,7 +62,8 @@ int FormatWAV::decode_up_to_n(uint32_t *audio_pcm_buf, int n) {
         n_read += n_written;
 
         raw_buf.read_ack(read);
-        raw_buf.try_wrap_buffer();
+        if (raw_buf.can_wrap_buffer() && raw_buf.should_wrap_buffer())
+            raw_buf.try_wrap_buffer();
     }
 
     return n_read;
