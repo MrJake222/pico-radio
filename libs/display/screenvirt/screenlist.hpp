@@ -60,12 +60,18 @@ class ScreenList : public Screen {
     // show (entry(also <begin> called) or re-entry, value=true) or from a page change (value=false)
     bool load_show;
 
+    // default behaviour is to load data each time using a Loader
+    // <run_action> of subclasses can override this by setting this to true
+    // it is reset to false in <show>
+    bool preserve;
+
 protected:
     int size_x(int y) override final { return y == last_y() ? action_icons() : 1; }
     int size_y() override final { return kb_buttons() + rows_above() + rows_below(); }
 
     void load_page(bool load_show);
     int get_page() { return page; }
+    void set_preserve() { preserve = true; }
 
     // draws entry buttons, pass variables from draw_button
     void draw_button_entry(int y, bool selected);

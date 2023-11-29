@@ -227,6 +227,10 @@ void ScreenList::load_page(bool load_show_) {
 void ScreenList::show() {
     // called from input
 
+    // save <station_count>
+    // (this is done so that Screen::show() won't draw any buttons, causes flickering)
+    const int scnt = station_count;
+
     // reset loaded stations & call show
     // (show tries to draw a button list from old screen,
     //  this causes flickering)
@@ -237,6 +241,18 @@ void ScreenList::show() {
     // <ll.begin> called by subclass before this
     get_ll().set_cb_arg(this);
     get_ll().set_all_loaded_cb(all_loaded_cb);
+
+    if (preserve) {
+        preserve = false;
+
+        // restore <station_count>
+        // (so show_loaded can draw buttons)
+        station_count = scnt;
+        load_show = true;
+
+        show_loaded();
+        return;
+    }
 
     load_page(true);
 }

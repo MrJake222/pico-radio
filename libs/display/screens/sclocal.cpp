@@ -64,6 +64,10 @@ Screen* ScLocal::run_action(int action) {
                         return nullptr;
                     }
 
+                    // player screen can't mess up the data
+                    // don't load it again on re-entry
+                    set_preserve();
+
                     // <i> equals position on search list (not fav list)
                     sc_play.begin(ent, -1, this);
                     return &sc_play;
