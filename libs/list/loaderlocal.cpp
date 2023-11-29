@@ -23,27 +23,21 @@ void llocal_res_cb(void* arg, const char* res) {
     ll->set_file(name, is_dir);
 }
 
-void LoaderLocal::task() {
-    FRESULT res;
+int LoaderLocal::fatfs_list_dir() {
     int r;
-    int errored = 0;
+    FRESULT res;
+    bool errored = false;
 
     res = f_opendir(&dir, path->str());
     if (res != FR_OK) {
-        errored++;
+        errored = true;
         goto end_noclose;
-    }
-
-    r = lfsorter::create_open(acc);
-    if (r) {
-        errored++;
-        goto end_close_fatfs;
     }
 
     while (!should_abort) {
         res = f_readdir(&dir, &fileinfo);
         if (res != FR_OK) {
-            errored++;
+            errored = true;
             goto end;
         }
 
@@ -59,19 +53,55 @@ void LoaderLocal::task() {
                             fileinfo.fattrib & AM_DIR ? "0" : "1", // prepend 0 to folders to be sorted first
                             fileinfo.fname);
         if (r) {
+            errored = true;
+            goto end;
+        }
+    }
+
+end:
+    f_closedir(&dir);
+
+end_noclose:
+    return errored ? -1 : 0;
+}
+
+void LoaderLocal::task() {
+    FRESULT res;
+    int r;
+    int errored = 0;
+
+    if (can_use_cache) {
+        // using cache
+        // only open the existing file
+        r = lfsorter::open(acc);
+        if (r) {
+            errored++;
+            goto end_noclose;
+        }
+    }
+    else {
+        // can't use cache
+        // need to create new file and populate it with FatFS dir listing
+
+        r = lfsorter::open_create_truncate(acc);
+        if (r) {
+            errored++;
+            goto end_noclose;
+        }
+
+        r = fatfs_list_dir();
+        if (r) {
             errored++;
             goto end;
         }
     }
 
+    // this automatically rewinds created file to the beginning
     lfsorter::get_smallest_n_skip_k(acc, entries_max, entries_max * page,strcasecmp,
                                     this, llocal_res_cb);
 
 end:
     acc.close();
-
-end_close_fatfs:
-    f_closedir(&dir);
 
 end_noclose:
     call_all_loaded(errored);

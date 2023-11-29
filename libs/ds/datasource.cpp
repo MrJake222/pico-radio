@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cassert>
 
+// TODO DS::read_line optimize to use buffer
 int read_line(DataSource* ds, char* buf, int bufsize, int* line_length) {
 
     assert(buf != nullptr || bufsize == 0);

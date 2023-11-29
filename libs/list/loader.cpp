@@ -17,6 +17,7 @@ void ll_task(void* arg) {
 
 void Loader::begin() {
     all_loaded_cb = nullptr;
+    can_use_cache = false;
 }
 
 void Loader::call_all_loaded(int errored) {

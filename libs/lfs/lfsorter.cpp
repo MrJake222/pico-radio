@@ -5,13 +5,28 @@
 
 namespace lfsorter {
 
-int create_open(LfsAccess& acc) {
+int open_create_truncate(LfsAccess& acc) {
     int r;
     acc.begin(".tmp");
 
     r = acc.open_rw_create_truncate();
     if (r < 0)
         return r;
+
+    puts("lfsorter: created tmp file");
+
+    return 0;
+}
+
+int open(LfsAccess& acc) {
+    int r;
+    acc.begin(".tmp");
+
+    r = acc.open_r();
+    if (r < 0)
+        return r;
+
+    puts("lfsorter: using cached tmp file");
 
     return 0;
 }

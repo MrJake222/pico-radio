@@ -19,6 +19,8 @@ class LoaderLocal : public Loader {
     // to a concatenation of path and entry path
     char buf[PATH_LEN];
 
+    int fatfs_list_dir();
+
     friend void llocal_res_cb(void* arg, const char* res);
     void task() override;
     void set_file(const char* path_, bool is_dir);

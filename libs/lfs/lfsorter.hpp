@@ -12,7 +12,9 @@ typedef int(*cmp_fn)(const char* e1, const char* e2);
 typedef void(*res_cb_fn)(void* arg, const char* res);
 
 // creates and opens temporary file
-int create_open(LfsAccess& acc);
+int open_create_truncate(LfsAccess& acc);
+// opens previously created temporary file
+int open(LfsAccess& acc);
 // writes to access a list of char pointers
 int write(LfsAccess& acc, int n, ...);
 // skips k smallest elements and returns n smallest elements of the rest

@@ -28,6 +28,10 @@ protected:
     const int entries_max;
     int entries_offset;
 
+    // certain loaders may use lfs cache
+    // this flag is set by screens on page switches (for example)
+    bool can_use_cache;
+
     // get how many entries are there (don't care about pagination)
     // -1 is infinite pages (or failed to determine)
     // it gets called only once in <get_page_count> from <all_loaded_cb>
@@ -41,6 +45,8 @@ public:
         { }
 
     void begin();
+
+    void use_cache() { can_use_cache = true; }
 
     // set callback to call when all loading is done
     void set_cb_arg(void* arg) { cb_arg = arg; }

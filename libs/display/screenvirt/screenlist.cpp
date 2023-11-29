@@ -221,6 +221,10 @@ void ScreenList::load_page(bool load_show_) {
                         display.W);
     }
 
+    if (!load_show)
+        // only if called from functions other than show
+        get_ll().use_cache();
+
     get_ll().load(page);
 }
 
