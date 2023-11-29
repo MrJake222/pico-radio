@@ -36,19 +36,15 @@ class ScreenList : public Screen {
     void iny() override;
     void dey() override;
 
-    void button_pre_selection_change() override;
+    // clear button + scroll bar area
+    void clear_subarea();
+
     void draw_top_buttons();
     void draw_bottom_buttons();
     void draw_scroll_bar();
 
     // scrolled text id of currently selected item
     int text_idx;
-
-    // was the loading at least called once (the interface was displayed)?
-    // set to false in <set_fresh_load>
-    // set to true in <all_loaded_cb>
-    // remains <true> when loading a new page
-    bool loaded;
 
     // gated count, only updated after all stations are loaded
     int station_count;
@@ -59,12 +55,12 @@ class ScreenList : public Screen {
     int page_count;
     int page;
     void print_page();
+    void load_page(bool reload);
 
 protected:
     int size_x(int y) override final { return y == last_y() ? action_icons() : 1; }
     int size_y() override final { return kb_buttons() + rows_above() + rows_below(); }
 
-    bool is_loaded() { return loaded; }
     int get_page() { return page; }
 
     // draws entry buttons, pass variables from draw_button
@@ -80,30 +76,35 @@ protected:
     const int s_res_pad;    // result item text padding (left-right)
     const int s_scr_w;      // scroll bar width
     const int s_scr_pad;    // scroll bar spacing from results
+    const bool info_load;   // show loading text on first load
+    const bool info_reload; // show loading text on reloads
 
 public:
     ScreenList(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
                int s_base_x_, int s_base_y_,
                int s_res_w_, int s_res_h_, int s_res_mar_, int s_res_pad_,
-               int s_scr_w_, int s_scr_pad_)
+               int s_scr_w_, int s_scr_pad_,
+               bool info_load_, bool info_reload_)
         : Screen(display_, mutex_ticker_)
         , s_base_x(s_base_x_), s_base_y(s_base_y_)
         , s_res_w(s_res_w_), s_res_h(s_res_h_), s_res_mar(s_res_mar_), s_res_pad(s_res_pad_)
         , s_scr_w(s_scr_w_), s_scr_pad(s_scr_pad_)
+        , info_load(info_load_), info_reload(info_reload_)
         { }
 
+    // called on forward-entry only
     void begin() override;
-    // subclasses should call different ll.begin() methods
-    // before calling to this super-method
-    // (moved to show() because sub-screens can change loader settings this,
-    //  and won't call begin() by design)
+
+    // loading setup should happen here (this is called from screen manager)
+    // on every call (sub-screens can change loader settings this, and won't call begin() by design)
+    // subclasses should call different ll.begin() methods before calling to this super-method)
     void show() override;
 
-    // to be used by player add/remove from favourites feature (both functions, or <begin>)
-    // on next <show>, reload the contents
-    void set_fresh_load();
-    // set page/base_y/current_y from absolute index
-    void set_fav_pos(int fav_index);
+    // this is called after <show> initialized loading and it was finished
+    void show_loaded();
+
+    // set page/base_y/current_y from absolute index into the list
+    void set_abs_pos(int abs_index);
 
     friend void all_loaded_cb(void* arg, int errored);
 };

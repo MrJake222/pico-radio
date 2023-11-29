@@ -13,6 +13,8 @@ class LoaderLocal : public Loader {
 
     // path should always contain trailing slash
     char path[PATH_LEN];
+    // used in <check_entry_url> to update the path of the entry
+    // to a concatenation of path and entry path
     char buf[PATH_LEN];
 
     friend void llocal_res_cb(void* arg, const char* res);

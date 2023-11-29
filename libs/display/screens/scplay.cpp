@@ -106,9 +106,8 @@ Screen* ScPlay::run_action(int action) {
                     return nullptr;
                 }
 
-                // set position to newly added station and request reload
-                sc_fav.set_fav_pos(fav_index);
-                sc_fav.set_fresh_load();
+                // set position to newly added station
+                sc_fav.set_abs_pos(fav_index);
             }
             else {
                 // on fav list
@@ -119,8 +118,8 @@ Screen* ScPlay::run_action(int action) {
                     return nullptr;
                 }
 
-                // request reload (page might've disappeared/new stations fill in the gap)
-                sc_fav.set_fresh_load();
+                // set position to one above (if exists) or 0
+                sc_fav.set_abs_pos(fav_index > 0 ? fav_index - 1 : 0);
                 // mark removed
                 fav_index = -1;
             }

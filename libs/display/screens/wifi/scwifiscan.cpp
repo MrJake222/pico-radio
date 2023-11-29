@@ -56,9 +56,6 @@ Screen* ScWifiScan::run_action(int action) {
 }
 
 void ScWifiScan::show() {
-    if (!is_loaded()) {
-        ll.begin();
-    }
-
+    ll.begin();
     ScreenList::show();
 }

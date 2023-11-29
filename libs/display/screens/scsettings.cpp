@@ -65,9 +65,6 @@ Screen* ScSettings::run_action(int action) {
 }
 
 void ScSettings::show() {
-    if (!is_loaded()) {
-        ll.begin();
-    }
-
+    ll.begin();
     ScreenList::show();
 }

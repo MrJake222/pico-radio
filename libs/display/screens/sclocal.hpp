@@ -19,12 +19,13 @@ class ScLocal : public ScreenList {
 public:
     ScLocal(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
             LoaderLocal& ll_)
-    : ScreenList(display_, mutex_ticker_,
-    3, 25,
-    147, 20, 1, 2,
-    5, 2)
-    , ll(ll_)
-            { }
+            : ScreenList(display_, mutex_ticker_,
+                         3, 25,
+                         147, 20, 1, 2,
+                         5, 2,
+                         false, false)
+                         , ll(ll_)
+                         { }
 
     void begin(const char* path_);
     void show() override;

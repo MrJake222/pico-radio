@@ -69,9 +69,6 @@ Screen* ScWifiSaved::run_action(int action) {
 }
 
 void ScWifiSaved::show() {
-    if (!is_loaded()) {
-        ll.begin(PATH_WIFI);
-    }
-
+    ll.begin(PATH_WIFI);
     ScreenList::show();
 }

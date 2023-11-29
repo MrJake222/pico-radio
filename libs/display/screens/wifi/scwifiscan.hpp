@@ -19,11 +19,11 @@ public:
     ScWifiScan(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
                LoaderWifiScan& ll_)
                : ScreenList(display_, mutex_ticker_,
-                         3, 25,
-                         147, 20, 1, 2,
-                         5, 2)
-            , ll(ll_)
-    { }
+                            3, 25,
+                            147, 20, 1, 2,
+                            5, 2, true, true)
+               , ll(ll_)
+               { }
 
     void show() override;
 

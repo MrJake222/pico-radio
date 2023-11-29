@@ -26,12 +26,13 @@ class ScSearchRes : public ScreenList {
 public:
     ScSearchRes(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
                 LoaderSearch& ll_)
-        : ScreenList(display_, mutex_ticker_,
-                     3, 31,
-                     147, 20, 1, 2,
-                     5, 2)
-        , ll(ll_)
-        { }
+                : ScreenList(display_, mutex_ticker_,
+                             3, 31,
+                             147, 20, 1, 2,
+                             5, 2,
+                             true, true)
+                , ll(ll_)
+                { }
 
     void begin(const char* prompt_);
     void show() override;

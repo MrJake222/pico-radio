@@ -19,9 +19,9 @@ public:
     ScWifiSaved(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
                 LoaderM3U& ll_)
                 : ScreenList(display_, mutex_ticker_,
-                3, 25,
-                147, 20, 1, 2,
-                5, 2)
+                             3, 25,
+                             147, 20, 1, 2,
+                             5, 2, false, false)
                 , ll(ll_)
                 { }
 

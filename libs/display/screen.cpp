@@ -49,12 +49,8 @@ Screen* Screen::input(ButtonEnum btn) {
         return run_action(get_action(current_x, current_y));
     }
 
-    button_pre_selection_change();
-
-    // TODO fix button flickering on new page load
-    // currently this cannot be done with old_x/y and then if old != new
-    // because ScreenList depends on redrawing currently selected button
-    draw_button(current_x, current_y, false);
+    const int old_x = current_x;
+    const int old_y = current_y;
 
     switch (btn) {
         case UP:
@@ -74,7 +70,11 @@ Screen* Screen::input(ButtonEnum btn) {
             break;
     }
 
-    draw_button(current_x, current_y, true);
+    if (current_x != old_x || current_y != old_y) {
+        draw_button(old_x, old_y, false);
+        draw_button(current_x, current_y, true);
+    }
+
     return nullptr;
 }
 

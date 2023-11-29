@@ -76,8 +76,7 @@ Screen* ScLocal::run_action(int action) {
                         return nullptr;
                     }
 
-                    set_fresh_load();
-                    set_fav_pos(0);
+                    set_abs_pos(0);
                     show();
                     break;
 
@@ -97,10 +96,8 @@ Screen* ScLocal::run_action(int action) {
                 return &sc_fav;
 
             // path updated
-            set_fresh_load();
-            set_fav_pos(0);
+            set_abs_pos(0);
             show();
-
             break;
     }
 
@@ -113,9 +110,6 @@ void ScLocal::begin(const char* path_) {
 }
 
 void ScLocal::show() {
-    if (!is_loaded()) {
-        ll.begin(path);
-    }
-
+    ll.begin(path);
     ScreenList::show();
 }

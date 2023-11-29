@@ -25,6 +25,14 @@ int ScreenList::kb_buttons() {
     return MIN(KB_BUTTONS_MAX, station_count);
 }
 
+void ScreenList::clear_subarea() {
+    display.fill_rect(s_base_x,
+                      s_base_y,
+                      s_res_w + s_scr_pad + s_scr_w,
+                      (s_res_h + s_res_mar) * KB_BUTTONS_MAX,
+                      COLOR_BG);
+}
+
 void ScreenList::draw_top_buttons() {
     // draw top 3 buttons, bottom button drawn by base class
     for (int y=0; y<kb_buttons()-1; y++) {
@@ -71,7 +79,7 @@ void ScreenList::inx() {
 
         // reload page
         if (page != page_orig) {
-            get_ll().load(page);
+            load_page(true);
         }
     }
     else {
@@ -99,7 +107,7 @@ void ScreenList::dex() {
 
         // reload page
         if (page != page_orig) {
-            get_ll().load(page);
+            load_page(true);
         }
     }
     else {
@@ -154,10 +162,6 @@ void ScreenList::dey() {
     }
 }
 
-void ScreenList::button_pre_selection_change() {
-    reset_scrolled_texts(); // TODO only remove text that we own (text_idx)
-}
-
 void ScreenList::draw_button_entry(int y, bool selected) {
 
     unsigned char xs;
@@ -195,6 +199,8 @@ void ScreenList::draw_button_entry(int y, bool selected) {
             break;
     }
 
+    reset_scrolled_texts(); // TODO reset only owned
+
     const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);
     const int pad = (s_res_h - font->H) / 2;
     text_idx = add_scrolled_text_or_normal(
@@ -205,58 +211,60 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
 void all_loaded_cb(void* arg, int errored);
 
-void ScreenList::show() {
-    // called from input
-    Screen::show();
+void ScreenList::load_page(bool reload) {
+    reset_scrolled_texts(); // TODO reset only owned
 
-    if (!loaded) {
+    if ((!reload && info_load) || (reload && info_reload)) {
+        clear_subarea();
+
         add_normal_text(10, 40, "Ładowanie",
                         ubuntu_font_get_size(UbuntuFontSize::FONT_24),
                         COLOR_BG, COLOR_FG,
                         display.W);
+    }
 
-        // <ll.begin> called by subclass
-        // setup list loading
-        // (done in show() because sub-screens can change loader settings this,
-        //  and won't call begin() by design)
-        get_ll().set_cb_arg(this);
-        get_ll().set_all_loaded_cb(all_loaded_cb);
-        get_ll().load(page);
+    if (reload) {
+        // always on top of the new page
+        current_y = default_y();
+        base_y = 0;
     }
-    else {
-        draw_scroll_bar();
-        print_page();
-    }
+
+    get_ll().load(page);
+}
+
+void ScreenList::show() {
+    // called from input
+    Screen::show();
+
+    // setup loading
+    // <ll.begin> called by subclass before this
+    get_ll().set_cb_arg(this);
+    get_ll().set_all_loaded_cb(all_loaded_cb);
+
+    load_page(false);
+}
+
+void ScreenList::show_loaded() {
+    clear_subarea();
+    draw_buttons();
+    draw_scroll_bar();
+    print_page();
 }
 
 void ScreenList::begin() {
     Screen::begin();
 
-    // request reload of favourites screen
-    // this is important because here we are reusing
-    // the same buffers for stations as the fav list
-    sc_fav.set_fresh_load();
-
-    // start on top of first page & reload
-    set_fav_pos(0);
-    set_fresh_load();
+    // start on top of first page
+    set_abs_pos(0);
 }
 
-void ScreenList::set_fresh_load() {
-    loaded = false;
-    // base_y/page limited in <all_loaded_cb>
-
-    // don't draw any buttons
-    station_count = 0;
-}
-
-void ScreenList::set_fav_pos(int fav_index) {
-    page = fav_index / MAX_ENTRIES;
+void ScreenList::set_abs_pos(int abs_index) {
+    page = abs_index / MAX_ENTRIES;
 
     // set to last row of keyboard
     // it's always possible, as opposed to top row (not enough stations below)
     int offset = KB_BUTTONS_MAX - 1; // from bottom to top row
-    base_y = (fav_index % MAX_ENTRIES) - offset;
+    base_y = (abs_index % MAX_ENTRIES) - offset;
     current_y = rows_above() + offset;
 
     if (base_y < 0) {
@@ -298,36 +306,15 @@ void all_loaded_cb(void* arg, int errored) {
     sc->station_count = sc->get_ll().get_entry_count();
     sc->page_count =    sc->get_ll().get_page_count();
 
-    // limit station & page offset
-    sc->base_y = MIN(sc->base_y, sc->max_base_y()); // stations may have been removed
-    if (sc->page_count != -1)
-        sc->page = MIN(sc->page, sc->page_count);   // page may have disappeared
-
-    // TODO screenlist: this if is unnecessary
-    if (sc->loaded) {
-        // it's a reload (page changed)
-
-        // move to top
-        sc->current_y = sc->default_y();
-        sc->base_y = 0;
-    }
-    else {
-        // it's a fresh load
-        // report errors and redraw the whole screen
-
-        sc->loaded = true;
-
-        // report errors only on fresh loads
-        if (errored > 0) {
-            // show error
-            char c[80];
-            snprintf(c, 80, "Błąd: nie udało się załadować %d dostawców stacji.", errored);
-            sc->show_error(c);
-            return;
-        }
+    if (errored > 0) {
+        // show error
+        char c[80];
+        snprintf(c, 80, "Błąd: nie udało się załadować %d dostawców stacji.", errored);
+        sc->show_error(c);
+        return;
     }
 
-    // always (if no error)
     // re-draw the screen
-    sc->show();
+    // (if no error)
+    sc->show_loaded();
 }
