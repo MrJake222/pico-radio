@@ -3,8 +3,8 @@
 #include <listm3u.hpp>
 #include <m3u.hpp>
 
-void LoaderM3U::begin(const char* path_) {
-    Loader::begin();
+void LoaderM3U::begin(le_type type_, const char* path_) {
+    Loader::begin(type_);
     path = path_;
 }
 
@@ -45,8 +45,8 @@ retry:
     // skip lines: 1 (header) + 2*page*per_page
     rd.skip_lines(1 + 2 * page * MAX_ENTRIES);
 
-    list->begin(entries + entries_offset,
-                entries_max - entries_offset);
+    list->begin(entries + get_entries_offset(),
+                entries_max - get_entries_offset());
     r = list->consume_all(&rd, should_abort, error);
     if (r < 0) {
         // failed
@@ -54,8 +54,8 @@ retry:
         goto end;
     }
 
-    entries_offset += list->get_entries_found();
-    printf("done loading all favourites, loaded %d stations, error %d\n", entries_offset, errored);
+    set_next_entry(list->get_entries_found());
+    printf("done loading all favourites, loaded %d stations, error %d\n", get_entries_offset(), errored);
     update("Gotowe");
 
 end:

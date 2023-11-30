@@ -20,14 +20,11 @@ int ScPlay::size_y() {
 
 const char* ScPlay::get_title() {
     switch (ent->type) {
-        case ListEntry::le_type_radio:
+        case le_type_radio:
             return "Radio";
 
-        case ListEntry::le_type_local:
+        case le_type_local:
             return "Odtwarzacz";
-
-        case ListEntry::le_type_dir:
-            return ""; // impossible
     }
 
     return "";
@@ -167,7 +164,7 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 
     switch (sc->ent->type) {
 
-        case ListEntry::le_type_radio:
+        case le_type_radio:
             // update bottom text
             sc->update_scrolled_text(sc->meta_idx,
                                      r < 0 ? "brak danych" : buf);
@@ -181,7 +178,7 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 
             break;
 
-        case ListEntry::le_type_local:
+        case le_type_local:
             // update top text (only if meta available)
             if (r == 0) {
                 sc->update_scrolled_text(sc->meta_idx, buf);
@@ -206,9 +203,6 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 
 
             break;
-
-        // impossible
-        case ListEntry::le_type_dir: break;
     }
 
     // current CPU usage
@@ -231,7 +225,7 @@ void ScPlay::show() {
 
     switch (ent->type) {
 
-        case ListEntry::le_type_radio:
+        case le_type_radio:
             // top text -- station name: scrolled or normal (not changeable)
             add_scrolled_text_or_normal(
                     2, 13, ent->get_name(),
@@ -248,7 +242,7 @@ void ScPlay::show() {
 
             break;
 
-        case ListEntry::le_type_local:
+        case le_type_local:
             // top text -- song name: scrolled (save id to change later from metadata)
             meta_idx = add_scrolled_text(
                     2, 13, ent->get_name(),
@@ -259,9 +253,6 @@ void ScPlay::show() {
             // no bottom text
 
             break;
-
-        // impossible
-        case ListEntry::le_type_dir: break;
     }
 
     add_normal_text_ljust(71, STATS_Y, "CPU",

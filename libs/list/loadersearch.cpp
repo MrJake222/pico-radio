@@ -123,8 +123,8 @@ void LoaderSearch::task() {
 
             client_begin_set_callback();
             list = query_url(client, url_buf,
-                             entries + entries_offset,
-                             entries_max - entries_offset,
+                             entries + get_entries_offset(),
+                             entries_max - get_entries_offset(),
                              should_abort, client_errored);
 
             // when done server
@@ -144,15 +144,15 @@ void LoaderSearch::task() {
         }
 
         // printf("done loading url, loaded %d stations\n", list->stations_found);
-        entries_offset += list->get_entries_found();
+        set_next_entry(list->get_entries_found());
 
-        if (entries_offset == entries_max) {
+        if (!can_fit_more_entries()) {
             puts("rs: maxed out stations, done");
             break;
         }
     }
 
-    printf("done loading all, loaded %d stations, %d providers errored\n", entries_offset, errored);
+    printf("done loading all, loaded %d stations, %d providers errored\n", get_entries_offset(), errored);
     // for (int i=0; i<entries_offset; i++) {
     //     printf("uuid %s name %32s url %s\n", entries[i].uuid, entries[i].name, entries[i].url);
     // }
@@ -165,8 +165,8 @@ void LoaderSearch::client_begin_set_callback() {
     client.set_err_cb(client_err_cb, this);
 }
 
-void LoaderSearch::begin(const char* query_) {
-    Loader::begin();
+void LoaderSearch::begin(le_type type_, const char* query_) {
+    Loader::begin(type_);
     url_encode_string(query_enc, query_);
 }
 

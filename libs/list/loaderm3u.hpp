@@ -30,7 +30,7 @@ public:
         , lfs(lfs_), rd(lfs_)
         { }
 
-    void begin(const char* path_);
+    void begin(le_type type_, const char* path_);
 
     void set_update_cb(ld_fav_update_cb cb) { upd_cb = cb; }
 };

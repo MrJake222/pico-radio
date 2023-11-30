@@ -40,7 +40,7 @@ public:
             , acc(acc_)
     { }
 
-    void begin(Path* path);
+    void begin(le_type type_, Path* path);
 
     int check_entry_url(int i) override;
 };

@@ -15,6 +15,12 @@ class Loader {
     // must run <call_all_loaded> when finished
     virtual void task() = 0;
 
+    // this is made private to force setting
+    // ListEntry::type via <set_next_entry>
+    int entries_offset;
+    // entry type to set
+    le_type type;
+
 protected:
     void* get_cb_arg() { return cb_arg; }
     // when called with no callback or when aborted, does nothing
@@ -26,7 +32,11 @@ protected:
 
     ListEntry* const entries;
     const int entries_max;
-    int entries_offset;
+    int get_entries_offset() { return entries_offset; }
+    void set_next_entry(int skip);
+    // helper functions
+    ListEntry* get_current_entry() { return &entries[entries_offset]; }
+    bool can_fit_more_entries() { return entries_offset < entries_max; }
 
     // certain loaders may use lfs cache
     // this flag is set by screens on page switches (for example)
@@ -44,7 +54,7 @@ public:
         , entries_max(entries_max_)
         { }
 
-    void begin();
+    void begin(le_type type_);
 
     void use_cache() { can_use_cache = true; }
 

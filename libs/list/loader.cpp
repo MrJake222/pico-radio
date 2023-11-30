@@ -15,9 +15,16 @@ void ll_task(void* arg) {
     vTaskDelete(nullptr);
 }
 
-void Loader::begin() {
+void Loader::begin(le_type type_) {
     all_loaded_cb = nullptr;
     can_use_cache = false;
+    type = type_;
+}
+
+void Loader::set_next_entry(int skip) {
+    while (skip--) {
+        entries[entries_offset++].type = type;
+    }
 }
 
 void Loader::call_all_loaded(int errored) {

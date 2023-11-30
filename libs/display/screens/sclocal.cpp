@@ -56,38 +56,42 @@ Screen* ScLocal::run_action(int action) {
             ent = ll.get_entry(i);
 
             switch (ent->type) {
-                case ListEntry::le_type_local:
-                    // play local file
-                    r = ll.check_entry_url(i);
-                    if (r < 0) {
-                        show_error("Błąd: nie można otworzyć strumienia");
-                        return nullptr;
+                case le_type_local:
+                    if (!ent->llocal.is_dir) {
+                        // play local file
+                        r = ll.check_entry_url(i);
+                        if (r < 0) {
+                            show_error("Błąd: nie można otworzyć strumienia");
+                            return nullptr;
+                        }
+
+                        // player screen can't mess up the data
+                        // don't load it again on re-entry
+                        set_preserve();
+
+                        // <i> equals position on search list (not fav list)
+                        sc_play.begin(ent, -1, this);
+                        return &sc_play;
                     }
 
-                    // player screen can't mess up the data
-                    // don't load it again on re-entry
-                    set_preserve();
+                    else {
+                        // open folder recursively
+                        r = path.go(ent->get_url());
+                        if (r < 0) {
+                            show_error("Błąd: nie można otworzyć katalogu");
+                            return nullptr;
+                        }
 
-                    // <i> equals position on search list (not fav list)
-                    sc_play.begin(ent, -1, this);
-                    return &sc_play;
+                        draw_title(); // title changes as we update path
 
-                case ListEntry::le_type_dir:
-                    // open folder recursively
-                    r = path.go(ent->get_url());
-                    if (r < 0) {
-                        show_error("Błąd: nie można otworzyć katalogu");
-                        return nullptr;
+                        set_abs_pos(0);
+                        load_page(lp_src_dir);
                     }
 
-                    draw_title(); // title changes as we update path
-
-                    set_abs_pos(0);
-                    load_page(false);
                     break;
 
                 // radio is impossible here
-                case ListEntry::le_type_radio: break;
+                case le_type_radio: break;
             }
 
             break;
@@ -104,7 +108,7 @@ Screen* ScLocal::run_action(int action) {
             draw_title(); // title changes as we update path
 
             set_abs_pos(0);
-            load_page(false);
+            load_page(lp_src_dir);
             break;
     }
 
@@ -117,6 +121,6 @@ void ScLocal::begin(const char* path_) {
 }
 
 void ScLocal::show() {
-    ll.begin(&path);
+    ll.begin(le_type_local, &path);
     ScreenList::show();
 }

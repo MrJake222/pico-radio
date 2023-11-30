@@ -57,11 +57,12 @@ void lwifi_sorter_cb(void* arg, const char* res) {
 }
 
 void LoaderWifiScan::set_result(const char* ssid, int p) {
-    ListEntry* entry = &entries[entries_offset];
+    ListEntry* entry = get_current_entry();
 
     entry->set_name(ssid);
+    entry->lwifi.quality = p;
 
-    entries_offset++;
+    set_next_entry(1);
 }
 
 int LoaderWifiScan::scan_networks() {

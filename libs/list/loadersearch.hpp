@@ -38,7 +38,7 @@ public:
         , entries_pls_max(entries_pls_max_)
         { }
 
-    void begin(const char* query_);
+    void begin(le_type type_, const char* query_);
     void load_abort() override;
 
     int check_entry_url(int i) override;

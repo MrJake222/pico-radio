@@ -3,12 +3,11 @@
 #include <cstring>
 #include <filetype.hpp>
 
-#include <static.hpp>
 #include <lfsaccess.hpp>
 #include <lfsorter.hpp>
 
-void LoaderLocal::begin(Path* path_) {
-    Loader::begin();
+void LoaderLocal::begin(le_type type_, Path* path_) {
+    Loader::begin(type_);
     path = path_;
 }
 
@@ -105,14 +104,13 @@ end_noclose:
 }
 
 void LoaderLocal::set_file(const char* path_, bool is_dir) {
-    ListEntry* entry = &entries[entries_offset];
+    ListEntry* entry = get_current_entry();
     entry->set_name("");
     entry->set_url(path_);
-    entry->type = is_dir ? ListEntry::le_type_dir
-                         : ListEntry::le_type_local;
-    entry->dir_added = false;
+    entry->llocal.is_dir = is_dir;
+    entry->llocal.has_full_path = false;
 
-    entries_offset++;
+    set_next_entry(1);
 }
 
 int LoaderLocal::get_entry_count_whole() {
@@ -157,7 +155,7 @@ bool LoaderLocal::is_valid() {
 }
 
 int LoaderLocal::check_entry_url(int i) {
-    if (entries[i].dir_added)
+    if (entries[i].llocal.has_full_path)
         return 0;
 
     // same as strcpy but returns end pointer
@@ -168,7 +166,7 @@ int LoaderLocal::check_entry_url(int i) {
 
     strncpy(end, entries[i].get_url(), buf_left);
     entries[i].set_url(buf);
-    entries[i].dir_added = true;
+    entries[i].llocal.has_full_path = true;
 
     return 0;
 }

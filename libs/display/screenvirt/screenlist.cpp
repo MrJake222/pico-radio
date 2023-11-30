@@ -79,7 +79,7 @@ void ScreenList::inx() {
 
         // reload page
         if (page != page_orig) {
-            load_page(false);
+            load_page(lp_src_new_page);
         }
     }
     else {
@@ -107,7 +107,7 @@ void ScreenList::dex() {
 
         // reload page
         if (page != page_orig) {
-            load_page(false);
+            load_page(lp_src_new_page);
         }
     }
     else {
@@ -184,17 +184,15 @@ void ScreenList::draw_button_entry(int y, bool selected) {
     int pad_right = 0;
 
     switch (ent->type) {
-        case ListEntry::le_type_radio:
-        case ListEntry::le_type_local:
-            break;
+        case le_type_local:
+            if (ent->llocal.is_dir) {
+                const struct icon* icon = &icon_folder;
+                const int pad = (s_res_h - icon->h) / 2;
+                display.draw_icon(xs + s_res_pad, ys + pad, icon_folder, bg, COLOR_FG);
 
-        case ListEntry::le_type_dir:
-            const struct icon* icon = &icon_folder;
-            const int pad = (s_res_h - icon->h) / 2;
-            display.draw_icon(xs + s_res_pad, ys + pad, icon_folder, bg, COLOR_FG);
-
-            // move text
-            pad_right += 16;
+                // move text
+                pad_right += 16;
+            }
 
             break;
     }
@@ -209,10 +207,10 @@ void ScreenList::draw_button_entry(int y, bool selected) {
 
 void all_loaded_cb(void* arg, int errored);
 
-void ScreenList::load_page(bool load_show_) {
-    load_show = load_show_;
+void ScreenList::load_page(lp_src src_) {
+    src = src_;
 
-    if ((load_show && info_load_show) || (!load_show && info_load)) {
+    if (((src == lp_src_show) && info_load_show) || ((src != lp_src_show) && info_load)) {
         clear_subarea();
 
         add_normal_text(10, 40, "Ładowanie",
@@ -221,8 +219,8 @@ void ScreenList::load_page(bool load_show_) {
                         display.W);
     }
 
-    if (!load_show)
-        // only if called from functions other than show
+    if (src == lp_src_new_page)
+        // only if new page
         get_ll().use_cache();
 
     get_ll().load(page);
@@ -252,25 +250,24 @@ void ScreenList::show() {
         // restore <station_count>
         // (so show_loaded can draw buttons)
         station_count = scnt;
-        load_show = true;
+        src = lp_src_show;
 
         show_loaded();
         return;
     }
 
-    load_page(true);
+    load_page(lp_src_show);
 }
 
 void ScreenList::show_loaded() {
-    if (!load_show) {
+    if (src == lp_src_new_page || src == lp_src_dir) {
         // this is executed only on new page / new directory
-
-        // don't reset position on screen re-entry
-        // (on entry it is reset by <begin>)
-        // top of the page
+        // reset position to the top of the page
         current_y = default_y();
         base_y = 0;
     }
+
+    // on first entry position is reset by <begin>
 
     reset_scrolled_texts(); // TODO reset only owned
 

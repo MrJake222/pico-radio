@@ -56,9 +56,9 @@ class ScreenList : public Screen {
     int page;
     void print_page();
 
-    // when the load finishes, this indicates whether it was started from
-    // show (entry(also <begin> called) or re-entry, value=true) or from a page change (value=false)
-    bool load_show;
+    // see below at <lp_src>
+    // defined as int, because no enum forward declaration
+    int src;
 
     // default behaviour is to load data each time using a Loader
     // <run_action> of subclasses can override this by setting this to true
@@ -69,7 +69,15 @@ protected:
     int size_x(int y) override final { return y == last_y() ? action_icons() : 1; }
     int size_y() override final { return kb_buttons() + rows_above() + rows_below(); }
 
-    void load_page(bool load_show);
+    // load page source
+    // from where the new page was requested
+    enum lp_src {
+        lp_src_show,        // <show> function, first load
+        lp_src_new_page,    // new page, use cache
+        lp_src_dir,         // directory descent
+    };
+
+    void load_page(lp_src src_);
     int get_page() { return page; }
     void set_preserve() { preserve = true; }
 

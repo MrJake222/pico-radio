@@ -110,7 +110,7 @@ Screen* ScFavourites::run_action(int action) {
 void fav_update_cb(void* arg, const char* info);
 
 void ScFavourites::show() {
-    ll.begin(PATH_FAVOURITES);
+    ll.begin(le_type_radio, PATH_FAVOURITES);
     ll.set_update_cb(fav_update_cb);
 
     // call superclass after setup

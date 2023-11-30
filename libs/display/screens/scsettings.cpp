@@ -44,7 +44,7 @@ Screen* ScSettings::run_action(int action) {
             i = get_selected_station_index();
             ent = ll.get_entry(i);
 
-            switch (ent->idx) {
+            switch (ent->lconst.idx) {
                 case settings::me_wifi_idx:
                     sc_wifi_saved.begin();
                     return &sc_wifi_saved;
@@ -65,6 +65,6 @@ Screen* ScSettings::run_action(int action) {
 }
 
 void ScSettings::show() {
-    ll.begin();
+    ll.begin(le_type_const);
     ScreenList::show();
 }

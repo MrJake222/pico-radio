@@ -75,7 +75,7 @@ void List::set_current_url(const char* p) {
 }
 
 void List::set_next_entry() {
-    entries[entries_found].type = ListEntry::le_type_radio;
+    // type is being set in Loader
     entries_found++;
 }
 
