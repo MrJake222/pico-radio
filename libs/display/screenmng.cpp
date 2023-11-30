@@ -32,6 +32,8 @@ static Screen* current_screen;
 // (ticker can preempt the input task)
 static SemaphoreHandle_t mutex_ticker;
 
+static LfsAccess acc(get_lfs());
+
 // list loaders
 static LoaderSearch sl(
         get_entries(), MAX_ENTRIES,
@@ -43,14 +45,16 @@ static LoaderM3U m3ul(
         get_lfs());
 
 static LoaderLocal locall(
-        get_entries(), MAX_ENTRIES);
+        get_entries(), MAX_ENTRIES,
+        acc);
 
 static LoaderConst setcl(
         get_entries(), MAX_ENTRIES,
         settings::get_menu_entries(), settings::get_menu_entry_count());
 
 static LoaderWifiScan scanl(
-        get_entries(), MAX_ENTRIES);
+        get_entries(), MAX_ENTRIES,
+        acc);
 
 ScFavourites sc_fav(display, mutex_ticker, m3ul);
 ScSearch sc_search(display, mutex_ticker);

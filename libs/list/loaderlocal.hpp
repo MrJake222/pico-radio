@@ -2,6 +2,7 @@
 
 #include <loader.hpp>
 
+#include <lfsaccess.hpp>
 #include <path.hpp>
 #include <ff.h>
 
@@ -13,6 +14,7 @@ class LoaderLocal : public Loader {
     DIR dir;
     FILINFO fileinfo;
 
+    LfsAccess& acc;
     Path* path;
 
     // used in <check_entry_url> to update the path of the entry
@@ -32,8 +34,10 @@ class LoaderLocal : public Loader {
     int get_entry_count_whole() override;
 
 public:
-    LoaderLocal(ListEntry* entries_, int entries_max_)
+    LoaderLocal(ListEntry* entries_, int entries_max_,
+                LfsAccess& acc_)
             : Loader(entries_, entries_max_)
+            , acc(acc_)
     { }
 
     void begin(Path* path);

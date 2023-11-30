@@ -67,3 +67,13 @@ void url_encode_string(char* dst, const char* src) {
         src++;
     }
 }
+
+int rssi_to_percent(int rssi) {
+    if (rssi >= -50)
+        return 100;
+
+    if (rssi <= -100)
+        return 0;
+
+    return 2 * (rssi + 100);
+}

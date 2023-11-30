@@ -13,6 +13,8 @@ int create_mutex_give(SemaphoreHandle_t& mutex);
 // encodes character ' ' into %20
 void url_encode_string(char* dst, const char* src);
 
+int rssi_to_percent(int rssi);
+
 // before true -> e1 before e2
 template<typename T>
 void insert_in_order(T* arr, int arr_len, T* elem, bool(*before)(const T* e1, const T* e2)) {

@@ -7,8 +7,6 @@
 #include <lfsaccess.hpp>
 #include <lfsorter.hpp>
 
-static LfsAccess acc(get_lfs());
-
 void LoaderLocal::begin(Path* path_) {
     Loader::begin();
     path = path_;
@@ -66,7 +64,6 @@ end_noclose:
 }
 
 void LoaderLocal::task() {
-    FRESULT res;
     int r;
     int errored = 0;
 
@@ -119,35 +116,30 @@ void LoaderLocal::set_file(const char* path_, bool is_dir) {
 }
 
 int LoaderLocal::get_entry_count_whole() {
-    FRESULT res;
 
-    res = f_opendir(&dir, path->str());
-    if (res != FR_OK) {
-        return -1;
+    // this is called from all_loaded callback
+    // -> can use cache
+
+    int r;
+    bool errored = false;
+
+    r = lfsorter::open(acc);
+    if (r) {
+        errored = true;
+        goto end_noclose;
     }
 
-    int files_dirs = 0;
-
-    while (!should_abort) {
-        res = f_readdir(&dir, &fileinfo);
-        if (res != FR_OK) {
-            f_closedir(&dir);
-            return -1;
-        }
-
-        if (!fileinfo.fname[0]) {
-            // empty string -> end of folder
-            break;
-        }
-
-        if (!is_valid())
-            continue;
-
-        files_dirs++;
+    r = acc.skip_all_lines();
+    if (r < 0) {
+        errored = true;
+        goto end;
     }
 
-    f_closedir(&dir);
-    return files_dirs;
+end:
+    acc.close();
+
+end_noclose:
+    return errored ? -1 : r;
 }
 
 bool LoaderLocal::is_valid() {
@@ -157,7 +149,7 @@ bool LoaderLocal::is_valid() {
 
     bool is_dir = fileinfo.fattrib & AM_DIR;
     if (!is_dir && filetype_from_name(fileinfo.fname) == FileType::UNSUPPORTED) {
-        // file not supporteed
+        // file not supported
         return false;
     }
 

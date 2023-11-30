@@ -3,25 +3,28 @@
 #include <pico/cyw43_arch.h>
 
 #include <loader.hpp>
+#include <lfsaccess.hpp>
 
 class LoaderWifiScan : public Loader {
 
-    // pagination
-    // page skips 80% because new stations might be discovered
-    int to_skip() { return page * (entries_max * 80/100); }
-
-    int scan_networks();
+    LfsAccess& acc;
 
     int get_entry_count_whole() override;
     void task() override;
 
     // cyw43 callback function
     friend int scan_res_cb(void* arg, const cyw43_ev_scan_result_t* res);
+    friend void lwifi_sorter_cb(void* arg, const char* res);
     // used by callback to set results
-    void set_result(const char* ssid);
+    void set_result(const char* ssid, int p);
+
+    int scan_networks();
+    int read_networks();
 
 public:
-    LoaderWifiScan(ListEntry* entries_, int entries_max_)
+    LoaderWifiScan(ListEntry* entries_, int entries_max_,
+                   LfsAccess& acc_)
             : Loader(entries_, entries_max_)
+            , acc(acc_)
     { }
 };

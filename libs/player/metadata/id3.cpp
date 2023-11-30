@@ -3,6 +3,8 @@
 #include <cstring>
 #include <cstdio>
 
+// needed because some function require reference to
+// bool <abort>, and we never abort
 static const bool FALSE = false;
 
 void ID3::begin() {

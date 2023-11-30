@@ -26,9 +26,30 @@ int open(LfsAccess& acc) {
     if (r < 0)
         return r;
 
-    puts("lfsorter: using cached tmp file");
-
     return 0;
+}
+
+bool is_duplicate(LfsAccess& acc, cmp_fn cmp, const char* buf) {
+    const int begin_pos = acc.tell();
+    char line[LFSS_BUF_SIZE];
+    bool match = false;
+
+    acc.seek(0, LFS_SEEK_SET);
+
+    while (acc.more_content()) {
+        int ll;
+        read_line(&acc, line, LFSS_BUF_SIZE, &ll);
+
+        // must be strictly larger (implies difference)
+        if (cmp(line, buf) == 0) {
+            match = true;
+            break;
+        }
+    }
+
+    acc.seek(begin_pos, LFS_SEEK_SET);
+
+    return match;
 }
 
 int write(LfsAccess& acc, int n, ...) {
@@ -50,16 +71,16 @@ int write(LfsAccess& acc, int n, ...) {
     return 0;
 }
 
-int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb_arg, res_cb_fn res_cb) {
+void get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb_arg, res_cb_fn res_cb) {
 
     // line buffer
-    char line[ENT_NAME_LEN + 10];
+    char line[LFSS_BUF_SIZE];
 
     // smallest elements
     // currently searched
-    char s_curr[ENT_NAME_LEN + 10];
+    char s_curr[LFSS_BUF_SIZE];
     // previously found
-    char s_prev[ENT_NAME_LEN + 10] = {0x00}; // infinitely small
+    char s_prev[LFSS_BUF_SIZE] = {0x00}; // infinitely small
 
     int start = (int) time_us_32();
     int disk_took = 0;
@@ -75,7 +96,7 @@ int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb
         while (acc.more_content()) {
             int ll;
             int disk_start = (int) time_us_32();
-            read_line(&acc, line, LIST_MAX_LINE_LENGTH, &ll);
+            read_line(&acc, line, LFSS_BUF_SIZE, &ll);
             disk_took += ((int)time_us_32()) - disk_start;
 
 
@@ -104,8 +125,6 @@ int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb
     printf("lfsorter: took %5.2fms incl. disk %5.2fms\n",
            (float(end - start)) / 1000.0f,
            (float(disk_took)) / 1000.0f);
-
-    return 0;
 }
 
 } // namespace
