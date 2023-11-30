@@ -66,6 +66,7 @@ ScSettings sc_settings(display, mutex_ticker, setcl);
 ScWifiPwd sc_wifi_pwd(display, mutex_ticker);
 ScWifiSaved sc_wifi_saved(display, mutex_ticker, m3ul);
 ScWifiScan sc_wifi_scan(display, mutex_ticker, scanl);
+ScWifiConn sc_wifi_conn(display, mutex_ticker);
 
 [[noreturn]] void screen_tick_task(void* arg) {
     TickType_t last_wake;

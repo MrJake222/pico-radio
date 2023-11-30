@@ -9,7 +9,7 @@
 #define STATUS_Y    70
 
 enum Action {
-    PLAY,
+    LIST,
     BACK,
 };
 
@@ -18,7 +18,7 @@ int ScSearchRes::get_action(int x, int y) {
         return BACK;
     }
 
-    return PLAY;
+    return LIST;
 }
 
 void ScSearchRes::draw_button(int x, int y, bool selected, bool was_selected) {
@@ -27,7 +27,7 @@ void ScSearchRes::draw_button(int x, int y, bool selected, bool was_selected) {
     int bg;
 
     switch (action) {
-        case PLAY:
+        case LIST:
             draw_button_entry(y, selected, was_selected);
             break;
 
@@ -43,7 +43,7 @@ Screen* ScSearchRes::run_action(int action) {
     int i, r;
 
     switch ((Action) action) {
-        case PLAY:
+        case LIST:
             i = get_selected_station_index();
             r = ll.check_entry_url(i);
             if (r < 0) {
@@ -74,11 +74,11 @@ void ScSearchRes::show() {
                     COLOR_BG, COLOR_FG,
                     display.W);
 
-    add_normal_text_ljust(STATUS_X, STATUS_Y, "Dostawca",
+    add_normal_text_rjust(STATUS_X, STATUS_Y, "Dostawca",
                           ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                           COLOR_BG, COLOR_FG);
 
-    add_normal_text_ljust(STATUS_X, STATUS_Y+11, "Serwer",
+    add_normal_text_rjust(STATUS_X, STATUS_Y + 11, "Serwer",
                           ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                           COLOR_BG, COLOR_FG);
 

@@ -104,7 +104,7 @@ void Screen::add_normal_text(int text_x, int text_y, const char* str, const stru
                        text_x, text_x + max_width);
 }
 
-void Screen::add_normal_text_ljust(int text_x_r, int text_y, const char* str, const struct font* font, int bg, int fg) {
+void Screen::add_normal_text_rjust(int text_x_r, int text_y, const char* str, const struct font* font, int bg, int fg) {
 
     const int text_x = text_x_r - strlen_utf8(str) * font->W;
 

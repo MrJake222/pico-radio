@@ -7,7 +7,7 @@
 #include <sd.hpp>
 
 enum Action {
-    PLAY,
+    LIST,
 
     LOCAL,
     SETTINGS,
@@ -25,7 +25,7 @@ int ScFavourites::get_action(int x, int y) {
         }
     }
 
-    return PLAY;
+    return LIST;
 }
 
 void ScFavourites::draw_button(int x, int y, bool selected, bool was_selected) {
@@ -35,7 +35,7 @@ void ScFavourites::draw_button(int x, int y, bool selected, bool was_selected) {
     const int fg = COLOR_FG;
 
     switch (action) {
-        case PLAY:
+        case LIST:
             bg = get_btn_bg(selected, true);
             break;
 
@@ -45,7 +45,7 @@ void ScFavourites::draw_button(int x, int y, bool selected, bool was_selected) {
     }
 
     switch (action) {
-        case PLAY:
+        case LIST:
             draw_button_entry(y, selected, was_selected);
             break;
 
@@ -71,7 +71,7 @@ Screen* ScFavourites::run_action(int action) {
 
     switch ((Action) action) {
         // TODO on PLAY and SEARCH display warning when no wifi connection
-        case PLAY:
+        case LIST:
             i = get_selected_station_index();
             r = ll.check_entry_url(i);
             if (r < 0) {

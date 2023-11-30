@@ -1,9 +1,18 @@
 #include "scwifipwd.hpp"
 
+#include <screenmng.hpp>
+
 Screen* ScWifiPwd::sc_back() {
-    return nullptr;
+    return &sc_wifi_scan;
 }
 
 Screen* ScWifiPwd::sc_forward(const char* text) {
-    return nullptr;
+    net->set_url(text);
+    sc_wifi_conn.begin(net);
+    return &sc_wifi_conn;
+}
+
+void ScWifiPwd::begin(ListEntry* net_) {
+    ScreenKb::begin();
+    net = net_;
 }

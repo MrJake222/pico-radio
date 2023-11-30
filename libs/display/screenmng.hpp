@@ -12,6 +12,7 @@
 #include <scwifipwd.hpp>
 #include <scwifisaved.hpp>
 #include <scwifiscan.hpp>
+#include <scwificonn.hpp>
 
 extern ScFavourites sc_fav;
 extern ScSearch sc_search;
@@ -23,6 +24,7 @@ extern ScSettings sc_settings;
 extern ScWifiPwd sc_wifi_pwd;
 extern ScWifiSaved sc_wifi_saved;
 extern ScWifiScan sc_wifi_scan;
+extern ScWifiConn sc_wifi_conn;
 
 void screenmng_init();
 void screenmng_open(Screen* new_screen);

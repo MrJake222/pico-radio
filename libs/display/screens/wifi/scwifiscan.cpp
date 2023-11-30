@@ -6,7 +6,7 @@
 #include <screenmng.hpp>
 
 enum Action {
-    PLAY,
+    LIST,
     BACK,
 };
 
@@ -15,7 +15,7 @@ int ScWifiScan::get_action(int x, int y) {
         return BACK;
     }
 
-    return PLAY;
+    return LIST;
 }
 
 void ScWifiScan::draw_button(int x, int y, bool selected, bool was_selected) {
@@ -24,7 +24,7 @@ void ScWifiScan::draw_button(int x, int y, bool selected, bool was_selected) {
     int bg;
 
     switch (action) {
-        case PLAY:
+        case LIST:
             draw_button_entry(y, selected, was_selected);
             break;
 
@@ -37,15 +37,18 @@ void ScWifiScan::draw_button(int x, int y, bool selected, bool was_selected) {
 }
 
 Screen* ScWifiScan::run_action(int action) {
-    int i, r;
+    int i;
     ListEntry* ent;
 
     switch ((Action) action) {
-        case PLAY:
+        case LIST:
             i = get_selected_station_index();
             ent = ll.get_entry(i);
 
-            break;
+            set_preserve();
+
+            sc_wifi_pwd.begin(ent);
+            return &sc_wifi_pwd;
 
         case BACK:
             ll.load_abort();

@@ -5,7 +5,7 @@
 #include <settings.hpp>
 
 enum Action {
-    PLAY,
+    LIST,
     BACK,
 };
 
@@ -14,7 +14,7 @@ int ScSettings::get_action(int x, int y) {
         return BACK;
     }
 
-    return PLAY;
+    return LIST;
 }
 
 void ScSettings::draw_button(int x, int y, bool selected, bool was_selected) {
@@ -23,7 +23,7 @@ void ScSettings::draw_button(int x, int y, bool selected, bool was_selected) {
     int bg;
 
     switch (action) {
-        case PLAY:
+        case LIST:
             draw_button_entry(y, selected, was_selected);
             break;
 
@@ -40,7 +40,7 @@ Screen* ScSettings::run_action(int action) {
     ListEntry* ent;
 
     switch ((Action) action) {
-        case PLAY:
+        case LIST:
             i = get_selected_station_index();
             ent = ll.get_entry(i);
 

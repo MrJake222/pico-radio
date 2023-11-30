@@ -70,7 +70,7 @@
 #define PRI_LIST_LOADER         1
 #define PRI_DISPLAY_TICKER      1 // updates scrollable texts
 #define PRI_HW_SETUP            1
-#define PRI_WIFI_SETUP          1
+#define PRI_WIFI                1
 #define PRI_INPUT               1
 #define PRI_SD                  1
 
@@ -85,7 +85,7 @@
 #define STACK_LIST_LOADER         (180 + MIN_FREE_STACK + FATFS_RESV_STACK)
 #define STACK_DISPLAY_TICKER      (160 + MIN_FREE_STACK)
 #define STACK_HW_SETUP            (225 + MIN_FREE_STACK)
-#define STACK_WIFI_SETUP          (200 + MIN_FREE_STACK)
+#define STACK_WIFI                (250 + MIN_FREE_STACK)
 #define STACK_INPUT               (273 + MIN_FREE_STACK)
 #define STACK_SD                  (226 + MIN_FREE_STACK)
 
@@ -94,6 +94,13 @@
 #define LITTLEFS_CACHES           1024    // 3 blocks of this size
 #define PATH_FAVOURITES           "/favourites.m3u"
 #define PATH_WIFI                 "/wifi.m3u"
+
+// --------------------------------- WiFi --------------------------------- //
+#define WIFI_SSID_MAX_LEN           32
+#define WIFI_PWD_MAX_LEN            64
+#define WIFI_CONN_SCAN_TIMEOUT_MS   5000
+#define WIFI_CONN_TRY_TIMEOUT_MS    5000
+#define WIFI_CONN_TRIES             3
 
 // --------------------------------- SD --------------------------------- //
 #define FATFS_MAX_PATH_LEN        (128*4)
@@ -104,7 +111,7 @@
 #define LCD_SCROLLED_TEXTS_LEN_MAX      64
 #define LCD_TICK_INTERVAL_MS            50
 #define LCD_BL_TIMEOUT_MS               30000
-#define LCD_MAX_KB_INPUT                64
+#define LCD_MAX_KB_INPUT                (WIFI_PWD_MAX_LEN)
 
 // --------------------------------- Buttons --------------------------------- //
 #define BTN_REPEAT_START_TIMEOUT_MS     500

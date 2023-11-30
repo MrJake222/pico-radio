@@ -15,6 +15,7 @@ add_library(libs
         display/screens/wifi/scwifipwd.cpp
         display/screens/wifi/scwifisaved.cpp
         display/screens/wifi/scwifiscan.cpp
+        display/screens/wifi/scwificonn.cpp
 
         display/screenvirt/screenlist.cpp
         display/screenvirt/screenkb.cpp
@@ -67,6 +68,8 @@ add_library(libs
 
         sd/sd.cpp
 
+        wifi/wifi.cpp
+
         static.cpp
         circularbuffer.cpp
         util.cpp
@@ -83,6 +86,7 @@ target_include_directories(libs PUBLIC
         player/metadata
         player
         sd
+        wifi
         list
         display
         display/screens

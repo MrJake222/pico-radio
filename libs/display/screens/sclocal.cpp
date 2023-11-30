@@ -16,7 +16,7 @@ const char* ScLocal::get_title() {
 }
 
 enum Action {
-    PLAY,
+    LIST,
     BACK,
 };
 
@@ -25,7 +25,7 @@ int ScLocal::get_action(int x, int y) {
         return BACK;
     }
 
-    return PLAY;
+    return LIST;
 }
 
 void ScLocal::draw_button(int x, int y, bool selected, bool was_selected) {
@@ -34,7 +34,7 @@ void ScLocal::draw_button(int x, int y, bool selected, bool was_selected) {
     int bg;
 
     switch (action) {
-        case PLAY:
+        case LIST:
             draw_button_entry(y, selected, was_selected);
             break;
 
@@ -51,7 +51,7 @@ Screen* ScLocal::run_action(int action) {
     ListEntry* ent;
 
     switch ((Action) action) {
-        case PLAY:
+        case LIST:
             i = get_selected_station_index();
             ent = ll.get_entry(i);
 

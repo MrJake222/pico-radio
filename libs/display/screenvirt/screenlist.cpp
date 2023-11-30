@@ -306,6 +306,9 @@ void ScreenList::begin() {
 
     // start on top of first page
     set_abs_pos(0);
+
+    // reset preserve
+    preserve = false;
 }
 
 void ScreenList::set_abs_pos(int abs_index) {

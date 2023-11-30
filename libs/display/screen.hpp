@@ -89,7 +89,7 @@ protected:
 
     void add_normal_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width);
     // adds left justified text, takes <text_x_r> (right corner), calculates <str> length
-    void add_normal_text_ljust(int text_x_r, int text_y, const char *str, const struct font* font, int bg, int fg);
+    void add_normal_text_rjust(int text_x_r, int text_y, const char *str, const struct font* font, int bg, int fg);
     int add_scrolled_text(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg, int max_width);
     void update_scrolled_text(int idx, const char *str);
 

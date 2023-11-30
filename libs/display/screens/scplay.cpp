@@ -177,7 +177,7 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 
             // station time
             sprintf(buf, "%02d:%02d", c/60, c%60);
-            sc->add_normal_text_ljust(
+            sc->add_normal_text_rjust(
                     159, 55, buf,
                     ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                     COLOR_BG, COLOR_ACC1);
@@ -201,7 +201,7 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 
             // song time / total time
             sprintf(buf, "%02d:%02d / %02d:%02d", c/60, c%60, d/60, d%60);
-            sc->add_normal_text_ljust(
+            sc->add_normal_text_rjust(
                     159, 50, buf,
                     ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                     COLOR_BG, COLOR_ACC1);
@@ -221,7 +221,7 @@ void player_update_callback(void* arg, DecodeBase* dec) {
 
     // current bitrate
     sprintf(buf, "%d kbps", dec->bitrate() / 1000);
-    sc->add_normal_text_ljust(
+    sc->add_normal_text_rjust(
             160, STATS_Y + 22, buf,
             ubuntu_font_get_size(UbuntuFontSize::FONT_12),
             COLOR_BG, COLOR_ACC2);
@@ -265,11 +265,11 @@ void ScPlay::show() {
             assert(false);
     }
 
-    add_normal_text_ljust(71, STATS_Y, "CPU",
+    add_normal_text_rjust(71, STATS_Y, "CPU",
                           ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                           COLOR_BG, COLOR_FG);
 
-    add_normal_text_ljust(71, STATS_Y + 11, "Bufor",
+    add_normal_text_rjust(71, STATS_Y + 11, "Bufor",
                           ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                           COLOR_BG, COLOR_FG);
 
