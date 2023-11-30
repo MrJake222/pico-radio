@@ -17,7 +17,7 @@ enum Action {
     BACK
 };
 
-void ScBattery::draw_button(int x, int y, bool selected) {
+void ScBattery::draw_button(int x, int y, bool selected, bool was_selected) {
 
     auto action = (Action) get_action(x, y);
     int bg;

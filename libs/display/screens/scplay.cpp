@@ -52,7 +52,7 @@ void ScPlay::draw_star(bool selected) {
                       bg, fg);
 }
 
-void ScPlay::draw_button(int x, int y, bool selected) {
+void ScPlay::draw_button(int x, int y, bool selected, bool was_selected) {
 
     auto action = (Action) get_action(x, y);
     int bg;

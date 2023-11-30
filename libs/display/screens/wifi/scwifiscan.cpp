@@ -18,14 +18,14 @@ int ScWifiScan::get_action(int x, int y) {
     return PLAY;
 }
 
-void ScWifiScan::draw_button(int x, int y, bool selected) {
+void ScWifiScan::draw_button(int x, int y, bool selected, bool was_selected) {
 
     auto action = (Action) get_action(x, y);
     int bg;
 
     switch (action) {
         case PLAY:
-            draw_button_entry(y, selected);
+            draw_button_entry(y, selected, was_selected);
             break;
 
         case BACK:

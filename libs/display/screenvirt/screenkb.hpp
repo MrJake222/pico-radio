@@ -27,7 +27,7 @@ class ScreenKb : public Screen {
     int adjust_x(int old_x, int old_y, int new_y) override;
     void x_changed() override;
 
-    void draw_button(int x, int y, bool selected) override;
+    void draw_button(int x, int y, bool selected, bool was_selected) override;
 
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;

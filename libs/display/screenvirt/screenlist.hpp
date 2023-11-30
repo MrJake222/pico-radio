@@ -82,7 +82,7 @@ protected:
     void set_preserve() { preserve = true; }
 
     // draws entry buttons, pass variables from draw_button
-    void draw_button_entry(int y, bool selected);
+    void draw_button_entry(int y, bool selected, bool was_selected);
 
     int get_selected_station_index() { return base_y + current_y - rows_above(); }
 

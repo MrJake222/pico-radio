@@ -176,7 +176,7 @@ int ScreenKb::get_action(int x, int y) {
     }
 }
 
-void ScreenKb::draw_button(int x, int y, bool selected) {
+void ScreenKb::draw_button(int x, int y, bool selected, bool was_selected) {
 
     auto action = (Action) get_action(x, y);
     int bg;

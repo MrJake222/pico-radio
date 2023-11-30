@@ -36,14 +36,14 @@ void ScreenList::clear_subarea() {
 void ScreenList::draw_top_buttons() {
     // draw top 3 buttons, bottom button drawn by base class
     for (int y=0; y<kb_buttons()-1; y++) {
-        draw_button(0, y + rows_above(), false);
+        draw_button(0, y + rows_above(), false, false);
     }
 }
 
 void ScreenList::draw_bottom_buttons() {
     // draw bottom 3 buttons, top button drawn by base class
     for (int y=1; y<kb_buttons(); y++) {
-        draw_button(0, y + rows_above(), false);
+        draw_button(0, y + rows_above(), false, false);
     }
 }
 
@@ -164,7 +164,7 @@ void ScreenList::dey() {
     }
 }
 
-void ScreenList::draw_button_entry(int y, bool selected) {
+void ScreenList::draw_button_entry(int y, bool selected, bool was_selected) {
 
     unsigned char xs;
     unsigned char ys;
@@ -216,6 +216,10 @@ void ScreenList::draw_button_entry(int y, bool selected) {
         // move text
         pad_right += icon->w + 3;
     }
+
+    if (was_selected && !selected)
+        // this is a deselection call from Screen:input()
+        reset_scrolled_texts();
 
     const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);
     const int pad = (s_res_h - font->H) / 2;

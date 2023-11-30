@@ -28,7 +28,7 @@ int ScFavourites::get_action(int x, int y) {
     return PLAY;
 }
 
-void ScFavourites::draw_button(int x, int y, bool selected) {
+void ScFavourites::draw_button(int x, int y, bool selected, bool was_selected) {
 
     auto action = (Action) get_action(x, y);
     int bg;
@@ -46,7 +46,7 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
 
     switch (action) {
         case PLAY:
-            draw_button_entry(y, selected);
+            draw_button_entry(y, selected, was_selected);
             break;
 
         case LOCAL:

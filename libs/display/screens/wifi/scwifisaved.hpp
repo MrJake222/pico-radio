@@ -8,7 +8,7 @@ class ScWifiSaved : public ScreenList {
     const char* get_title() override { return "Zapisane sieci"; }
     int action_icons() override { return 2; }
 
-    void draw_button(int x, int y, bool selected) override;
+    void draw_button(int x, int y, bool selected, bool was_selected) override;
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 

@@ -71,13 +71,12 @@ Screen* Screen::input(ButtonEnum btn) {
     }
 
     if (current_x != old_x || current_y != old_y) {
-        // selection changed -> must reset old button scrolled text
-        // before any redraws (old one will draw over the scrolled garbage,
-        //                     new will potentially add a new scrolled text)
-        reset_scrolled_texts();
+        // selection changed
+        // draw_button should handle resetting its own scrolled texts
+        // (probably on selected==false and was_selected==true)
 
-        draw_button(old_x, old_y, false);
-        draw_button(current_x, current_y, true);
+        draw_button(old_x, old_y, false, true);
+        draw_button(current_x, current_y, true, false);
     }
 
     return nullptr;
@@ -94,7 +93,7 @@ void Screen::draw_buttons() {
     for (int y=0; y<size_y(); y++) {
         for (int x=0; x<size_x(y); x++) {
             bool s = (y == current_y && x == current_x);
-            draw_button(x, y, s);
+            draw_button(x, y, s, false);
         }
     }
 }

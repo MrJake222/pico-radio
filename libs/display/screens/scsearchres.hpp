@@ -10,7 +10,7 @@ class ScSearchRes : public ScreenList {
     const char* get_title() override { return "Wyniki"; }
     int action_icons() override { return 1; }
 
-    void draw_button(int x, int y, bool selected) override;
+    void draw_button(int x, int y, bool selected, bool was_selected) override;
 
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
