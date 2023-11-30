@@ -8,7 +8,7 @@ Screen* ScWifiPwd::sc_back() {
 
 Screen* ScWifiPwd::sc_forward(const char* text) {
     net->set_url(text);
-    sc_wifi_conn.begin(net);
+    sc_wifi_conn.begin(this, net, false);
     return &sc_wifi_conn;
 }
 

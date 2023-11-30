@@ -14,8 +14,10 @@ static TaskHandle_t wifi_conn_task_h;
 
 static char ssid[WIFI_SSID_MAX_LEN + 1];
 static char pwd[WIFI_PWD_MAX_LEN + 1];
-
 static uint8_t auth;
+static int16_t rssi;
+static uint8_t bssid[6];
+
 static uint32_t connect_auth() {
     if (auth & 0x04)
         return CYW43_AUTH_WPA2_AES_PSK;
@@ -29,7 +31,16 @@ static uint32_t connect_auth() {
 
     return -1;
 }
-static int16_t rssi;
+
+static bool connected_same() {
+    int status = cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA);
+    if (status != CYW43_LINK_JOIN)
+        return false; // not connected at all
+
+    uint8_t bssid_current[6];
+    cyw43_wifi_get_bssid(&cyw43_state, bssid_current);
+    return memcmp(bssid, bssid_current, 6) == 0;
+}
 
 static bool should_abort;
 
@@ -50,7 +61,10 @@ static inline void cb_conn() {
 static int connect_scan_cb(void* arg, const cyw43_ev_scan_result_t* res) {
     auth = res->auth_mode;
     rssi = res->rssi;
-    xTaskNotifyGive(wifi_conn_task_h);
+    memcpy(bssid, res->bssid, 6);
+
+    if (wifi_conn_task_h)
+        xTaskNotifyGive(wifi_conn_task_h);
 
     return 0;
 }
@@ -106,6 +120,9 @@ static void connect_task(void* arg) {
 
     cb_scan(rssi_to_percent(rssi));
 
+    if (connected_same())
+        goto already_connected;
+
     cb_update("Łączenie...");
 
     for (int i=0; i<WIFI_CONN_TRIES; i++) {
@@ -141,11 +158,13 @@ static void connect_task(void* arg) {
         goto end;
     }
 
+already_connected:
     cb_update("Połączono");
     cb_conn();
 
 end:
     printf("wifi cb_conn unused stack: %ld\n", uxTaskGetStackHighWaterMark(nullptr));
+    wifi_conn_task_h = nullptr;
     vTaskDelete(nullptr);
 }
 
@@ -166,6 +185,9 @@ void connect(const char* ssid_, const char* pwd_, cb_fns cbs_) {
 }
 
 void abort() {
+    if (!wifi_conn_task_h)
+        return;
+
     should_abort = true;
     xTaskNotifyGive(wifi_conn_task_h);
 }

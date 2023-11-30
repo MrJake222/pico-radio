@@ -7,13 +7,14 @@ class ScWifiConn : public Screen {
 
     const char * get_title() override { return "Sieć Wi-Fi"; }
 
-    int size_x(int y) override { return 1; }
+    int size_x(int y) override;
     int size_y() override { return 1; }
 
     int get_action(int x, int y) override;
     Screen * run_action(int action) override;
     void draw_button(int x, int y, bool selected, bool was_selected) override;
 
+    Screen* prev;
     ListEntry* net;
 
     // signal quality bar
@@ -28,13 +29,17 @@ class ScWifiConn : public Screen {
     friend void scwifi_scan(void* arg, int quality);
     friend void scwifi_conn(void* arg);
 
+    // if list_index == -1, then this screen will try to add wifi
+    // to known list on successful connection
+    int list_index;
+
 public:
     ScWifiConn(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_)
         : Screen(display_, mutex_ticker_)
         , q_bar_w(display.W - q_bar_x - 13 - 22)
         { }
 
-    void begin(ListEntry* net_);
+    void begin(Screen* prev_, ListEntry* net_, int list_index_);
 
     void show() override;
 };

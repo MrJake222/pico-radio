@@ -53,7 +53,8 @@ Screen* ScWifiSaved::run_action(int action) {
             i = get_selected_station_index();
             ent = ll.get_entry(i);
 
-            break;
+            sc_wifi_conn.begin(this, ent, false);
+            return &sc_wifi_conn;
 
         case BACK:
             ll.load_abort();

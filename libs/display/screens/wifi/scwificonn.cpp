@@ -11,6 +11,15 @@ enum Action {
     DELETE
 };
 
+int ScWifiConn::size_x(int y) {
+    if (list_index == -1)
+        // not on saved list
+        return 1;
+
+    // with delete button
+    return 2;
+}
+
 int ScWifiConn::get_action(int x, int y) {
     if (x == 0)
         return BACK;
@@ -31,7 +40,9 @@ void ScWifiConn::draw_button(int x, int y, bool selected, bool was_selected) {
             break;
 
         case DELETE:
-            break; // TODO implement
+            display.fill_rect(1+13, 113, 13, 14, bg);
+            display.draw_icon(2+13, 114, &icon_delete, bg, COLOR_FG);
+            break;
     }
 }
 
@@ -39,17 +50,32 @@ Screen* ScWifiConn::run_action(int action) {
     switch ((Action) action) {
         case BACK:
             wifi::abort();
-            return &sc_wifi_pwd;
+            return prev;
 
         case DELETE:
-            break; // TODO implement
+            int r = m3u::remove(PATH_WIFI, list_index);
+            if (r < 0) {
+                show_error("Nie udało się usunąć z zapisanych");
+                return nullptr;
+            }
+
+            // set position to one above (if exists) or 0
+            sc_wifi_saved.set_abs_pos(list_index > 0 ? list_index - 1 : 0);
+            // mark removed
+            list_index = -1;
+
+            draw_buttons();
+
+            break;
     }
 
     return nullptr;
 }
 
-void ScWifiConn::begin(ListEntry* net_) {
+void ScWifiConn::begin(Screen* prev_, ListEntry* net_, int list_index_) {
+    prev = prev_;
     net = net_;
+    list_index = list_index_;
     Screen::begin();
 }
 
@@ -112,5 +138,15 @@ void scwifi_scan(void* arg, int quality) {
 void scwifi_conn(void* arg) {
     auto sc = (ScWifiConn*) arg;
 
-    m3u::add(PATH_WIFI, sc->net);
+    if (sc->list_index == -1) {
+        sc->list_index = m3u::add(PATH_WIFI, sc->net);
+        if (sc->list_index < 0) {
+            sc->show_error("Nie udało się dodać do zapisanych");
+        }
+
+        // set position to newly added station
+        sc_wifi_saved.set_abs_pos(sc->list_index);
+
+        sc->draw_buttons();
+    }
 }
