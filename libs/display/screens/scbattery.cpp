@@ -32,7 +32,7 @@ void ScBattery::draw_button(int x, int y, bool selected) {
     switch (action) {
         case BACK:
             display.fill_rect(1, 114, 13, 13, bg);
-            display.draw_icon(2, 115, icon_back, bg, fg);
+            display.draw_icon(2, 115, &icon_back, bg, fg);
             break;
     }
 }

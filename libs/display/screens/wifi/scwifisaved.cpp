@@ -34,12 +34,12 @@ void ScWifiSaved::draw_button(int x, int y, bool selected) {
 
         case BACK:
             display.fill_rect(1, 114, 13, 13, bg);
-            display.draw_icon(2, 115, icon_back, bg, COLOR_FG);
+            display.draw_icon(2, 115, &icon_back, bg, COLOR_FG);
             break;
 
         case SEARCH:
             display.fill_rect(143, 111, 15, 15, bg);
-            display.draw_icon(144, 112, icon_search, bg, COLOR_FG);
+            display.draw_icon(144, 112, &icon_search, bg, COLOR_FG);
             break;
     }
 }

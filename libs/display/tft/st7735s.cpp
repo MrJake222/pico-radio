@@ -226,14 +226,14 @@ void ST7735S::write_text_wrap(int text_x, int text_y, const char* str, const str
     }
 }
 
-void ST7735S::draw_icon(int icon_x, int icon_y, struct icon icon, int bg, int fg) {
+void ST7735S::draw_icon(int icon_x, int icon_y, const struct icon* icon, int bg, int fg) {
     setup_write(icon_x, icon_y,
-                icon_x + icon.w,
-                icon_y + icon.h);
+                icon_x + icon->w,
+                icon_y + icon->h);
 
-    for (int y=0; y<icon.h; y++) {
-        for (int x=0; x<icon.w; x++) {
-            unsigned int alpha = icon.data[y*icon.w + x];
+    for (int y=0; y<icon->h; y++) {
+        for (int x=0; x<icon->w; x++) {
+            unsigned int alpha = icon->data[y*icon->w + x];
             uint16_t color = from_rgb(rgb_blend(fg, bg, alpha));
 
             spi_write16_blocking(spi, &color, 1);

@@ -24,3 +24,7 @@ extern const struct icon icon_folder;
 extern const struct icon icon_shift_empty;
 extern const struct icon icon_shift_filled;
 extern const struct icon icon_settings;
+extern const struct icon icon_wifi_0;
+extern const struct icon icon_wifi_1;
+extern const struct icon icon_wifi_2;
+extern const struct icon icon_wifi_3;

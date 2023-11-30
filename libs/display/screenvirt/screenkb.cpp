@@ -203,7 +203,7 @@ void ScreenKb::draw_button(int x, int y, bool selected) {
     switch (action) {
         case BACKSPACE:
             display.fill_rect(138, 18, 20, 20, bg);
-            display.draw_icon(140, 20, icon_backspace, bg, fg);
+            display.draw_icon(140, 20, &icon_backspace, bg, fg);
             break;
 
         case SPACE:
@@ -212,18 +212,18 @@ void ScreenKb::draw_button(int x, int y, bool selected) {
 
         case BACK:
             display.fill_rect(1, 114, 13, 13, bg);
-            display.draw_icon(2, 115, icon_back, bg, fg);
+            display.draw_icon(2, 115, &icon_back, bg, fg);
             break;
 
         case SEARCH:
             display.fill_rect(143, 111, 15, 15, bg);
-            display.draw_icon(144, 112, icon_search, bg, fg);
+            display.draw_icon(144, 112, &icon_search, bg, fg);
             break;
 
         case SHIFT:
             display.fill_rect(xs, ys, KB_BNT_W + 7, KB_BNT_H, bg);
             display.draw_icon(xs + 4, ys + 4,
-                              shift ? icon_shift_filled : icon_shift_empty,
+                              shift ? &icon_shift_filled : &icon_shift_empty,
                               bg, fg);
             break;
 

@@ -48,7 +48,7 @@ void ScPlay::draw_star(bool selected) {
 
     display.fill_rect(14, 111, 17, 17, bg);
     display.draw_icon(15, 112,
-                      fav_index < 0 ? icon_star_empty : icon_star_filled,
+                      fav_index < 0 ? &icon_star_empty : &icon_star_filled,
                       bg, fg);
 }
 
@@ -69,7 +69,7 @@ void ScPlay::draw_button(int x, int y, bool selected) {
     switch (action) {
         case BACK:
             display.fill_rect(1, 114, 13, 13, bg);
-            display.draw_icon(2, 115, icon_back, bg, fg);
+            display.draw_icon(2, 115, &icon_back, bg, fg);
             break;
 
         case FAV:
@@ -78,7 +78,7 @@ void ScPlay::draw_button(int x, int y, bool selected) {
 
         case FAV_BACK:
             display.fill_rect(30, 110, 17, 18, bg);
-            display.draw_icon(31, 111, icon_fav_back, bg, fg);
+            display.draw_icon(31, 111, &icon_fav_back, bg, fg);
             break;
     }
 }

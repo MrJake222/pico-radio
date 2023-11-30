@@ -161,16 +161,16 @@ void Screen::tick_sec() {
     // battery
     const int p = analog::battery_percentage();
     if (p >= 60)
-        display.draw_icon(icon_x, y, icon_battery_100, COLOR_BG, COLOR_FG_GOOD);
+        display.draw_icon(icon_x, y, &icon_battery_100, COLOR_BG, COLOR_FG_GOOD);
     else if (p >= 20)
-        display.draw_icon(icon_x, y, icon_battery_50, COLOR_BG, COLOR_FG_WARN);
+        display.draw_icon(icon_x, y, &icon_battery_50, COLOR_BG, COLOR_FG_WARN);
     else
-        display.draw_icon(icon_x, y, icon_battery_0, COLOR_BG, COLOR_FG_ERR);
+        display.draw_icon(icon_x, y, &icon_battery_0, COLOR_BG, COLOR_FG_ERR);
 
     // sd card
     icon_x -= 10; // width=8 + margin=2
     display.draw_icon(icon_x, y,
-                      sd::is_card_mounted() ? icon_sd : icon_sd_disabled,
+                      sd::is_card_mounted() ? &icon_sd : &icon_sd_disabled,
                       COLOR_BG, COLOR_FG);
 
     // TODO wifi status icon

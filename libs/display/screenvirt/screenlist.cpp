@@ -182,23 +182,37 @@ void ScreenList::draw_button_entry(int y, bool selected) {
     display.fill_rect(xs, ys, s_res_w, s_res_h, bg);
 
     int pad_right = 0;
+    const struct icon* icon = nullptr;
 
     switch (ent->type) {
         case le_type_local:
             if (ent->llocal.is_dir) {
-                const struct icon* icon = &icon_folder;
-                const int pad = (s_res_h - icon->h) / 2;
-                display.draw_icon(xs + s_res_pad, ys + pad, icon_folder, bg, COLOR_FG);
-
-                // move text
-                pad_right += 16;
+                icon = &icon_folder;
             }
+
+            break;
+
+        case le_type_wifi:
+            icon =
+                ent->lwifi.quality <  0 ? nullptr       // no info
+              : ent->lwifi.quality < 25 ? &icon_wifi_0  // [0, 25)
+              : ent->lwifi.quality < 50 ? &icon_wifi_1  // [25, 50)
+              : ent->lwifi.quality < 75 ? &icon_wifi_2  // [50, 75)
+              : &icon_wifi_3;                           // [75, ...
 
             break;
 
         default:
             // no additional icons
             break;
+    }
+
+    if (icon) {
+        const int pad = (s_res_h - icon->h) / 2;
+        display.draw_icon(xs + s_res_pad, ys + pad, icon, bg, COLOR_FG);
+
+        // move text
+        pad_right += icon->w + 3;
     }
 
     const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);

@@ -93,5 +93,5 @@ public:
     const char* write_text_maxlen(int text_x, int text_y, const char* str, const struct font* font, int bg, int fg, int maxlen);
     void write_text_wrap(int text_x, int text_y, const char *str, const struct font* font, int bg, int fg);
 
-    void draw_icon(int icon_x, int icon_y, struct icon icon, int bg, int fg);
+    void draw_icon(int icon_x, int icon_y, const struct icon* icon, int bg, int fg);
 };

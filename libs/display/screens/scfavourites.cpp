@@ -51,17 +51,17 @@ void ScFavourites::draw_button(int x, int y, bool selected) {
 
         case LOCAL:
             display.fill_rect(2, 111, 15, 15, bg);
-            display.draw_icon(3, 112, icon_local, bg, fg);
+            display.draw_icon(3, 112, &icon_local, bg, fg);
             break;
 
         case SETTINGS:
             display.fill_rect(2+15, 111, 15, 15, bg);
-            display.draw_icon(3+15, 112, icon_settings, bg, fg);
+            display.draw_icon(3+15, 112, &icon_settings, bg, fg);
             break;
 
         case SEARCH:
             display.fill_rect(143, 111, 15, 15, bg);
-            display.draw_icon(144, 112, icon_search, bg, fg);
+            display.draw_icon(144, 112, &icon_search, bg, fg);
             break;
     }
 }

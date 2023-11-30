@@ -41,7 +41,7 @@ void ScLocal::draw_button(int x, int y, bool selected) {
         case BACK:
             bg = get_btn_bg(selected, false);
             display.fill_rect(1, 114, 13, 13, bg);
-            display.draw_icon(2, 115, icon_back, bg, COLOR_FG);
+            display.draw_icon(2, 115, &icon_back, bg, COLOR_FG);
             break;
     }
 }
