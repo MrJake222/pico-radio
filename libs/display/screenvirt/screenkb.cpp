@@ -253,7 +253,7 @@ void ScreenKb::draw_prompt_field() {
 
     display.fill_rect(x, 18, width, 20, COLOR_BG_DARK);
     display.write_text(nov ? text_x : text_x-font->W,       // overflow: start rendering a letter earlier
-                       18,
+                       18+2,
                        nov ? text : text + chr_skips - 1,   // overflow: start rendering at offset - a letter to show overflow
                        font, COLOR_BG_DARK, COLOR_FG,
                        nov ? text_x : text_x - font->W/2,   // overflow: indicate by showing a bit of the previous letter

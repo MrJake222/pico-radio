@@ -51,6 +51,8 @@ Screen* ScSearchRes::run_action(int action) {
                 return nullptr;
             }
 
+            set_preserve();
+
             // <i> equals position on search list (not fav list)
             sc_play.begin(ll.get_entry(i), -1, this);
             return &sc_play;
@@ -67,7 +69,14 @@ Screen* ScSearchRes::run_action(int action) {
 void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers);
 
 void ScSearchRes::show() {
+    // setup list-loader first
+    ll.begin(prompt);
+    ll.set_update_cb(search_update_cb);
 
+    // then call super class
+    ScreenList::show();
+
+    // then draw new info
     sprintf(subtitle, "\"%s\"", prompt);
     add_normal_text(8, 15, subtitle,
                     ubuntu_font_get_size(UbuntuFontSize::FONT_16),
@@ -81,12 +90,6 @@ void ScSearchRes::show() {
     add_normal_text_rjust(STATUS_X, STATUS_Y + 11, "Serwer",
                           ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                           COLOR_BG, COLOR_FG);
-
-    // setup list-loader first
-    ll.begin(prompt);
-    ll.set_update_cb(search_update_cb);
-
-    ScreenList::show();
 }
 
 void ScSearchRes::begin(const char* prompt_) {

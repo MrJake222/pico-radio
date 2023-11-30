@@ -50,7 +50,7 @@ Screen* ScWifiConn::run_action(int action) {
     switch ((Action) action) {
         case BACK:
             wifi::abort();
-            return prev;
+            return list_index >= 0 ? &sc_wifi_saved : prev;
 
         case DELETE:
             int r = m3u::remove(PATH_WIFI, list_index);
@@ -64,6 +64,7 @@ Screen* ScWifiConn::run_action(int action) {
             // mark removed
             list_index = -1;
 
+            current_x = MAX(current_x, size_x(last_y()));
             draw_buttons();
 
             break;
