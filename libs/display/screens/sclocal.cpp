@@ -55,43 +55,38 @@ Screen* ScLocal::run_action(int action) {
             i = get_selected_station_index();
             ent = ll.get_entry(i);
 
-            switch (ent->type) {
-                case le_type_local:
-                    if (!ent->llocal.is_dir) {
-                        // play local file
-                        r = ll.check_entry_url(i);
-                        if (r < 0) {
-                            show_error("Błąd: nie można otworzyć strumienia");
-                            return nullptr;
-                        }
+            // this is local playback screen
+            assert(ent->type == le_type_local);
 
-                        // player screen can't mess up the data
-                        // don't load it again on re-entry
-                        set_preserve();
+            if (!ent->llocal.is_dir) {
+                // play local file
+                r = ll.check_entry_url(i);
+                if (r < 0) {
+                    show_error("Błąd: nie można otworzyć strumienia");
+                    return nullptr;
+                }
 
-                        // <i> equals position on search list (not fav list)
-                        sc_play.begin(ent, -1, this);
-                        return &sc_play;
-                    }
+                // player screen can't mess up the data
+                // don't load it again on re-entry
+                set_preserve();
 
-                    else {
-                        // open folder recursively
-                        r = path.go(ent->get_url());
-                        if (r < 0) {
-                            show_error("Błąd: nie można otworzyć katalogu");
-                            return nullptr;
-                        }
+                // <i> equals position on search list (not fav list)
+                sc_play.begin(ent, -1, this);
+                return &sc_play;
+            }
 
-                        draw_title(); // title changes as we update path
+            else {
+                // open folder recursively
+                r = path.go(ent->get_url());
+                if (r < 0) {
+                    show_error("Błąd: nie można otworzyć katalogu");
+                    return nullptr;
+                }
 
-                        set_abs_pos(0);
-                        load_page(lp_src_dir);
-                    }
+                draw_title(); // title changes as we update path
 
-                    break;
-
-                // radio is impossible here
-                case le_type_radio: break;
+                set_abs_pos(0);
+                load_page(lp_src_dir);
             }
 
             break;

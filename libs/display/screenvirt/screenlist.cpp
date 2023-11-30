@@ -195,6 +195,10 @@ void ScreenList::draw_button_entry(int y, bool selected) {
             }
 
             break;
+
+        default:
+            // no additional icons
+            break;
     }
 
     const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_16);

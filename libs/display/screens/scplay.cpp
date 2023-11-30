@@ -24,7 +24,13 @@ const char* ScPlay::get_title() {
             return "Radio";
 
         case le_type_local:
+            // can't play directory
+            assert(!ent->llocal.is_dir);
             return "Odtwarzacz";
+
+        default:
+            // can't play any other entry
+            assert(false);
     }
 
     return "";
@@ -200,9 +206,10 @@ void player_update_callback(void* arg, DecodeBase* dec) {
                     ubuntu_font_get_size(UbuntuFontSize::FONT_12),
                     COLOR_BG, COLOR_ACC1);
 
-
-
             break;
+
+        default:
+            assert(false);
     }
 
     // current CPU usage
@@ -253,6 +260,9 @@ void ScPlay::show() {
             // no bottom text
 
             break;
+
+        default:
+            assert(false);
     }
 
     add_normal_text_ljust(71, STATS_Y, "CPU",
