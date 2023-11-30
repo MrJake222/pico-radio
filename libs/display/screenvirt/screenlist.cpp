@@ -121,7 +121,8 @@ void ScreenList::iny() {
         // hidden station below exists
         base_y++;
         draw_scroll_bar();
-        draw_top_buttons();
+        reset_scrolled_texts();
+        draw_buttons(); // redraw all buttons (no y change, but we must deselect the button)
     }
     else if ((current_y == last_y() && rows_above() == 0) || (current_y == first_list_row() - 1)) {
         // last icon and no icons above
@@ -134,7 +135,7 @@ void ScreenList::iny() {
         base_y = 0;
         draw_scroll_bar();
         Screen::iny();
-        draw_bottom_buttons();
+        draw_bottom_buttons(); // no need to redraw topmost entry (y changed, Screen::input() will redraw it)
     }
     else {
         Screen::iny();
@@ -146,7 +147,8 @@ void ScreenList::dey() {
         // hidden station above exists
         base_y--;
         draw_scroll_bar();
-        draw_bottom_buttons();
+        reset_scrolled_texts();
+        draw_buttons(); // redraw all buttons (no y change, but we must deselect the button)
     }
     else if (current_y == last_list_row() + 1) {
         // last bottom icon
@@ -155,7 +157,7 @@ void ScreenList::dey() {
         base_y = max_base_y();
         draw_scroll_bar();
         Screen::dey();
-        draw_top_buttons();
+        draw_top_buttons(); // no need to redraw topmost entry (y changed, Screen::input() will redraw it)
     }
     else {
         Screen::dey();
