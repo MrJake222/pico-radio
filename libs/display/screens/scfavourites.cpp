@@ -4,6 +4,7 @@
 #include <ubuntu_mono.hpp>
 #include <icons.hpp>
 #include <sd.hpp>
+#include <wifi.hpp>
 
 enum Action {
     LIST,
@@ -67,11 +68,18 @@ void ScFavourites::draw_button(int x, int y, bool selected, bool was_selected) {
 
 Screen* ScFavourites::run_action(int action) {
     int i, r;
+    ListEntry* ent;
 
     switch ((Action) action) {
-        // TODO on PLAY and SEARCH display warning when no wifi connection
         case LIST:
             i = get_selected_station_index();
+            ent = ll.get_entry(i);
+
+            if (ent->type == le_type_radio && !wifi::is_connected()) {
+                show_warn("Uwaga: brak połączenia Wi-Fi");
+                return nullptr;
+            }
+
             r = ll.check_entry_url(i);
             if (r < 0) {
                 show_error("Błąd: nie można otworzyć strumienia");
@@ -101,6 +109,11 @@ Screen* ScFavourites::run_action(int action) {
             return &sc_settings;
 
         case SEARCH:
+            if (!wifi::is_connected()) {
+                show_warn("Uwaga: brak połączenia Wi-Fi");
+                return nullptr;
+            }
+
             sc_search.begin();
             return &sc_search;
     }

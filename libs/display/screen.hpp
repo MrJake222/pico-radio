@@ -78,7 +78,7 @@ protected:
     virtual void draw_button(int x, int y, bool selected, bool was_selected) = 0;
     void draw_buttons();
 
-    void show_overlay(int bg, const char* msg);
+    virtual void show_overlay(int bg, const char* msg);
 
     // this can be overridden to provide snapping to other target
     // returns new x value

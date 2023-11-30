@@ -263,14 +263,12 @@ void ScreenList::show() {
     station_count = 0;
     Screen::show();
 
-    if (is_overlay_displayed)
-        return;
-
     // setup loading
     // <ll.begin> called by subclass before this
     get_ll().set_cb_arg(this);
     get_ll().set_all_loaded_cb(all_loaded_cb);
 
+    // must be after loader setup
     if (preserve) {
         preserve = false;
 
@@ -282,6 +280,11 @@ void ScreenList::show() {
         show_loaded();
         return;
     }
+
+    // must be after preserve
+    // (show_overlay sets preserve)
+    if (is_overlay_displayed)
+        return;
 
     load_page(lp_src_show);
 }
@@ -370,4 +373,9 @@ void all_loaded_cb(void* arg, int errored) {
     // re-draw the screen
     // (if no error)
     sc->show_loaded();
+}
+
+void ScreenList::show_overlay(int bg, const char* msg) {
+    set_preserve();
+    Screen::show_overlay(bg, msg);
 }

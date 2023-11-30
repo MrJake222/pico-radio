@@ -33,8 +33,7 @@ static uint32_t connect_auth() {
 }
 
 static bool connected_same() {
-    int status = cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA);
-    if (status != CYW43_LINK_JOIN)
+    if (!is_connected())
         return false; // not connected at all
 
     uint8_t bssid_current[6];
@@ -190,6 +189,10 @@ void abort() {
 
     should_abort = true;
     xTaskNotifyGive(wifi_conn_task_h);
+}
+
+bool is_connected() {
+    return cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA) == CYW43_LINK_UP;
 }
 
 } // namespace

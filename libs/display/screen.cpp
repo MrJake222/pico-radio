@@ -2,6 +2,7 @@
 #include "icons.hpp"
 #include "analog.hpp"
 #include <sd.hpp>
+#include <wifi.hpp>
 
 #include <ubuntu_mono.hpp>
 #include <cstdio>
@@ -170,6 +171,12 @@ void Screen::tick_sec() {
     icon_x -= 10; // width=8 + margin=2
     display.draw_icon(icon_x, y,
                       sd::is_card_mounted() ? &icon_sd : &icon_sd_disabled,
+                      COLOR_BG, COLOR_FG);
+
+    // wifi
+    icon_x -= 13; // width=11 + margin=2
+    display.draw_icon(icon_x, y,
+                      wifi::is_connected() ? &icon_wifi_enabled : &icon_wifi_disabled,
                       COLOR_BG, COLOR_FG);
 
     // TODO wifi status icon

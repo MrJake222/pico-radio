@@ -121,6 +121,8 @@ public:
     // this is called after <show> initialized loading and it was finished
     void show_loaded();
 
+    void show_overlay(int bg, const char *msg) override;
+
     // set page/base_y/current_y from absolute index into the list
     void set_abs_pos(int abs_index);
 

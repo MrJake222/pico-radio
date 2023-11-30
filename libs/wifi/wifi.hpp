@@ -16,4 +16,6 @@ struct cb_fns {
 void connect(const char* ssid_, const char* pwd_, cb_fns cbs_);
 void abort();
 
+bool is_connected();
+
 } // namespace

@@ -29,3 +29,5 @@ extern const struct icon icon_wifi_1;
 extern const struct icon icon_wifi_2;
 extern const struct icon icon_wifi_3;
 extern const struct icon icon_delete;
+extern const struct icon icon_wifi_enabled;
+extern const struct icon icon_wifi_disabled;
