@@ -79,7 +79,9 @@ Screen* ScFavourites::run_action(int action) {
                 return nullptr;
             }
 
-            set_preserve();
+            // player screen can delete station from favs
+            // its easier just not to set preserve here
+            // set_preserve();
 
             // <i> equals position on the fav list (in relation to loaded stations)
             // need to adjust fav_index for current page
