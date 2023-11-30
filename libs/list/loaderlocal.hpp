@@ -26,6 +26,7 @@ class LoaderLocal : public Loader {
     friend void llocal_res_cb(void* arg, const char* res);
     void task() override;
     void set_file(const char* path_, bool is_dir);
+    void setup_entry(ListEntry *ent) override { ent->type = le_type_local; }
 
     // should the file be listed
     // eiter a dir or a supported file by player
@@ -40,7 +41,7 @@ public:
             , acc(acc_)
     { }
 
-    void begin(le_type type_, Path* path);
+    void begin(Path* path);
 
     int check_entry_url(int i) override;
 };

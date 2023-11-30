@@ -35,10 +35,12 @@ add_library(libs
         list/listm3u.cpp
         list/listpls.cpp
         list/loader.cpp
-        list/loadersearch.cpp
         list/loaderm3u.cpp
+        list/loadersearch.cpp
+        list/loaderfav.cpp
         list/loaderlocal.cpp
         list/loaderconst.cpp
+        list/loaderwifisaved.cpp
         list/loaderwifiscan.cpp
         list/path.cpp
 

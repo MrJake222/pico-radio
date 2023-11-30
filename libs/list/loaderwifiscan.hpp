@@ -11,6 +11,7 @@ class LoaderWifiScan : public Loader {
 
     int get_entry_count_whole() override;
     void task() override;
+    void setup_entry(ListEntry *ent) override { ent->type = le_type_wifi; }
 
     // cyw43 callback function
     friend int scan_res_cb(void* arg, const cyw43_ev_scan_result_t* res);

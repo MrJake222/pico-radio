@@ -1,7 +1,7 @@
 #pragma once
 
 #include <screenlist.hpp>
-#include <loaderm3u.hpp>
+#include <loaderwifisaved.hpp>
 
 class ScWifiSaved : public ScreenList {
 
@@ -12,12 +12,12 @@ class ScWifiSaved : public ScreenList {
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
-    LoaderM3U& ll;
+    LoaderWifiSaved& ll;
     Loader& get_ll() override { return ll; }
 
 public:
     ScWifiSaved(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
-                LoaderM3U& ll_)
+                LoaderWifiSaved& ll_)
                 : ScreenList(display_, mutex_ticker_,
                              3, 25,
                              147, 20, 1, 2,

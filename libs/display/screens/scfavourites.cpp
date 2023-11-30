@@ -2,7 +2,6 @@
 
 #include <screenmng.hpp>
 #include <ubuntu_mono.hpp>
-#include <loaderm3u.hpp>
 #include <icons.hpp>
 #include <sd.hpp>
 
@@ -112,7 +111,7 @@ Screen* ScFavourites::run_action(int action) {
 void fav_update_cb(void* arg, const char* info);
 
 void ScFavourites::show() {
-    ll.begin(le_type_radio, PATH_FAVOURITES);
+    ll.begin();
     ll.set_update_cb(fav_update_cb);
 
     // call superclass after setup

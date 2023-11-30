@@ -2,35 +2,35 @@
 
 #include <loader.hpp>
 #include <lfsaccess.hpp>
-#include <lfs.h>
 
 typedef void(*ld_fav_update_cb)(void* arg, const char* info);
 
 // This class loads M3U format
-// loads EXTINF=dummy,<name> and the following line as <url>
-// can be used for favs or wifi
+// loads EXTINF=ignored,<name> and the following line as <url>
 class LoaderM3U : public Loader {
 
-    const char* path;
+    const char* const path;
 
-    lfs_t* lfs;
-    LfsAccess rd;
-
-    void task() override;
+    LfsAccess& acc;
 
     ld_fav_update_cb upd_cb;
-    void update(const char* info);
+    void update_cb(const char* info);
 
     int get_entry_count_whole() override;
 
+protected:
+    // to be called from task()
+    // task() should call <set_next_entry> and <call_all_loaded> after this
+    // returns how many entries were loaded, or -1 on error
+    int load_m3u();
+
 public:
     LoaderM3U(ListEntry* entries_, int entries_max_,
-              lfs_t* lfs_)
+              LfsAccess& acc_, const char* path_)
         : Loader(entries_, entries_max_)
-        , lfs(lfs_), rd(lfs_)
+        , acc(acc_)
+        , path(path_)
         { }
-
-    void begin(le_type type_, const char* path_);
 
     void set_update_cb(ld_fav_update_cb cb) { upd_cb = cb; }
 };

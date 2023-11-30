@@ -18,6 +18,7 @@ class LoaderSearch : public Loader {
     const int entries_pls_max;
 
     void task() override;
+    void setup_entry(ListEntry *ent) override { ent->type = le_type_radio; }
 
     volatile bool client_errored;
     void client_begin_set_callback();
@@ -38,7 +39,7 @@ public:
         , entries_pls_max(entries_pls_max_)
         { }
 
-    void begin(le_type type_, const char* query_);
+    void begin(const char* query_);
     void load_abort() override;
 
     int check_entry_url(int i) override;

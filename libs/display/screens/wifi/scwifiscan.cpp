@@ -59,6 +59,6 @@ Screen* ScWifiScan::run_action(int action) {
 }
 
 void ScWifiScan::show() {
-    ll.begin(le_type_wifi);
+    ll.begin();
     ScreenList::show();
 }

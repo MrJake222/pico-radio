@@ -83,7 +83,7 @@ void ScSearchRes::show() {
                           COLOR_BG, COLOR_FG);
 
     // setup list-loader first
-    ll.begin(le_type_radio, prompt);
+    ll.begin(prompt);
     ll.set_update_cb(search_update_cb);
 
     ScreenList::show();

@@ -3,6 +3,8 @@
 #include <config.hpp>
 
 enum le_type {
+    le_type_invalid = -1,
+
     le_type_radio,  // radio stream
     le_type_local,  // local file/dir
     le_type_const,  // const entry

@@ -10,9 +10,11 @@
 #include <settings.hpp>
 
 #include <loadersearch.hpp>
-#include <loaderm3u.hpp>
+#include <loaderfav.hpp>
 #include <loaderlocal.hpp>
 #include <loaderconst.hpp>
+#include <loaderwifisaved.hpp>
+#include <loaderwifiscan.hpp>
 
 // protects screen from mutual usage
 static SemaphoreHandle_t mutex_display;
@@ -40,9 +42,9 @@ static LoaderSearch sl(
         get_entries_pls(), MAX_ENTRIES_PLS,
         get_http_client());
 
-static LoaderM3U m3ul(
+static LoaderFav favl(
         get_entries(), MAX_ENTRIES,
-        get_lfs());
+        acc);
 
 static LoaderLocal locall(
         get_entries(), MAX_ENTRIES,
@@ -52,11 +54,15 @@ static LoaderConst setcl(
         get_entries(), MAX_ENTRIES,
         settings::get_menu_entries(), settings::get_menu_entry_count());
 
-static LoaderWifiScan scanl(
+static LoaderWifiSaved wsavedl(
         get_entries(), MAX_ENTRIES,
         acc);
 
-ScFavourites sc_fav(display, mutex_ticker, m3ul);
+static LoaderWifiScan wscanl(
+        get_entries(), MAX_ENTRIES,
+        acc);
+
+ScFavourites sc_fav(display, mutex_ticker, favl);
 ScSearch sc_search(display, mutex_ticker);
 ScSearchRes sc_search_res(display, mutex_ticker, sl);
 ScPlay sc_play(display, mutex_ticker);
@@ -64,8 +70,8 @@ ScBattery sc_bat(display, mutex_ticker);
 ScLocal sc_local(display, mutex_ticker, locall);
 ScSettings sc_settings(display, mutex_ticker, setcl);
 ScWifiPwd sc_wifi_pwd(display, mutex_ticker);
-ScWifiSaved sc_wifi_saved(display, mutex_ticker, m3ul);
-ScWifiScan sc_wifi_scan(display, mutex_ticker, scanl);
+ScWifiSaved sc_wifi_saved(display, mutex_ticker, wsavedl);
+ScWifiScan sc_wifi_scan(display, mutex_ticker, wscanl);
 ScWifiConn sc_wifi_conn(display, mutex_ticker);
 
 [[noreturn]] void screen_tick_task(void* arg) {

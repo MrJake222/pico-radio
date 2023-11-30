@@ -165,8 +165,8 @@ void LoaderSearch::client_begin_set_callback() {
     client.set_err_cb(client_err_cb, this);
 }
 
-void LoaderSearch::begin(le_type type_, const char* query_) {
-    Loader::begin(type_);
+void LoaderSearch::begin(const char* query_) {
+    Loader::begin();
     url_encode_string(query_enc, query_);
 }
 

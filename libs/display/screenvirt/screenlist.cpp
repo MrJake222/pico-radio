@@ -263,6 +263,9 @@ void ScreenList::show() {
     station_count = 0;
     Screen::show();
 
+    if (is_overlay_displayed)
+        return;
+
     // setup loading
     // <ll.begin> called by subclass before this
     get_ll().set_cb_arg(this);

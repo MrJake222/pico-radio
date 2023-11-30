@@ -3,79 +3,73 @@
 #include <listm3u.hpp>
 #include <m3u.hpp>
 
-void LoaderM3U::begin(le_type type_, const char* path_) {
-    Loader::begin(type_);
-    path = path_;
-}
-
-void LoaderM3U::update(const char* info) {
+void LoaderM3U::update_cb(const char* info) {
     if (upd_cb)
         upd_cb(get_cb_arg(), info);
 }
 
-void LoaderM3U::task() {
+int LoaderM3U::load_m3u() {
 
-    // load favourites from lfs
+    // load m3u from lfs
     int r;
-    int errored = 0;
+    bool errored = false;
     bool error = false;
     List* list = &listm3u;
 
-    update("Przygotowanie");
+    update_cb("Przygotowanie");
 
 retry:
-    rd.begin(path);
-    r = rd.open_r();
+    acc.begin(path);
+    r = acc.open_r();
     if (r < 0) {
         if (r == LFS_ERR_NOENT) {
             // does not exist
-            puts("creating new favourites file");
-            update("Tworzenie");
+            puts("creating new m3u file");
+            update_cb("Tworzenie");
             m3u::create(path);
             goto retry;
         }
 
-        errored++;
+        errored = true;
         goto end_noclose;
     }
 
-    update("Ładowanie");
+    update_cb("Ładowanie");
 
     // pagination support
     // skip lines: 1 (header) + 2*page*per_page
-    rd.skip_lines(1 + 2 * page * MAX_ENTRIES);
+    acc.skip_lines(1 + 2 * page * MAX_ENTRIES);
 
     list->begin(entries + get_entries_offset(),
                 entries_max - get_entries_offset());
-    r = list->consume_all(&rd, should_abort, error);
+    r = list->consume_all(&acc, should_abort, error);
     if (r < 0) {
         // failed
-        errored++;
+        errored = true;
         goto end;
     }
 
-    set_next_entry(list->get_entries_found());
-    printf("done loading all favourites, loaded %d stations, error %d\n", get_entries_offset(), errored);
-    update("Gotowe");
+    printf("done loading all m3u, loaded %d entries, error %d\n", get_entries_offset(), errored);
+    update_cb("Gotowe");
 
 end:
-    rd.close();
+    acc.close();
 
 end_noclose:
-    call_all_loaded(errored);
+    return errored ? -1 : list->get_entries_found();
 }
 
 int LoaderM3U::get_entry_count_whole() {
     int r;
-    rd.begin(path);
+    acc.begin(path);
 
-    r = rd.open_r();
+    r = acc.open_r();
     if (r < 0)
         return r;
 
-    const int lines = rd.skip_all_lines();
+    const int lines = acc.skip_all_lines();
 
-    r = rd.close();
+    r = acc.close();
     if (r < 0)
         return r;
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <screenlist.hpp>
-#include <loaderm3u.hpp>
+#include <loaderfav.hpp>
 
 class ScFavourites : public ScreenList {
 
@@ -13,14 +13,14 @@ class ScFavourites : public ScreenList {
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
-    LoaderM3U& ll;
+    LoaderFav& ll;
     Loader & get_ll() override { return ll; }
 
     friend void fav_update_cb(void* arg, const char* info);
 
 public:
     ScFavourites(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_,
-                 LoaderM3U& ll_)
+                 LoaderFav& ll_)
                  : ScreenList(display_, mutex_ticker_,
                               3, 25,
                               147, 20, 1, 2,

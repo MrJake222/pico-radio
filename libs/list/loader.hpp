@@ -18,8 +18,9 @@ class Loader {
     // this is made private to force setting
     // ListEntry::type via <set_next_entry>
     int entries_offset;
-    // entry type to set
-    le_type type;
+    // called from <set_next_entry> to set any necessary info
+    // for ex. type of entry
+    virtual void setup_entry(ListEntry* ent) = 0;
 
 protected:
     void* get_cb_arg() { return cb_arg; }
@@ -54,7 +55,7 @@ public:
         , entries_max(entries_max_)
         { }
 
-    void begin(le_type type_);
+    void begin();
 
     void use_cache() { can_use_cache = true; }
 

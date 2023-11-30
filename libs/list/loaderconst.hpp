@@ -14,6 +14,7 @@ class LoaderConst : public Loader {
 
     int get_entry_count_whole() override { return const_entries_count; };
     void task() override;
+    void setup_entry(ListEntry *ent) override { ent->type = le_type_const; }
 
 public:
     LoaderConst(ListEntry* entries_, int entries_max_,

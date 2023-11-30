@@ -6,8 +6,8 @@
 #include <lfsaccess.hpp>
 #include <lfsorter.hpp>
 
-void LoaderLocal::begin(le_type type_, Path* path_) {
-    Loader::begin(type_);
+void LoaderLocal::begin(Path* path_) {
+    Loader::begin();
     path = path_;
 }
 

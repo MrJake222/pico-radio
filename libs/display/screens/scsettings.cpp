@@ -65,6 +65,6 @@ Screen* ScSettings::run_action(int action) {
 }
 
 void ScSettings::show() {
-    ll.begin(le_type_const);
+    ll.begin();
     ScreenList::show();
 }

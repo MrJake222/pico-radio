@@ -116,6 +116,6 @@ void ScLocal::begin(const char* path_) {
 }
 
 void ScLocal::show() {
-    ll.begin(le_type_local, &path);
+    ll.begin(&path);
     ScreenList::show();
 }

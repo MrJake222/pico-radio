@@ -15,15 +15,21 @@ void ll_task(void* arg) {
     vTaskDelete(nullptr);
 }
 
-void Loader::begin(le_type type_) {
+void Loader::begin() {
     all_loaded_cb = nullptr;
     can_use_cache = false;
-    type = type_;
 }
 
 void Loader::set_next_entry(int skip) {
     while (skip--) {
-        entries[entries_offset++].type = type;
+        ListEntry* ent = get_current_entry();
+
+        ent->type = le_type_invalid;
+        setup_entry(ent);
+        // setup_entry should at least set up the type
+        assert(ent->type != le_type_invalid);
+
+        entries_offset++;
     }
 }
 
@@ -37,9 +43,6 @@ void Loader::load(int page_) {
     should_abort = false;
     in_progress = true;
 
-    // set here because begin() is only called on entering the screen
-    // when loading a new page all previous results are discarded,
-    // hence loading from offset=0
     entries_offset = 0;
 
     xTaskCreate(ll_task,
