@@ -71,6 +71,7 @@ add_library(libs
         sd/sd.cpp
 
         wifi/wifi.cpp
+        wifi/wifiscan.cpp
 
         static.cpp
         circularbuffer.cpp

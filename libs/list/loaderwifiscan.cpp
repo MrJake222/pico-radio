@@ -1,51 +1,7 @@
 #include "loaderwifiscan.hpp"
 
-#include <FreeRTOS.h>
-#include <task.h>
-
+#include <wifiscan.hpp>
 #include <lfsorter.hpp>
-#include <util.hpp>
-
-static int cmp_ssid(const char* e1, const char* e2) {
-    // skip 3-digit percent value + space
-    return strcasecmp(e1 + 4, e2 + 4);
-}
-
-static int cmp_percent(const char* e1, const char* e2) {
-    if (e1[0] == 0x00 || e2[0] == 0xff)
-        return -1; //    e1 is smaller than everything
-                   // or e2 is larger than everything
-
-    if (e1[0] == 0xff || e2[0] == 0x00)
-        return 1; //    e1 is larger than everything
-                  // or e2 is smaller than everything
-
-    // parse percent value
-    // take advantage of atoi stopping at first invalid character
-    int r = atoi(e2) - atoi(e1);
-    if (r != 0)
-        return r;
-
-    // if percent value didn't sort
-    return cmp_ssid(e1, e2);
-}
-
-int scan_res_cb(void* arg, const cyw43_ev_scan_result_t* res) {
-    auto ld = (LoaderWifiScan*) arg;
-    char buf[LFSS_BUF_SIZE];
-
-    int p = rssi_to_percent(res->rssi);
-    snprintf(buf, LFSS_BUF_SIZE, "%03d %s", p, res->ssid);
-    bool dup = lfsorter::is_duplicate(ld->acc, cmp_ssid, buf);
-
-    printf("  wifi: %c ch%2d rssi%3d (%2d%%) %s\n", (dup ? 'D' : ' '), res->channel, res->rssi, p, res->ssid);
-
-    if (!dup) {
-        lfsorter::write(ld->acc, 1, buf);
-    }
-
-    return 0;
-}
 
 void lwifi_sorter_cb(void* arg, const char* res) {
     auto ld = (LoaderWifiScan*) arg;
@@ -65,75 +21,21 @@ void LoaderWifiScan::set_result(const char* ssid, int p) {
     set_next_entry(1);
 }
 
-int LoaderWifiScan::scan_networks() {
-    int r;
-    bool errored = false;
-    cyw43_wifi_scan_options_t scan_options = {0};
-
-    r = lfsorter::open_create_truncate(acc);
-    if (r) {
-        errored = true;
-        goto end_noclose;
-    }
-
-    puts("wifi: scan start");
-
-    r = cyw43_wifi_scan(
-            &cyw43_state,
-            &scan_options,
-            this,
-            scan_res_cb);
-
-    if (r) {
-        errored = true;
-        goto end;
-    }
-
-    for (int i=0; i<100 && cyw43_wifi_scan_active(&cyw43_state); i++)
-        vTaskDelay(pdMS_TO_TICKS(100));
-
-    puts("wifi: scan end");
-
-end:
-    acc.close();
-
-end_noclose:
-    return errored ? -1 : 0;
-}
-
-int LoaderWifiScan::read_networks() {
-    int r;
-    bool errored = false;
-
-    r = lfsorter::open(acc);
-    if (r) {
-        errored = true;
-        goto end_noclose;
-    }
-
-    lfsorter::get_smallest_n_skip_k(acc, entries_max, entries_max * page,cmp_percent,
-                                    this, lwifi_sorter_cb);
-
-end:
-    acc.close();
-
-end_noclose:
-    return errored ? -1 : 0;
-}
-
 void LoaderWifiScan::task() {
     int r;
     bool errored = false;
 
     if (!can_use_cache) {
-        r = scan_networks();
+        r = wifi::scan_lfs(acc);
         if (r) {
             errored = true;
             goto end;
         }
     }
 
-    r = read_networks();
+    r = wifi::read_lfs(acc, entries_max, page * entries_max,
+                       this, lwifi_sorter_cb);
+
     if (r) {
         errored = true;
         goto end;

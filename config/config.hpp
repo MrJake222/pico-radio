@@ -101,6 +101,8 @@
 #define WIFI_CONN_SCAN_TIMEOUT_MS   5000
 #define WIFI_CONN_TRY_TIMEOUT_MS    5000
 #define WIFI_CONN_TRIES             3
+#define WIFI_SCAN_POLL_MS           100
+#define WIFI_SCAN_POLL_MAX_TIMES    100 // 10s max
 
 // --------------------------------- SD --------------------------------- //
 #define FATFS_MAX_PATH_LEN        (128*4)
