@@ -3,7 +3,7 @@
 #include <screenmng.hpp>
 #include <icons.hpp>
 #include <ubuntu_mono.hpp>
-#include <wifi.hpp>
+#include <wificonnect.hpp>
 #include <m3u.hpp>
 
 enum Action {

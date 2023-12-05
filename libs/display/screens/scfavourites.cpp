@@ -4,7 +4,7 @@
 #include <ubuntu_mono.hpp>
 #include <icons.hpp>
 #include <sd.hpp>
-#include <wifi.hpp>
+#include <wificonnect.hpp>
 
 enum Action {
     LIST,

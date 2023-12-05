@@ -70,7 +70,7 @@ add_library(libs
 
         sd/sd.cpp
 
-        wifi/wifi.cpp
+        wifi/wificonnect.cpp
         wifi/wifiscan.cpp
 
         static.cpp

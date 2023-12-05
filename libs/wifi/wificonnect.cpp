@@ -1,4 +1,4 @@
-#include "wifi.hpp"
+#include "wificonnect.hpp"
 
 #include <pico/cyw43_arch.h>
 
@@ -84,7 +84,7 @@ static void err_to_string(int error, char* buf) {
     }
 }
 
-static void connect_task(void* arg) {
+void connect_task(void* arg) {
     int r;
 
     // start scan to find out this wifi auth type

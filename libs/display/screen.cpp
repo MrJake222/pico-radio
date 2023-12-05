@@ -2,7 +2,7 @@
 #include "icons.hpp"
 #include "analog.hpp"
 #include <sd.hpp>
-#include <wifi.hpp>
+#include <wificonnect.hpp>
 
 #include <ubuntu_mono.hpp>
 #include <cstdio>
