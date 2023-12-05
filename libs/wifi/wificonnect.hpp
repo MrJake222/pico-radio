@@ -13,7 +13,10 @@ struct cb_fns {
     connected_fn conn;
 };
 
-void connect(const char* ssid_, const char* pwd_, cb_fns cbs_);
+// creates new rtos task to connect to the network, doesn't block the caller
+void connect_async(const char* ssid_, const char* pwd_, cb_fns cbs_);
+// uses caller rtos task, blocks it until connected or failure
+void connect_blocking(const char* ssid_, const char* pwd_, cb_fns cbs_);
 void abort();
 
 bool is_connected();

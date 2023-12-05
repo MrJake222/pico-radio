@@ -167,12 +167,22 @@ end:
     vTaskDelete(nullptr);
 }
 
-void connect(const char* ssid_, const char* pwd_, cb_fns cbs_) {
-
+static void connect_prepare(const char* ssid_, const char* pwd_, cb_fns cbs_) {
     strncpy(ssid, ssid_, WIFI_SSID_MAX_LEN);
     strncpy(pwd, pwd_, WIFI_PWD_MAX_LEN);
     cbs = cbs_;
     should_abort = false;
+}
+
+void connect_blocking(const char* ssid_, const char* pwd_, cb_fns cbs_) {
+    connect_prepare(ssid_, pwd_, cbs_);
+
+    wifi_conn_task_h = xTaskGetCurrentTaskHandle();
+    connect_task(nullptr);
+}
+
+void connect_async(const char* ssid_, const char* pwd_, cb_fns cbs_) {
+    connect_prepare(ssid_, pwd_, cbs_);
 
     xTaskCreate(
             connect_task,

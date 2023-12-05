@@ -114,14 +114,15 @@ void ScWifiConn::show() {
                           COLOR_BG, COLOR_FG);
     draw_progress_bar(q_bar_x, q_bar_y, q_bar_w, 0, COLOR_BG_DARK, COLOR_ACC2, true);
 
-    wifi::connect(net->get_name(),
-                  net->get_url(),
-                  {
-                      this,
-                      scwifi_update,
-                      scwifi_scan,
-                      scwifi_conn
-                  });
+    wifi::connect_async(
+            net->get_name(),
+            net->get_url(),
+            {
+                this,
+                scwifi_update,
+                scwifi_scan,
+                scwifi_conn
+            });
 }
 
 void scwifi_update(void* arg, const char* str) {
