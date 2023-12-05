@@ -18,8 +18,8 @@ class List {
     int entries_len;
     int entries_found;
 
-    ListError consume(DataSource* ds);
-    virtual ListError consume_format(char* line) = 0;
+    ListError consume_line(DataSource* ds);
+    virtual ListError consume_line_format(char* line) = 0;
 
 protected:
     void set_current_name(const char* p);
@@ -33,7 +33,7 @@ public:
         entries_found = 0;
     }
 
-    int consume_all(DataSource* ds, volatile bool& abort, volatile bool& error);
+    int consume_all(DataSource* ds, volatile const bool& abort, volatile const bool& error);
 
     int get_entries_found() { return entries_found; }
 

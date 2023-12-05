@@ -5,7 +5,7 @@
 
 class ListPLS : public List {
 public:
-    ListError consume_format(char* line) override;
+    ListError consume_line_format(char* line) override;
 };
 
 extern ListPLS listpls;

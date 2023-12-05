@@ -3,7 +3,7 @@
 #include <cstring>
 #include <random>
 
-ListError List::consume(DataSource* ds) {
+ListError List::consume_line(DataSource* ds) {
     int r, len;
 
     r = read_line(ds, line, LIST_MAX_LINE_LENGTH, &len);
@@ -28,10 +28,10 @@ ListError List::consume(DataSource* ds) {
     // not empty line
     // not maxed out entries
 
-    return consume_format(line);
+    return consume_line_format(line);
 }
 
-int List::consume_all(DataSource* ds, volatile bool& abort, volatile bool& error) {
+int List::consume_all(DataSource* ds, volatile const bool& abort, volatile const bool& error) {
     while (ds->more_content()) {
         // loop until all content data has been read or aborted
         if (abort) {
@@ -39,7 +39,7 @@ int List::consume_all(DataSource* ds, volatile bool& abort, volatile bool& error
             break;
         }
 
-        ListError lr = consume(ds);
+        ListError lr = consume_line(ds);
 
         if (lr == ListError::ERROR) {
             puts("ds: error");
