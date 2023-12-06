@@ -167,4 +167,9 @@ end:
     return 0;
 }
 
+void skip(LfsAccess& acc, int entries) {
+    // skip lines: 1 (header) + 2*entries
+    acc.skip_lines(1 + 2 * entries);
+}
+
 } // namespace fav

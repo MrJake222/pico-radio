@@ -1,7 +1,7 @@
 #pragma once
 
 #include <listentry.hpp>
-#include <lfs.h>
+#include <lfsaccess.hpp>
 
 // in-place operators on M3U lists
 
@@ -18,5 +18,8 @@ int remove(const char* path, int index);
 // tries to find entry of name <name> and return it's url in <url> parameter
 // returns 0 on success, -1 on failure
 int get(const char* path, const char* name, char* url, int url_max_len);
+
+// this shadows private LfsAccess
+void skip(LfsAccess& acc, int entries);
 
 }

@@ -35,8 +35,7 @@ retry:
     update_cb("Ładowanie");
 
     // pagination support
-    // skip lines: 1 (header) + 2*page*per_page
-    acc.skip_lines(1 + 2 * page * MAX_ENTRIES);
+    m3u::skip(acc, page * MAX_ENTRIES);
 
     list.begin(entries + get_entries_offset(),
                entries_max - get_entries_offset());

@@ -91,7 +91,6 @@ static int do_connect() {
     scan_options.ssid_len = strlen(ssid);
 
     int conn_error = PICO_ERROR_TIMEOUT;
-    char buf_err[16];
     char buf_upd[48];
 
     cb_update("Szukanie...");
@@ -153,7 +152,7 @@ static int do_connect() {
     if (conn_error != PICO_ERROR_NONE) {
         puts("wifi: cb_conn giving up");
 
-        sprintf(buf_upd, "Połaczenie nieudane: %s (kod %d)", err_to_string(r), r);
+        sprintf(buf_upd, "Połaczenie nieudane: %s (kod %d)", err_to_string(conn_error), conn_error);
         cb_update(buf_upd);
 
         goto end;

@@ -21,10 +21,6 @@ ListError List::consume_line(DataSource* ds) {
         return ListError::OK;
     }
 
-    if (entries_found == entries_len) {
-        return ListError::ABORT;
-    }
-
     // not empty line
     // not maxed out entries
 
@@ -32,27 +28,25 @@ ListError List::consume_line(DataSource* ds) {
 }
 
 int List::consume_all(DataSource* ds, volatile const bool& abort, volatile const bool& error) {
+
+    // loop until all content data has been read
     while (ds->more_content()) {
-        // loop until all content data has been read or aborted
+
+        // ... or aborted
         if (abort) {
             puts("rs: abort");
             break;
         }
 
-        ListError lr = consume_line(ds);
-
-        if (lr == ListError::ERROR) {
-            puts("ds: error");
-            return -1;
-        }
-
-        else if (lr == ListError::ABORT) {
-            // buffer maxed out, don't waste more time
+        // ... or maxed out entries
+        if (entries_found == entries_len) {
             puts("ds: maxed out entries");
             break;
         }
 
-        if (error) {
+        ListError lr = consume_line(ds);
+
+        if (lr == ListError::ERROR || error) {
             puts("ds: error");
             return -1;
         }

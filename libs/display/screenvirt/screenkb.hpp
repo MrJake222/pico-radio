@@ -5,11 +5,17 @@
 #include <cstring>
 
 // TODO keyboard add special characters
-// TODO keyboard test search with special characters
 
 class ScreenKb : public Screen {
 
+    // shift is on
+    // keypress should type uppercase letters
     bool shift;
+    // shift is sticky
+    // keypress should not reset it to default position
+    bool shift_stick;
+
+    void shift_off();
 
     // navigation ux
     int8_t prev_x_first_to_kb;

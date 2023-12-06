@@ -7,7 +7,6 @@
 enum class ListError {
     ERROR,
     OK,
-    ABORT,
 };
 
 class List {

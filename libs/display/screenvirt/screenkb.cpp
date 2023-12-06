@@ -223,7 +223,8 @@ void ScreenKb::draw_button(int x, int y, bool selected, bool was_selected) {
         case SHIFT:
             display.fill_rect(xs, ys, KB_BNT_W + 7, KB_BNT_H, bg);
             display.draw_icon(xs + 4, ys + 4,
-                              shift ? &icon_shift_filled : &icon_shift_empty,
+                              shift ? (shift_stick ? &icon_shift_sticky : &icon_shift_filled)
+                                         : &icon_shift_empty,
                               bg, fg);
             break;
 
@@ -273,6 +274,11 @@ void ScreenKb::hide() {
     buttons_repeat_center(false);
 }
 
+void ScreenKb::shift_off() {
+    shift = false;
+    draw_buttons();
+}
+
 Screen* ScreenKb::run_action(int action) {
 
     const int ti_old = ti;
@@ -284,8 +290,21 @@ Screen* ScreenKb::run_action(int action) {
             break;
 
         case SHIFT:
-            shift ^= true;  // xor
-            draw_buttons(); // redraw keyboard
+            if (shift_stick) {
+                // sticky shift -> reset to default
+                shift_stick = false;
+                shift = false;
+            }
+            else if (shift) {
+                // non-sticky shift mode -> set sticky
+                shift_stick = true;
+            }
+            else {
+                // no shift -> set shift
+                shift = true;
+            }
+
+            draw_buttons();
             break;
 
         case SPACE:
@@ -301,8 +320,11 @@ Screen* ScreenKb::run_action(int action) {
             return sc_forward(text);
 
         case KB:
-            if (ti < text_max_len())
-                text[ti++] =  letters[shift][current_y - 1][current_x];
+            if (ti < text_max_len()) {
+                text[ti++] = letters[shift][current_y - 1][current_x];
+                if (!shift_stick)
+                    shift_off();
+            }
             break;
     }
 
@@ -320,6 +342,7 @@ void ScreenKb::begin() {
     Screen::begin();
 
     shift = false;
+    shift_stick = false;
     text[0] = '\0';
     ti = 0;
 
