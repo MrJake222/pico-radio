@@ -2,10 +2,7 @@
 
 #include <cstring>
 #include <cstdio>
-
-// needed because some function require reference to
-// bool <abort>, and we never abort
-static const bool FALSE = false;
+#include <util.hpp>
 
 void ID3::begin() {
     // init as empty strings
@@ -36,7 +33,7 @@ int ID3::try_parse() {
     while (size_left > 0) {
         if (*cbuf.read_ptr() == 0x00) {
             // padding
-            cbuf.read_ack_large(size_left, FALSE);
+            cbuf.read_ack_large(size_left, FLAG_FALSE);
             break;
         }
 
@@ -71,7 +68,7 @@ int ID3::try_parse() {
         }
 
         // ack frame
-        cbuf.read_ack_large(frame_size, FALSE);
+        cbuf.read_ack_large(frame_size, FLAG_FALSE);
         size_left -= frame_size + 10; // + header size
     }
 

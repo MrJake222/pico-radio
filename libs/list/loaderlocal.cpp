@@ -93,7 +93,8 @@ void LoaderLocal::task() {
     }
 
     // this automatically rewinds created file to the beginning
-    lfsorter::get_smallest_n_skip_k(acc, entries_max, entries_max * page,strcasecmp,
+    lfsorter::get_smallest_n_skip_k(acc, should_abort,
+                                    entries_max, entries_max * page, strcasecmp,
                                     this, llocal_res_cb);
 
 end:

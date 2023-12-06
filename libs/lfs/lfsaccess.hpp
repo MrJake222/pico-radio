@@ -14,6 +14,7 @@ class LfsAccess : public DataSource {
     char path[LFS_NAME_MAX];
 
     int bytes_read;
+    bool is_open_;
 
     int open(int flags);
 
@@ -29,6 +30,7 @@ public:
     int open_w_create() { return open(LFS_O_WRONLY | LFS_O_CREAT); }
     int open_rw_create_truncate() { return open(LFS_O_RDWR | LFS_O_CREAT | LFS_O_TRUNC); }
     int close();
+    bool is_open() { return is_open_; }
 
     int size() { return lfs_file_size(lfs, &file); }
 

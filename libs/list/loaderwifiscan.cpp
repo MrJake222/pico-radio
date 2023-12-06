@@ -24,14 +24,15 @@ void LoaderWifiScan::task() {
     bool errored = false;
 
     if (!can_use_cache) {
-        r = wifi::lfs::scan(acc);
+        r = wifi::lfs::scan(acc, should_abort);
         if (r) {
             errored = true;
             goto end;
         }
     }
 
-    r = wifi::lfs::read(acc, entries_max, page * entries_max,
+    r = wifi::lfs::read(acc, should_abort,
+                        entries_max, page * entries_max,
                        this, lwifi_sorter_cb);
 
     if (r < 0) {
@@ -40,7 +41,12 @@ void LoaderWifiScan::task() {
     }
 
 end:
-    call_all_loaded(errored);
+    call_all_loaded(errored ? 1 : 0);
+}
+
+void LoaderWifiScan::load_abort() {
+    Loader::load_abort();
+    wifi::lfs::abort_wait(acc);
 }
 
 int LoaderWifiScan::get_entry_count_whole() {

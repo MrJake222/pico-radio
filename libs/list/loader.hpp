@@ -64,7 +64,7 @@ public:
     void set_all_loaded_cb(all_ld_cb_fn cb) { all_loaded_cb = cb; }
 
     // start loading
-    virtual void load(int page_);
+    void load(int page_);
     // stop loading
     virtual void load_abort();
 

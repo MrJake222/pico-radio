@@ -6,10 +6,7 @@
 
 // used for read() operation
 #include <listm3u.hpp>
-
-// needed because some function require reference to
-// bool <abort> or <error>, and we never abort/error out
-static const bool FALSE = false;
+#include <util.hpp>
 
 namespace m3u {
 
@@ -143,7 +140,7 @@ int get(const char* path, const char* name, char* url, int url_max_len) {
         // this resets consumed entry counter to 0
         list->begin(&ent, 1);
         // this reads one m3u entry
-        r = list->consume_all(&acc, FALSE, FALSE);
+        r = list->consume_all(&acc, FLAG_FALSE, FLAG_FALSE);
         if (r < 0) {
             error = true;
             goto end;

@@ -56,7 +56,7 @@ static void connect_best_task(void* arg) {
 
     printf("connect_best_saved unused stack entry: %ld, lfsaccess: %d frames\n", uxTaskGetStackHighWaterMark(nullptr), sizeof(acc) / sizeof(StackType_t));
 
-    r = lfs::scan(acc);
+    r = lfs::scan(acc, FLAG_FALSE);
     if (r) {
         puts("wifi-best: scan failed");
         return;
@@ -67,7 +67,7 @@ static void connect_best_task(void* arg) {
     struct status status = { false, 0 };
 
     for (int skip=0; !is_connected_link(); skip++) {
-        r = lfs::read(acc, 1, skip, &status, best_cb_fn);
+        r = lfs::read(acc, FLAG_FALSE, 1, skip, &status, best_cb_fn);
         if (r < 0) {
             puts("wifi-best: read failed");
             return;

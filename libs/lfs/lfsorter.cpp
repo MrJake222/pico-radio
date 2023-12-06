@@ -71,7 +71,7 @@ int write(LfsAccess& acc, int n, ...) {
     return 0;
 }
 
-int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb_arg, res_cb_fn res_cb) {
+int get_smallest_n_skip_k(LfsAccess& acc, flagref_t should_abort, int n, int k, cmp_fn cmp, void* res_cb_arg, res_cb_fn res_cb) {
 
     // line buffer
     char line[LFSS_BUF_SIZE];
@@ -101,11 +101,13 @@ int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb
             read_line(&acc, line, LFSS_BUF_SIZE, &ll);
             disk_took += ((int)time_us_32()) - disk_start;
 
-
             // must be strictly larger (implies difference)
             if (cmp(s_prev, line) < 0 && cmp(line, s_curr) < 0) {
                 strcpy(s_curr, line);
             }
+
+            if (should_abort)
+                return cnt;
         }
 
         if (s_curr[0] == 0xff) {

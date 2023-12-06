@@ -23,4 +23,6 @@ public:
             : Loader(entries_, entries_max_)
             , acc(acc_)
     { }
+
+    void load_abort() override;
 };

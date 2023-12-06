@@ -2,6 +2,7 @@
 
 void LfsAccess::begin(const char* path_) {
     strcpy(path, path_);
+    is_open_ = false;
 }
 
 int LfsAccess::open(int flags) {
@@ -17,6 +18,7 @@ int LfsAccess::open(int flags) {
     }
 
     bytes_read = 0;
+    is_open_ = true;
 
     return 0;
 }
@@ -29,6 +31,8 @@ int LfsAccess::close() {
         printf("littlefs: failed to close code %d\n", r);
         return r;
     }
+
+    is_open_ = false;
 
     return 0;
 }

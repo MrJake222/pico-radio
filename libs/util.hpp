@@ -5,6 +5,11 @@
 #include <FreeRTOS.h>
 #include <semphr.h>
 
+// types
+typedef volatile const bool& flagref_t;
+// needed because some function require flagref_t and we never abort
+static const bool FLAG_FALSE = false;
+
 // hexdump-like printing
 void debug_print(uint8_t* buffer, int read_at, int bytes, int reverse);
 
