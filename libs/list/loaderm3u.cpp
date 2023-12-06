@@ -1,6 +1,5 @@
 #include "loaderm3u.hpp"
 
-#include <listm3u.hpp>
 #include <m3u.hpp>
 
 void LoaderM3U::update_cb(const char* info) {
@@ -14,7 +13,6 @@ int LoaderM3U::load_m3u() {
     int r;
     bool errored = false;
     bool error = false;
-    List* list = &listm3u;
 
     update_cb("Przygotowanie");
 
@@ -40,9 +38,9 @@ retry:
     // skip lines: 1 (header) + 2*page*per_page
     acc.skip_lines(1 + 2 * page * MAX_ENTRIES);
 
-    list->begin(entries + get_entries_offset(),
-                entries_max - get_entries_offset());
-    r = list->consume_all(&acc, should_abort, error);
+    list.begin(entries + get_entries_offset(),
+               entries_max - get_entries_offset());
+    r = list.consume_all(&acc, should_abort, error);
     if (r < 0) {
         // failed
         errored = true;
@@ -56,7 +54,7 @@ end:
     acc.close();
 
 end_noclose:
-    return errored ? -1 : list->get_entries_found();
+    return errored ? -1 : list.get_entries_found();
 }
 
 int LoaderM3U::get_entry_count_whole() {

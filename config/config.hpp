@@ -67,9 +67,9 @@
 #define PRI_PLAYER_STAT         2  // handles player's statistics updates
 #define PRI_FIFO_QUEUE          3  // handles message passing to for ex. player task
 #define PRI_LWIP_TCPIP          5
-#define PRI_LIST_LOADER         1
-#define PRI_DISPLAY_TICKER      1 // updates scrollable texts
-#define PRI_INIT                1
+#define PRI_LIST_LOADER         2  // quickly load favs on startup
+#define PRI_DISPLAY_TICKER      1  // updates scrollable texts
+#define PRI_INIT                2  // don't get starved by wifi best
 #define PRI_WIFI_CONN           1
 #define PRI_WIFI_BEST           1
 #define PRI_INPUT               1

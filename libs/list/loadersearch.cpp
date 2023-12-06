@@ -53,6 +53,7 @@ void client_err_cb(void* arg, int err) {
 }
 
 static List* query_url(HttpClientPico& client, const char* url, ListEntry* entries, int max_entries,
+        ListM3U& list_m3u, ListPLS& list_pls,
         volatile bool& should_abort, volatile bool& client_errored) {
     client_errored = false;
     int r = client.get(url);
@@ -66,11 +67,11 @@ static List* query_url(HttpClientPico& client, const char* url, ListEntry* entri
 
     if (strcmp(client.get_content_type(), "audio/mpegurl") == 0) {
         // .m3u file
-        list = &listm3u;
+        list = &list_m3u;
     }
     else if (strcmp(client.get_content_type(), "audio/scpls") == 0 || strcmp(client.get_content_type(), "audio/x-scpls") == 0) {
         // .pls file
-        list = &listpls;
+        list = &list_pls;
     }
     else {
         printf("unsupported type of radio listing: %s\n", client.get_content_type());
@@ -125,6 +126,7 @@ void LoaderSearch::task() {
             list = query_url(client, url_buf,
                              entries + get_entries_offset(),
                              entries_max - get_entries_offset(),
+                             list_m3u, list_pls,
                              should_abort, client_errored);
 
             // when done server
@@ -186,6 +188,7 @@ int LoaderSearch::check_entry_url(int i) {
         client_begin_set_callback();
         List* list = query_url(client, url,
                                entries_pls, entries_pls_max,
+                               list_m3u, list_pls,
                                should_abort, client_errored);
 
         if (!list)

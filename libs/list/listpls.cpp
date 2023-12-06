@@ -2,8 +2,6 @@
 
 #include <cstring>
 
-ListPLS listpls;
-
 ListError ListPLS::consume_line_format(char* line) {
 
     if (line[0] == '[') {

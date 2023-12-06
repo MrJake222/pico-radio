@@ -2,8 +2,6 @@
 
 #include <cstring>
 
-ListM3U listm3u;
-
 ListError ListM3U::consume_line_format(char* line) {
     if (line[0] == '#') {
         // comment (metadata)

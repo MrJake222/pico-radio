@@ -11,8 +11,8 @@ class LoaderWifiSaved : public LoaderM3U {
 
 public:
     LoaderWifiSaved(ListEntry* entries_, int entries_max_,
-                    LfsAccess& acc_)
+                    LfsAccess& acc_, ListM3U& list_m3u_)
                     : LoaderM3U(entries_, entries_max_,
-                                acc_, PATH_WIFI)
+                                acc_, PATH_WIFI, list_m3u_)
     { }
 };

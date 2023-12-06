@@ -2,6 +2,7 @@
 
 #include <loader.hpp>
 #include <lfsaccess.hpp>
+#include <listm3u.hpp>
 
 typedef void(*ld_fav_update_cb)(void* arg, const char* info);
 
@@ -12,6 +13,7 @@ class LoaderM3U : public Loader {
     const char* const path;
 
     LfsAccess& acc;
+    ListM3U& list;
 
     ld_fav_update_cb upd_cb;
     void update_cb(const char* info);
@@ -26,10 +28,12 @@ protected:
 
 public:
     LoaderM3U(ListEntry* entries_, int entries_max_,
-              LfsAccess& acc_, const char* path_)
+              LfsAccess& acc_, const char* path_,
+              ListM3U& list_m3u_)
         : Loader(entries_, entries_max_)
         , acc(acc_)
         , path(path_)
+        , list(list_m3u_)
         { }
 
     void set_update_cb(ld_fav_update_cb cb) { upd_cb = cb; }

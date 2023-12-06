@@ -129,7 +129,7 @@ int get(const char* path, const char* name, char* url, int url_max_len) {
 
     // this operation abuses ListM3U to read m3u file entry-by-entry (entries_len = 1)
     // each reading requires call to <begin> and <consume_all> (which bails out after maxing out entries)
-    List* list = &listm3u;
+    ListM3U list;
 
     // entry buffer (only of length 1)
     ListEntry ent{};
@@ -138,9 +138,9 @@ int get(const char* path, const char* name, char* url, int url_max_len) {
 
     while (acc.more_content()) {
         // this resets consumed entry counter to 0
-        list->begin(&ent, 1);
+        list.begin(&ent, 1);
         // this reads one m3u entry
-        r = list->consume_all(&acc, FLAG_FALSE, FLAG_FALSE);
+        r = list.consume_all(&acc, FLAG_FALSE, FLAG_FALSE);
         if (r < 0) {
             error = true;
             goto end;
