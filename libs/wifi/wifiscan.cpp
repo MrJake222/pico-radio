@@ -6,11 +6,28 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-namespace wifi {
+namespace wifi::lfs {
+
+void format_encode(char* buf, int buf_size, const char* ssid, int q) {
+    // format wifi to a string as "qqq NAME"
+    // where qqq is quality in percents is 3-digit format
+    // next is one space
+    // and NAME is the wifi ssid
+    snprintf(buf, buf_size, "%03d %s", q, ssid);
+}
+
+const char* format_decode_ssid(const char* buf) {
+    // skip 3-digit percent quality + space
+    return buf + 4;
+}
+
+int format_decode_quality(const char* buf) {
+    // directly at the beginning (ends with space)
+    return atoi(buf);
+}
 
 static int cmp_ssid(const char* e1, const char* e2) {
-    // skip 3-digit percent value + space
-    return strcasecmp(e1 + 4, e2 + 4);
+    return strcasecmp(format_decode_ssid(e1), format_decode_ssid(e2));
 }
 
 static int cmp_percent(const char* e1, const char* e2) {
@@ -24,7 +41,7 @@ static int cmp_percent(const char* e1, const char* e2) {
 
     // parse percent value
     // take advantage of atoi stopping at first invalid character
-    int r = atoi(e2) - atoi(e1);
+    int r = format_decode_quality(e2) - format_decode_quality(e1);
     if (r != 0)
         return r;
 
@@ -36,15 +53,12 @@ int scan_res_cb(void* arg, const cyw43_ev_scan_result_t* res) {
     auto& acc = *(LfsAccess*)arg;
     char buf[LFSS_BUF_SIZE];
 
-    // format wifi to a string as "ppp NAME"
-    // where ppp is quality in percents is 3-digit format
-    // next is one space
-    // and NAME is the wifi ssid
-    int p = rssi_to_percent(res->rssi);
-    snprintf(buf, LFSS_BUF_SIZE, "%03d %s", p, res->ssid);
+    int q = rssi_to_percent(res->rssi);
+    format_encode(buf, LFSS_BUF_SIZE, (const char*) res->ssid, q);
+
     bool dup = lfsorter::is_duplicate(acc, cmp_ssid, buf);
 
-    printf("  wifi: %c ch%2d rssi%3d (%2d%%) %s\n", (dup ? 'D' : ' '), res->channel, res->rssi, p, res->ssid);
+    printf("  wifi: %c ch%2d rssi%3d (%2d%%) %s\n", (dup ? 'D' : ' '), res->channel, res->rssi, q, res->ssid);
 
     if (!dup) {
         lfsorter::write(acc, 1, buf);
@@ -53,7 +67,7 @@ int scan_res_cb(void* arg, const cyw43_ev_scan_result_t* res) {
     return 0;
 }
 
-int scan_lfs(LfsAccess& acc) {
+int scan(LfsAccess& acc) {
     int r;
     bool errored = false;
     cyw43_wifi_scan_options_t scan_options = {0};
@@ -89,7 +103,7 @@ end_noclose:
     return errored ? -1 : 0;
 }
 
-int read_lfs(LfsAccess& acc, int n, int k, void* cb_arg, lfsorter::res_cb_fn cb) {
+int read(LfsAccess& acc, int n, int k, void* cb_arg, lfsorter::res_cb_fn cb) {
     int r;
     bool errored = false;
 
@@ -99,13 +113,45 @@ int read_lfs(LfsAccess& acc, int n, int k, void* cb_arg, lfsorter::res_cb_fn cb)
         goto end_noclose;
     }
 
-    lfsorter::get_smallest_n_skip_k(acc, n, k, cmp_percent,
-                                    cb_arg, cb);
+    int cnt;
+    cnt = lfsorter::get_smallest_n_skip_k(
+            acc, n, k, cmp_percent,
+            cb_arg, cb);
 
     acc.close();
 
 end_noclose:
-    return errored ? -1 : 0;
+    return errored ? -1 : cnt;
 }
+
+int count(LfsAccess& acc) {
+
+    // this is called from all_loaded callback
+    // -> can use cache
+
+    int r;
+    bool errored = false;
+
+    r = lfsorter::open(acc);
+    if (r) {
+        errored = true;
+        goto end_noclose;
+    }
+
+    r = acc.skip_all_lines();
+    if (r < 0) {
+        errored = true;
+        goto end;
+    }
+
+    printf("wifi: scanned %d networks\n", r);
+
+end:
+    acc.close();
+
+end_noclose:
+    return errored ? -1 : r;
+}
+
 
 } // namespace

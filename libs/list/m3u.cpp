@@ -4,6 +4,13 @@
 #include <config.hpp>
 #include <static.hpp>
 
+// used for read() operation
+#include <listm3u.hpp>
+
+// needed because some function require reference to
+// bool <abort> or <error>, and we never abort/error out
+static const bool FALSE = false;
+
 namespace m3u {
 
 static LfsAccess acc(get_lfs());
@@ -112,6 +119,54 @@ int remove(const char* path, int index) {
     if (r < 0)
         return r;
 
+    return 0;
+}
+
+int get(const char* path, const char* name, char* url, int url_max_len) {
+    int r;
+    acc.begin(path);
+
+    r = acc.open_r();
+    if (r < 0)
+        return r;
+
+    // this operation abuses ListM3U to read m3u file entry-by-entry (entries_len = 1)
+    // each reading requires call to <begin> and <consume_all> (which bails out after maxing out entries)
+    List* list = &listm3u;
+
+    // entry buffer (only of length 1)
+    ListEntry ent{};
+    bool found = false;
+    bool error = false;
+
+    while (acc.more_content()) {
+        // this resets consumed entry counter to 0
+        list->begin(&ent, 1);
+        // this reads one m3u entry
+        r = list->consume_all(&acc, FALSE, FALSE);
+        if (r < 0) {
+            error = true;
+            goto end;
+        }
+
+        // now ent is some entry read from file
+        if (strcmp(name, ent.get_name()) == 0) {
+            // match found, copy name and return 0
+            strncpy(url, ent.get_url(), url_max_len);
+            found = true;
+            goto end;
+        }
+    }
+
+end:
+    r = acc.close();
+    if (r < 0)
+        return r;
+
+    if (error || !found)
+        return -1;
+
+    // no error and found
     return 0;
 }
 

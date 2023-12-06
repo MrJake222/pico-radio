@@ -9,6 +9,7 @@
 #include <analog.hpp>
 #include <sd.hpp>
 #include <gpio_irq.hpp>
+#include <wifibest.hpp>
 
 void init_lowlevel() {
     set_sys_clock_khz(150000, true);
@@ -50,6 +51,7 @@ void task_init(void* arg) {
     assert(r == 0);
     cyw43_arch_enable_sta_mode();
     puts("wifi init+sta done");
+    wifi::connect_best_saved();
 
     // Display config
     // TODO make init screen show first
@@ -74,7 +76,7 @@ void task_init(void* arg) {
 
     // print stack usage & end task
     uint32_t min_free_stack = uxTaskGetStackHighWaterMark(nullptr);
-    printf("hardware unused stack: %ld\n", min_free_stack);
+    printf("init task unused stack: %ld\n", min_free_stack);
     vTaskDelete(nullptr);
 }
 
@@ -95,9 +97,9 @@ int main() {
     xTaskCreate(
             task_init,
             "init",
-            STACK_HW_SETUP,
+            STACK_INIT,
             nullptr,
-            PRI_HW_SETUP,
+            PRI_INIT,
             nullptr);
 
     vTaskStartScheduler();

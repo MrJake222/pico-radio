@@ -71,7 +71,7 @@ int write(LfsAccess& acc, int n, ...) {
     return 0;
 }
 
-void get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb_arg, res_cb_fn res_cb) {
+int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb_arg, res_cb_fn res_cb) {
 
     // line buffer
     char line[LFSS_BUF_SIZE];
@@ -84,6 +84,8 @@ void get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_c
 
     int start = (int) time_us_32();
     int disk_took = 0;
+
+    int cnt = 0;
 
     // find k+n smallest elements
     for (int i=0; i<(k+n); i++) {
@@ -114,6 +116,7 @@ void get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_c
         if (i >= k) {
             // skipped k, now report the rest
             res_cb(res_cb_arg, s_curr);
+            cnt++;
         }
 
         // printf("lfsorter: %s\n", s_curr);
@@ -125,6 +128,8 @@ void get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_c
     printf("lfsorter: took %5.2fms incl. disk %5.2fms\n",
            (float(end - start)) / 1000.0f,
            (float(disk_took)) / 1000.0f);
+
+    return cnt;
 }
 
 } // namespace

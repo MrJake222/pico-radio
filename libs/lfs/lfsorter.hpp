@@ -29,6 +29,9 @@ bool is_duplicate(LfsAccess& acc, cmp_fn cmp, const char* buf);
 int write(LfsAccess& acc, int n, ...);
 
 // skips k smallest elements and returns n smallest elements of the rest
-void get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb_arg, res_cb_fn res_cb);
+// note: this function returns entries as-is, refer to writing code to strip any extra flags
+// this function is not async, after it returns all entries had been loaded and passed to callback
+// returns how many entries were actually reported back to caller via callback or -1 on failure
+int get_smallest_n_skip_k(LfsAccess& acc, int n, int k, cmp_fn cmp, void* res_cb_arg, res_cb_fn res_cb);
 
 } // namespace

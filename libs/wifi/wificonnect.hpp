@@ -13,12 +13,15 @@ struct cb_fns {
     connected_fn conn;
 };
 
+const char* err_to_string(int error);
+
 // creates new rtos task to connect to the network, doesn't block the caller
 void connect_async(const char* ssid_, const char* pwd_, cb_fns cbs_);
 // uses caller rtos task, blocks it until connected or failure
-void connect_blocking(const char* ssid_, const char* pwd_, cb_fns cbs_);
+int connect_blocking(const char* ssid_, const char* pwd_, cb_fns cbs_);
 void abort();
 
-bool is_connected();
+bool is_connected_link();
+bool is_connected_ip();
 
 } // namespace

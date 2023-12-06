@@ -72,6 +72,7 @@ add_library(libs
 
         wifi/wificonnect.cpp
         wifi/wifiscan.cpp
+        wifi/wifibest.cpp
 
         static.cpp
         circularbuffer.cpp

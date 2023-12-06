@@ -90,7 +90,7 @@ ScWifiConn sc_wifi_conn(display, mutex_ticker);
 void screenmng_init() {
     display.init();
     current_screen = &sc_fav; // first screen to open
-    // current_screen = &sc_wifi_pwd; // test screen0
+    // current_screen = &sc_wifi_scan; // test screen
 
     create_mutex_give(mutex_display);
     create_mutex_give(mutex_ticker);

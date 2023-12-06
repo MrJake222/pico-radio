@@ -69,8 +69,9 @@
 #define PRI_LWIP_TCPIP          5
 #define PRI_LIST_LOADER         1
 #define PRI_DISPLAY_TICKER      1 // updates scrollable texts
-#define PRI_HW_SETUP            1
-#define PRI_WIFI                1
+#define PRI_INIT                1
+#define PRI_WIFI_CONN           1
+#define PRI_WIFI_BEST           1
 #define PRI_INPUT               1
 #define PRI_SD                  1
 
@@ -78,14 +79,16 @@
 #include <FreeRTOSConfig.h>
 
 #define MIN_FREE_STACK            100
-#define FATFS_RESV_STACK          (((FF_MAX_LFN+1)*2 + ((FF_MAX_LFN + 44U) / 15 * 32)) / sizeof(configSTACK_DEPTH_TYPE))
-#define STACK_PLAYER              (200 + MIN_FREE_STACK + FATFS_RESV_STACK)
+#define RESV_STACK_FATFS          (((FF_MAX_LFN+1)*2 + ((FF_MAX_LFN + 44U) / 15 * 32)) / sizeof(configSTACK_DEPTH_TYPE))
+#define RESV_STACK_LFSACC         350
+#define STACK_PLAYER              (200 + MIN_FREE_STACK + RESV_STACK_FATFS)
 #define STACK_PLAYER_STAT         (164 + MIN_FREE_STACK)
 #define STACK_FIFO_QUEUE          configMINIMAL_STACK_SIZE // currently unused
-#define STACK_LIST_LOADER         (180 + MIN_FREE_STACK + FATFS_RESV_STACK)
+#define STACK_LIST_LOADER         (180 + MIN_FREE_STACK + RESV_STACK_FATFS)
 #define STACK_DISPLAY_TICKER      (160 + MIN_FREE_STACK)
-#define STACK_HW_SETUP            (225 + MIN_FREE_STACK)
-#define STACK_WIFI                (250 + MIN_FREE_STACK)
+#define STACK_INIT                (225 + MIN_FREE_STACK)
+#define STACK_WIFI_CONN           (250 + MIN_FREE_STACK)
+#define STACK_WIFI_BEST           (340 + MIN_FREE_STACK + RESV_STACK_LFSACC)
 #define STACK_INPUT               (273 + MIN_FREE_STACK)
 #define STACK_SD                  (226 + MIN_FREE_STACK)
 

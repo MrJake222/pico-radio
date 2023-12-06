@@ -176,7 +176,7 @@ void Screen::tick_sec() {
     // wifi
     icon_x -= 13; // width=11 + margin=2
     display.draw_icon(icon_x, y,
-                      wifi::is_connected() ? &icon_wifi_enabled : &icon_wifi_disabled,
+                      wifi::is_connected_ip() ? &icon_wifi_enabled : &icon_wifi_disabled,
                       COLOR_BG, COLOR_FG);
 
     // TODO wifi status icon

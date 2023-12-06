@@ -33,7 +33,7 @@ static uint32_t connect_auth() {
 }
 
 static bool connected_same() {
-    if (!is_connected())
+    if (!is_connected_ip())
         return false; // not connected at all
 
     uint8_t bssid_current[6];
@@ -68,31 +68,29 @@ static int connect_scan_cb(void* arg, const cyw43_ev_scan_result_t* res) {
     return 0;
 }
 
-static void err_to_string(int error, char* buf) {
+const char* err_to_string(int error) {
     switch (error) {
         case PICO_ERROR_TIMEOUT:
-            strcpy(buf, "timeout");
-            break;
+            return "timeout";
 
         case PICO_ERROR_BADAUTH:
-            strcpy(buf, "złe hasło");
-            break;
+            return "złe hasło";
 
         default:
-            sprintf(buf, "bład kod %d", error);
-            break;
+            return "nieznany błąd";
     }
 }
 
-void connect_task(void* arg) {
+static int do_connect() {
     int r;
+    wifi_conn_task_h = xTaskGetCurrentTaskHandle();
 
     // start scan to find out this wifi auth type
     cyw43_wifi_scan_options_t scan_options = {0};
     strncpy((char*) scan_options.ssid, ssid, 31);
     scan_options.ssid_len = strlen(ssid);
 
-    bool connected = false;
+    int conn_error = PICO_ERROR_TIMEOUT;
     char buf_err[16];
     char buf_upd[48];
 
@@ -119,8 +117,10 @@ void connect_task(void* arg) {
 
     cb_scan(rssi_to_percent(rssi));
 
-    if (connected_same())
+    if (connected_same()) {
+        conn_error = PICO_ERROR_NONE;
         goto already_connected;
+    }
 
     cb_update("Łączenie...");
 
@@ -135,23 +135,25 @@ void connect_task(void* arg) {
                 WIFI_CONN_TRY_TIMEOUT_MS);
 
         if (r == 0) {
-            connected = true;
+            conn_error = PICO_ERROR_NONE;
             break;
         }
         else {
             printf("wifi: cb_conn try=%d/%d failed reason=%d\n", i+1, WIFI_CONN_TRIES, r);
 
-            err_to_string(r, buf_err);
-            sprintf(buf_upd, "Próba %d/%d: %s", i+1, WIFI_CONN_TRIES, buf_err);
+            sprintf(buf_upd, "Próba %d/%d", i+1, WIFI_CONN_TRIES);
             cb_update(buf_upd);
+
+            if (r != PICO_ERROR_TIMEOUT)
+                conn_error = r; // save only "real" errors
+                                // (value of conn_error defaults to timeout anyway)
         }
     }
 
-    if (!connected) {
+    if (conn_error != PICO_ERROR_NONE) {
         puts("wifi: cb_conn giving up");
 
-        err_to_string(r, buf_err);
-        sprintf(buf_upd, "Połaczenie nieudane: %s", buf_err);
+        sprintf(buf_upd, "Połaczenie nieudane: %s (kod %d)", err_to_string(r), r);
         cb_update(buf_upd);
 
         goto end;
@@ -162,9 +164,8 @@ already_connected:
     cb_conn();
 
 end:
-    printf("wifi cb_conn unused stack: %ld\n", uxTaskGetStackHighWaterMark(nullptr));
     wifi_conn_task_h = nullptr;
-    vTaskDelete(nullptr);
+    return conn_error;
 }
 
 static void connect_prepare(const char* ssid_, const char* pwd_, cb_fns cbs_) {
@@ -174,11 +175,15 @@ static void connect_prepare(const char* ssid_, const char* pwd_, cb_fns cbs_) {
     should_abort = false;
 }
 
-void connect_blocking(const char* ssid_, const char* pwd_, cb_fns cbs_) {
+int connect_blocking(const char* ssid_, const char* pwd_, cb_fns cbs_) {
     connect_prepare(ssid_, pwd_, cbs_);
+    return do_connect();
+}
 
-    wifi_conn_task_h = xTaskGetCurrentTaskHandle();
-    connect_task(nullptr);
+static void connect_task(void* arg) {
+    do_connect();
+    printf("wifi cb_conn unused stack: %ld\n", uxTaskGetStackHighWaterMark(nullptr));
+    vTaskDelete(nullptr);
 }
 
 void connect_async(const char* ssid_, const char* pwd_, cb_fns cbs_) {
@@ -186,10 +191,10 @@ void connect_async(const char* ssid_, const char* pwd_, cb_fns cbs_) {
 
     xTaskCreate(
             connect_task,
-            "wifi cb_conn",
-            STACK_WIFI,
+            "wifi conn",
+            STACK_WIFI_CONN,
             nullptr,
-            PRI_WIFI,
+            PRI_WIFI_CONN,
             &wifi_conn_task_h);
 }
 
@@ -201,7 +206,11 @@ void abort() {
     xTaskNotifyGive(wifi_conn_task_h);
 }
 
-bool is_connected() {
+bool is_connected_link() {
+    return cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA) == CYW43_LINK_JOIN;
+}
+
+bool is_connected_ip() {
     return cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA) == CYW43_LINK_UP;
 }
 

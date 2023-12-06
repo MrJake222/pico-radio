@@ -1,6 +1,5 @@
 #include "listm3u.hpp"
 
-#include <cstdio>
 #include <cstring>
 
 ListM3U listm3u;
@@ -11,7 +10,7 @@ ListError ListM3U::consume_line_format(char* line) {
         line++; // skip #
 
         if (strcmp(line, "EXTM3U") == 0) {
-            printf("header: '%s'\n", line);
+            // printf("header: '%s'\n", line);
         }
         else {
             char* val = strchr(line, ':');

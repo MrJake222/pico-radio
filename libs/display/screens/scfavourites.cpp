@@ -75,8 +75,8 @@ Screen* ScFavourites::run_action(int action) {
             i = get_selected_station_index();
             ent = ll.get_entry(i);
 
-            if (ent->type == le_type_radio && !wifi::is_connected()) {
-                show_warn("Uwaga: brak połączenia Wi-Fi");
+            if (ent->type == le_type_radio && !wifi::is_connected_ip()) {
+                show_warn("Uwaga: brak połączenia Wi-Fi lub adresu IP");
                 return nullptr;
             }
 
@@ -109,8 +109,8 @@ Screen* ScFavourites::run_action(int action) {
             return &sc_settings;
 
         case SEARCH:
-            if (!wifi::is_connected()) {
-                show_warn("Uwaga: brak połączenia Wi-Fi");
+            if (!wifi::is_connected_ip()) {
+                show_warn("Uwaga: brak połączenia Wi-Fi lub adresu IP");
                 return nullptr;
             }
 
