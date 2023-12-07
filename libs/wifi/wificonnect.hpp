@@ -22,6 +22,7 @@ void connect_async(const char* ssid_, const char* pwd_, cb_fns cbs_);
 // uses caller rtos task, blocks it until connected or failure
 int connect_blocking(const char* ssid_, const char* pwd_, cb_fns cbs_);
 void abort();
+void disconnect();
 
 bool is_in_progress();
 bool is_connected_link();

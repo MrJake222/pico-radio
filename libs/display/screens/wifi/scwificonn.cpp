@@ -53,6 +53,8 @@ Screen* ScWifiConn::run_action(int action) {
             return list_index >= 0 ? &sc_wifi_saved : prev;
 
         case DELETE:
+            wifi::disconnect();
+
             int r = m3u::remove(PATH_WIFI, list_index);
             if (r < 0) {
                 show_error("Nie udało się usunąć z zapisanych");

@@ -202,6 +202,11 @@ void abort() {
     xTaskNotifyGive(wifi_conn_task_h);
 }
 
+void disconnect() {
+    cyw43_wifi_leave(&cyw43_state, CYW43_ITF_STA);
+    connect_clear();
+}
+
 void init() {
     int r;
     r = cyw43_arch_init();
