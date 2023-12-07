@@ -151,7 +151,7 @@ void Screen::tick_sec_disable() {
     xSemaphoreGive(mutex_ticker);
 }
 
-void Screen::tick_sec() {
+void Screen::tick_sec(int sec) {
     // update top-of-the-screen status icons
 
     // important for drawing title
@@ -176,10 +176,10 @@ void Screen::tick_sec() {
     // wifi
     icon_x -= 13; // width=11 + margin=2
     display.draw_icon(icon_x, y,
-                      wifi::is_connected_ip() ? &icon_wifi_enabled : &icon_wifi_disabled,
+                      wifi::is_in_progress() ? icon_wifi[sec % 4] // animate
+                      : wifi::is_connected_ip() ? wifi::quality_to_icon(wifi::connected_quality()) // current signal
+                      : &icon_wifi_3_x, // disabled
                       COLOR_BG, COLOR_FG);
-
-    // TODO wifi status icon
 }
 
 void Screen::tick() {
@@ -194,7 +194,7 @@ void Screen::tick() {
         tick_sec_counter++;
         if (tick_sec_counter == 1000 / LCD_TICK_INTERVAL_MS) {
             tick_sec_counter = 0;
-            tick_sec();
+            tick_sec_call();
         }
     }
 
@@ -271,7 +271,7 @@ void Screen::show() {
 
     draw_buttons();
     tick_sec_enable();
-    tick_sec(); // first tick
+    tick_sec_call(); // first tick
 
     // after tick_sec() because it sets icon_x
     draw_title();

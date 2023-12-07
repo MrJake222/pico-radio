@@ -14,7 +14,7 @@ class ScBattery : public Screen {
     int get_action(int x, int y) override;
     Screen* run_action(int action) override;
 
-    void tick_sec() override;
+    void tick_sec(int sec) override;
 
 public:
     using Screen::Screen;

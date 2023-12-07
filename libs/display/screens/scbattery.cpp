@@ -64,8 +64,8 @@ void ScBattery::show() {
                     display.W - 2);
 }
 
-void ScBattery::tick_sec() {
-    Screen::tick_sec();
+void ScBattery::tick_sec(int sec) {
+    Screen::tick_sec(sec);
     char buf[6];
 
     sprintf(buf, "%1.3f", analog::vcc_voltage());

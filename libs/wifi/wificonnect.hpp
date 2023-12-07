@@ -1,5 +1,7 @@
 #pragma once
 
+#include <icons.hpp>
+
 namespace wifi {
 
 typedef void(*update_fn)(void* arg, const char* str);
@@ -14,6 +16,9 @@ struct cb_fns {
 };
 
 const char* err_to_string(int error);
+const struct icon* quality_to_icon(int quality);
+
+void init();
 
 // creates new rtos task to connect to the network, doesn't block the caller
 void connect_async(const char* ssid_, const char* pwd_, cb_fns cbs_);
@@ -21,7 +26,10 @@ void connect_async(const char* ssid_, const char* pwd_, cb_fns cbs_);
 int connect_blocking(const char* ssid_, const char* pwd_, cb_fns cbs_);
 void abort();
 
+bool is_in_progress();
+
 bool is_connected_link();
 bool is_connected_ip();
+int connected_quality();
 
 } // namespace

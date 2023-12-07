@@ -6,6 +6,7 @@
 
 #include <FreeRTOS.h>
 #include <semphr.h>
+#include <hardware/timer.h>
 
 #define COLOR_BG             0xCCCCCC
 #define COLOR_BG_SEL         0x66CC66
@@ -113,7 +114,8 @@ protected:
     int tick_sec_counter;
     void tick_sec_enable();
     void tick_sec_disable();
-    virtual void tick_sec();
+    virtual void tick_sec(int sec);
+    inline void tick_sec_call() { tick_sec((int)(time_us_32() / 1000000)); }
 
 public:
     Screen(ST7735S& display_, SemaphoreHandle_t& mutex_ticker_)

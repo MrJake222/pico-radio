@@ -9,6 +9,7 @@
 #include <analog.hpp>
 #include <sd.hpp>
 #include <gpio_irq.hpp>
+#include <wificonnect.hpp>
 #include <wifibest.hpp>
 
 void init_lowlevel() {
@@ -46,10 +47,7 @@ void task_init(void* arg) {
 
     // Wi-Fi config
     // (before screen because some try to scan)
-    int r;
-    r = cyw43_arch_init();
-    assert(r == 0);
-    cyw43_arch_enable_sta_mode();
+    wifi::init();
     puts("wifi init+sta done");
     wifi::connect_best_saved();
 

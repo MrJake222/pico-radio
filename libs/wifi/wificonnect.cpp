@@ -186,6 +186,8 @@ static void connect_task(void* arg) {
 }
 
 void connect_async(const char* ssid_, const char* pwd_, cb_fns cbs_) {
+    assert(wifi_conn_task_h == nullptr);
+
     connect_prepare(ssid_, pwd_, cbs_);
 
     xTaskCreate(
@@ -205,12 +207,41 @@ void abort() {
     xTaskNotifyGive(wifi_conn_task_h);
 }
 
+void init() {
+    int r;
+    r = cyw43_arch_init();
+    assert(r == 0);
+
+    cyw43_arch_enable_sta_mode();
+
+    wifi_conn_task_h = nullptr;
+}
+
+bool is_in_progress() {
+    return wifi_conn_task_h != nullptr;
+}
+
 bool is_connected_link() {
     return cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA) == CYW43_LINK_JOIN;
 }
 
 bool is_connected_ip() {
     return cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA) == CYW43_LINK_UP;
+}
+
+int connected_quality() {
+    int32_t rssi;
+    cyw43_wifi_get_rssi(&cyw43_state, &rssi);
+    return rssi_to_percent(rssi);
+}
+
+const struct icon* quality_to_icon(int quality) {
+    if (quality < 0)
+        return nullptr;
+    if (quality >= 100)
+        return icon_wifi[3];
+
+    return icon_wifi[quality / 25];
 }
 
 } // namespace

@@ -5,6 +5,7 @@
 #include <ubuntu_mono.hpp>
 #include <icons.hpp>
 #include <screenmng.hpp>
+#include <wificonnect.hpp>
 
 // #define s_base_x      3
 // #define s_base_y     31
@@ -195,13 +196,7 @@ void ScreenList::draw_button_entry(int y, bool selected, bool was_selected) {
             break;
 
         case le_type_wifi:
-            icon =
-                ent->lwifi.quality <  0 ? nullptr       // no info
-              : ent->lwifi.quality < 25 ? &icon_wifi_0  // [0, 25)
-              : ent->lwifi.quality < 50 ? &icon_wifi_1  // [25, 50)
-              : ent->lwifi.quality < 75 ? &icon_wifi_2  // [50, 75)
-              : &icon_wifi_3;                           // [75, ...
-
+            icon = wifi::quality_to_icon(ent->lwifi.quality);
             break;
 
         default:
