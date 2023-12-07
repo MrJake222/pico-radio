@@ -83,13 +83,6 @@ void ScSearchRes::show() {
                     COLOR_BG, COLOR_FG,
                     display.W);
 
-    add_normal_text_rjust(STATUS_X, STATUS_Y, "Dostawca",
-                          ubuntu_font_get_size(UbuntuFontSize::FONT_12),
-                          COLOR_BG, COLOR_FG);
-
-    add_normal_text_rjust(STATUS_X, STATUS_Y + 11, "Serwer",
-                          ubuntu_font_get_size(UbuntuFontSize::FONT_12),
-                          COLOR_BG, COLOR_FG);
 }
 
 void ScSearchRes::begin(const char* prompt_) {
@@ -100,6 +93,18 @@ void ScSearchRes::begin(const char* prompt_) {
 
 void search_update_cb(void* arg, int provider_idx, int server_idx, int max_servers) {
     auto sc = (ScSearchRes*) arg;
+
+    // maybe little inefficient but this is only called on real page load
+    // (as opposed to <show>, it's called always)
+    sc->add_normal_text_rjust(
+            STATUS_X, STATUS_Y, "Dostawca",
+            ubuntu_font_get_size(UbuntuFontSize::FONT_12),
+            COLOR_BG, COLOR_FG);
+
+    sc->add_normal_text_rjust(
+            STATUS_X, STATUS_Y + 11, "Serwer",
+            ubuntu_font_get_size(UbuntuFontSize::FONT_12),
+            COLOR_BG, COLOR_FG);
 
     sc->draw_progress_bar(STATUS_X+3, STATUS_Y+5,    64, provider_idx*100 / sc->ll.get_provider_count(), COLOR_BG_DARK, COLOR_ACC2, true);
     sc->draw_progress_bar(STATUS_X+3, STATUS_Y+11+5, 64, server_idx*100   / max_servers,                 COLOR_BG_DARK, COLOR_ACC2, true);

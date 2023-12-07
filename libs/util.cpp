@@ -58,7 +58,7 @@ void url_encode_string(char* dst, const char* src) {
             *dst++ = '0'; // %20
         }
 
-        if (*src == '&') {
+        else if (*src == '&') {
             *dst++ = '%';
             *dst++ = '2';
             *dst++ = '6'; // %26
@@ -72,6 +72,8 @@ void url_encode_string(char* dst, const char* src) {
 
         src++;
     }
+
+    *dst++ = '\0';
 }
 
 int rssi_to_percent(int rssi) {
