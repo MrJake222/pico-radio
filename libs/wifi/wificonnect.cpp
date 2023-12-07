@@ -10,19 +10,24 @@
 
 namespace wifi {
 
+// TODO rewrite wifi as class
+
 static TaskHandle_t wifi_conn_task_h;
 
 static char ssid[WIFI_SSID_MAX_LEN + 1];
 static char pwd[WIFI_PWD_MAX_LEN + 1];
-static uint8_t auth;
-static int16_t rssi;
-static uint8_t bssid[6];
+static uint8_t scan_auth;
+static int16_t scan_rssi;
+static uint8_t scan_bssid[6];
+
+static cb_fns cbs;
+static bool should_abort;
 
 static uint32_t connect_auth() {
-    if (auth & 0x04)
+    if (scan_auth & 0x04)
         return CYW43_AUTH_WPA2_AES_PSK;
 
-    if (auth & 0x02)
+    if (scan_auth & 0x02)
         return CYW43_AUTH_WPA_TKIP_PSK;
 
     // if (sec & 0x01)
@@ -38,12 +43,21 @@ static bool connected_same() {
 
     uint8_t bssid_current[6];
     cyw43_wifi_get_bssid(&cyw43_state, bssid_current);
-    return memcmp(bssid, bssid_current, 6) == 0;
+    return memcmp(scan_bssid, bssid_current, 6) == 0;
 }
 
-static bool should_abort;
+static void connect_prepare(const char* ssid_, const char* pwd_, cb_fns cbs_) {
+    strncpy(ssid, ssid_, WIFI_SSID_MAX_LEN);
+    strncpy(pwd, pwd_, WIFI_PWD_MAX_LEN);
+    cbs = cbs_;
+    should_abort = false;
+}
 
-static cb_fns cbs;
+static void connect_clear() {
+    memset(ssid, 0, WIFI_SSID_MAX_LEN);
+    memset(pwd, 0, WIFI_PWD_MAX_LEN);
+}
+
 static inline void cb_update(const char* str) {
     if (cbs.upd && !should_abort)
         cbs.upd(cbs.arg, str);
@@ -58,27 +72,14 @@ static inline void cb_conn() {
 }
 
 static int connect_scan_cb(void* arg, const cyw43_ev_scan_result_t* res) {
-    auth = res->auth_mode;
-    rssi = res->rssi;
-    memcpy(bssid, res->bssid, 6);
+    scan_auth = res->auth_mode;
+    scan_rssi = res->rssi;
+    memcpy(scan_bssid, res->bssid, 6);
 
     if (wifi_conn_task_h)
         xTaskNotifyGive(wifi_conn_task_h);
 
     return 0;
-}
-
-const char* err_to_string(int error) {
-    switch (error) {
-        case PICO_ERROR_TIMEOUT:
-            return "timeout";
-
-        case PICO_ERROR_BADAUTH:
-            return "złe hasło";
-
-        default:
-            return "nieznany błąd";
-    }
 }
 
 static int do_connect() {
@@ -114,7 +115,7 @@ static int do_connect() {
         goto end;
     }
 
-    cb_scan(rssi_to_percent(rssi));
+    cb_scan(rssi_to_percent(scan_rssi));
 
     if (connected_same()) {
         conn_error = PICO_ERROR_NONE;
@@ -154,6 +155,7 @@ static int do_connect() {
 
         sprintf(buf_upd, "Połaczenie nieudane: %s (kod %d)", err_to_string(conn_error), conn_error);
         cb_update(buf_upd);
+        connect_clear();
 
         goto end;
     }
@@ -165,13 +167,6 @@ already_connected:
 end:
     wifi_conn_task_h = nullptr;
     return conn_error;
-}
-
-static void connect_prepare(const char* ssid_, const char* pwd_, cb_fns cbs_) {
-    strncpy(ssid, ssid_, WIFI_SSID_MAX_LEN);
-    strncpy(pwd, pwd_, WIFI_PWD_MAX_LEN);
-    cbs = cbs_;
-    should_abort = false;
 }
 
 int connect_blocking(const char* ssid_, const char* pwd_, cb_fns cbs_) {
@@ -229,10 +224,27 @@ bool is_connected_ip() {
     return cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA) == CYW43_LINK_UP;
 }
 
+bool is_connected_to(const char* ssid_) {
+    return strncmp(ssid, ssid_, WIFI_SSID_MAX_LEN) == 0;
+}
+
 int connected_quality() {
     int32_t rssi;
     cyw43_wifi_get_rssi(&cyw43_state, &rssi);
     return rssi_to_percent(rssi);
+}
+
+const char* err_to_string(int error) {
+    switch (error) {
+        case PICO_ERROR_TIMEOUT:
+            return "timeout";
+
+        case PICO_ERROR_BADAUTH:
+            return "złe hasło";
+
+        default:
+            return "nieznany błąd";
+    }
 }
 
 const struct icon* quality_to_icon(int quality) {

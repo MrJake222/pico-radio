@@ -32,3 +32,4 @@ extern const struct icon icon_settings;
 extern const struct icon* icon_wifi[4];
 extern const struct icon icon_wifi_3_x;
 extern const struct icon icon_delete;
+extern const struct icon icon_conn;

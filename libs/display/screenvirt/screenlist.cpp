@@ -184,19 +184,21 @@ void ScreenList::draw_button_entry(int y, bool selected, bool was_selected) {
     bg = get_btn_bg(selected, true);
     display.fill_rect(xs, ys, s_res_w, s_res_h, bg);
 
-    int pad_right = 0;
-    const struct icon* icon = nullptr;
+    const struct icon* icons[2] = { nullptr, nullptr };
 
     switch (ent->type) {
         case le_type_local:
             if (ent->llocal.is_dir) {
-                icon = &icon_folder;
+                icons[0] = &icon_folder;
             }
 
             break;
 
         case le_type_wifi:
-            icon = wifi::quality_to_icon(ent->lwifi.quality);
+            icons[0] = wifi::quality_to_icon(ent->lwifi.quality);
+            if (wifi::is_connected_to(ent->get_name()))
+                icons[1] = &icon_conn;
+
             break;
 
         default:
@@ -204,12 +206,15 @@ void ScreenList::draw_button_entry(int y, bool selected, bool was_selected) {
             break;
     }
 
-    if (icon) {
-        const int pad = (s_res_h - icon->h) / 2;
-        display.draw_icon(xs + s_res_pad, ys + pad, icon, bg, COLOR_FG);
+    int pad_right = 0;
+    for (auto icon : icons) {
+        if (icon) {
+            const int pad = (s_res_h - icon->h) / 2;
+            display.draw_icon(xs + s_res_pad + pad_right, ys + pad, icon, bg, COLOR_FG);
 
-        // move text
-        pad_right += icon->w + 3;
+            // move text
+            pad_right += icon->w + 3;
+        }
     }
 
     if (was_selected && !selected)
