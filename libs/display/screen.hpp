@@ -62,10 +62,12 @@ protected:
     int current_y;
     // increment/decrement x/y
     // with wrapping and limiting
-    virtual void inx();
-    virtual void dex();
-    virtual void iny();
-    virtual void dey();
+    // returns whether <input> should redraw the buttons
+    // default return value is <true>, but subclasses may want to disable this
+    virtual bool inx();
+    virtual bool dex();
+    virtual bool iny();
+    virtual bool dey();
 
     // overlay displayed
     // this can (and should) be used in <show>
@@ -84,7 +86,6 @@ protected:
     // this can be overridden to provide snapping to other target
     // returns new x value
     virtual int adjust_x(int old_x, int old_y, int new_y);
-    virtual void x_changed() { }
 
     static int get_btn_bg(bool selected, bool dark);
 

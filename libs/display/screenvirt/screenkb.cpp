@@ -149,8 +149,14 @@ int ScreenKb::adjust_x(int old_x, int old_y, int new_y) {
     return Screen::adjust_x(old_x, old_y, new_y);
 }
 
-void ScreenKb::x_changed() {
+bool ScreenKb::inx() {
     prev_x_clear();
+    return Screen::inx();
+}
+
+bool ScreenKb::dex() {
+    prev_x_clear();
+    return Screen::dex();
 }
 
 int ScreenKb::get_action(int x, int y) {

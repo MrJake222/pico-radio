@@ -31,7 +31,8 @@ class ScreenKb : public Screen {
     int size_x(int y) override;
     int size_y() override;
     int adjust_x(int old_x, int old_y, int new_y) override;
-    void x_changed() override;
+    bool inx() override;
+    bool dex() override;
 
     void draw_button(int x, int y, bool selected, bool was_selected) override;
 

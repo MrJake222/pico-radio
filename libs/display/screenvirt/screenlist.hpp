@@ -31,16 +31,18 @@ class ScreenList : public Screen {
     int base_y;
     int max_base_y();
 
-    void inx() override;
-    void dex() override;
-    void iny() override;
-    void dey() override;
+    bool inx() override;
+    bool dex() override;
+    bool iny() override;
+    bool dey() override;
 
     // clear button + scroll bar area
     void clear_subarea();
 
-    void draw_top_buttons();
-    void draw_bottom_buttons();
+    void draw_list_buttons(int from, int to);
+    inline void draw_list_all_buttons()    { draw_list_buttons(0, kb_buttons());   }
+    inline void draw_list_top_buttons()    { draw_list_buttons(0, kb_buttons()-1); }
+    inline void draw_list_bottom_buttons() { draw_list_buttons(1, kb_buttons());   }
     void draw_scroll_bar();
 
     // scrolled text id of currently selected item

@@ -7,32 +7,34 @@
 #include <ubuntu_mono.hpp>
 #include <cstdio>
 
-void Screen::inx() {
+bool Screen::inx() {
     current_x++;
     current_x %= size_x(current_y);
-    x_changed();
+    return true;
 }
 
-void Screen::dex() {
+bool Screen::dex() {
     current_x--;
     if (current_x < 0)
         current_x = size_x(current_y) - 1;
-    x_changed();
+    return true;
 }
 
-void Screen::iny() {
+bool Screen::iny() {
     int old_y = current_y;
     current_y++;
     current_y %= size_y();
     current_x = adjust_x(current_x, old_y, current_y);
+    return true;
 }
 
-void Screen::dey() {
+bool Screen::dey() {
     int old_y = current_y;
     current_y--;
     if (current_y < 0)
         current_y = size_y() - 1;
     current_x = adjust_x(current_x, old_y, current_y);
+    return true;
 }
 
 int Screen::adjust_x(int old_x, int old_y, int new_y) {
@@ -52,27 +54,27 @@ Screen* Screen::input(ButtonEnum btn) {
 
     const int old_x = current_x;
     const int old_y = current_y;
+    bool redraw;
 
     switch (btn) {
         case UP:
-            dey();
+            redraw = dey();
             break;
 
         case DOWN:
-            iny();
+            redraw = iny();
             break;
 
         case LEFT:
-            dex();
+            redraw = dex();
             break;
 
         case RIGHT:
-            inx();
+            redraw = inx();
             break;
     }
 
-    if (current_x != old_x || current_y != old_y) {
-        // selection changed
+    if (redraw) {
         // draw_button should handle resetting its own scrolled texts
         // (probably on selected==false and was_selected==true)
 

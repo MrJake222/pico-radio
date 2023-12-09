@@ -34,16 +34,8 @@ void ScreenList::clear_subarea() {
                       COLOR_BG);
 }
 
-void ScreenList::draw_top_buttons() {
-    // draw top 3 buttons, bottom button drawn by base class
-    for (int y=0; y<kb_buttons()-1; y++) {
-        draw_button(0, y + rows_above(), false, false);
-    }
-}
-
-void ScreenList::draw_bottom_buttons() {
-    // draw bottom 3 buttons, top button drawn by base class
-    for (int y=1; y<kb_buttons(); y++) {
+void ScreenList::draw_list_buttons(int from, int to) {
+    for (int y=from; y<to; y++) {
         draw_button(0, y + rows_above(), false, false);
     }
 }
@@ -65,13 +57,13 @@ void ScreenList::draw_scroll_bar() {
     display.fill_rect(x, (int)start, s_scr_w, (int)height, COLOR_ACC1);
 }
 
-void ScreenList::inx() {
+bool ScreenList::inx() {
     if (scrolled_area()) {
         // inside of scrolling area
         int page_orig = page;
 
         if (get_ll().is_in_progress())
-            return;
+            return false;
 
         // inx -> next page
         page++;
@@ -82,19 +74,23 @@ void ScreenList::inx() {
         if (page != page_orig) {
             load_page(lp_src_new_page);
         }
+
+        // don't do any button redraw
+        // show_loaded() will draw all necessary list buttons
+        return false;
     }
-    else {
-        Screen::inx();
-    }
+
+    // if not scrolled area, use default impl
+    return Screen::inx();
 }
 
-void ScreenList::dex() {
+bool ScreenList::dex() {
     if (scrolled_area()) {
         // inside of scrolling area
         int page_orig = page;
 
         if (get_ll().is_in_progress())
-            return;
+            return false;
 
         // dex -> prev page
         page--;
@@ -110,59 +106,74 @@ void ScreenList::dex() {
         if (page != page_orig) {
             load_page(lp_src_new_page);
         }
+
+        // don't do any button redraw
+        // show_loaded() will draw all necessary list buttons
+        return false;
     }
-    else {
-        Screen::dex();
-    }
+
+    return Screen::dex();
 }
 
-void ScreenList::iny() {
+bool ScreenList::iny() {
     if (current_y == last_list_row() && get_selected_station_index() + 1 < station_count) {
         // last kb row
         // hidden station below exists
         base_y++;
         draw_scroll_bar();
         reset_scrolled_texts();
-        draw_buttons(); // redraw all buttons (no y change, but we must deselect the button)
+        draw_list_all_buttons();
+
+        // don't do any button redraw in Screen::input()
+        return false;
     }
-    else if ((current_y == last_y() && rows_above() == 0) || (current_y == first_list_row() - 1)) {
-        // last icon and no icons above
+
+    if ((current_y == last_y() && rows_above() == 0) || (current_y == first_list_row() - 1)) {
+        // bottom icon and no icons above the list
         // the cursor will jump straight into topmost list position
-        //
         // OR
-        //
         // last top icon
+        // the cursor will enter the list from above
+        //
         // move to top of the list (after this the first row is selected)
         base_y = 0;
         draw_scroll_bar();
         Screen::iny();
-        draw_bottom_buttons(); // no need to redraw topmost entry (y changed, Screen::input() will redraw it)
+        draw_list_bottom_buttons(); // no need to redraw topmost entry (y changed, Screen::input() will redraw it)
+
+        // redraw top entry and deselect last icon
+        return true;
     }
-    else {
-        Screen::iny();
-    }
+
+    return Screen::iny();
 }
 
-void ScreenList::dey() {
+bool ScreenList::dey() {
     if (current_y == first_list_row() && base_y > 0) {
         // hidden station above exists
         base_y--;
         draw_scroll_bar();
         reset_scrolled_texts();
-        draw_buttons(); // redraw all buttons (no y change, but we must deselect the button)
+        draw_list_all_buttons();
+
+        // don't do any button redraw in Screen::input()
+        return false;
     }
-    else if (current_y == last_list_row() + 1) {
+
+    if (current_y == last_list_row() + 1) {
         // last bottom icon
         // move to bottom of the list
         // after this the last row is selected
         base_y = max_base_y();
         draw_scroll_bar();
         Screen::dey();
-        draw_top_buttons(); // no need to redraw topmost entry (y changed, Screen::input() will redraw it)
+        draw_list_top_buttons(); // no need to redraw topmost entry (y changed, Screen::input() will redraw it)
+
+        // redraw top entry and deselect last icon
+        return true;
     }
-    else {
-        Screen::dey();
-    }
+
+    return Screen::dey();
 }
 
 void ScreenList::draw_button_entry(int y, bool selected, bool was_selected) {
