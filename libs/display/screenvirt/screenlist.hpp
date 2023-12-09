@@ -40,7 +40,6 @@ class ScreenList : public Screen {
     void clear_subarea();
 
     void draw_list_buttons(int from, int to);
-    inline void draw_list_all_buttons()    { draw_list_buttons(0, kb_buttons());   }
     inline void draw_list_top_buttons()    { draw_list_buttons(0, kb_buttons()-1); }
     inline void draw_list_bottom_buttons() { draw_list_buttons(1, kb_buttons());   }
     void draw_scroll_bar();

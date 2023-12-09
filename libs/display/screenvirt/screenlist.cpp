@@ -122,10 +122,10 @@ bool ScreenList::iny() {
         base_y++;
         draw_scroll_bar();
         reset_scrolled_texts();
-        draw_list_all_buttons();
+        draw_list_top_buttons();
 
-        // don't do any button redraw in Screen::input()
-        return false;
+        // let Screen::input() handle last button
+        return true;
     }
 
     if ((current_y == last_y() && rows_above() == 0) || (current_y == first_list_row() - 1)) {
@@ -154,10 +154,10 @@ bool ScreenList::dey() {
         base_y--;
         draw_scroll_bar();
         reset_scrolled_texts();
-        draw_list_all_buttons();
+        draw_list_bottom_buttons();
 
-        // don't do any button redraw in Screen::input()
-        return false;
+        // let Screen::input() handle last button
+        return true;
     }
 
     if (current_y == last_list_row() + 1) {
@@ -245,6 +245,8 @@ void all_loaded_cb(void* arg, int errored);
 void ScreenList::load_page(lp_src src_) {
     src = src_;
 
+    reset_scrolled_texts(); // TODO reset only owned
+
     if (((src == lp_src_show) && info_load_show) || ((src != lp_src_show) && info_load)) {
         clear_subarea();
 
@@ -307,10 +309,7 @@ void ScreenList::show_loaded() {
         current_y = default_y();
         base_y = 0;
     }
-
     // on first entry position is reset by <begin>
-
-    reset_scrolled_texts(); // TODO reset only owned
 
     clear_subarea();
     draw_buttons();
