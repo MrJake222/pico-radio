@@ -65,11 +65,12 @@ end_noclose:
 void LoaderLocal::task() {
     int r;
     int errored = 0;
+    acc.begin(lfs_path);
 
     if (can_use_cache) {
         // using cache
         // only open the existing file
-        r = lfsorter::open(acc);
+        r = acc.open_r();
         if (r) {
             errored++;
             goto end_noclose;
@@ -79,7 +80,7 @@ void LoaderLocal::task() {
         // can't use cache
         // need to create new file and populate it with FatFS dir listing
 
-        r = lfsorter::open_create_truncate(acc);
+        r = acc.open_rw_create_truncate();
         if (r) {
             errored++;
             goto end_noclose;
@@ -121,8 +122,9 @@ int LoaderLocal::get_entry_count_whole() {
 
     int r;
     bool errored = false;
+    acc.begin(lfs_path);
 
-    r = lfsorter::open(acc);
+    r = acc.open_r();
     if (r) {
         errored = true;
         goto end_noclose;

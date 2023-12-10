@@ -8,6 +8,8 @@
 
 namespace wifi::lfs {
 
+const char* lfs_path = ".tmp_wscan";
+
 struct status {
     LfsAccess* acc;
     volatile bool should_abort;
@@ -85,7 +87,9 @@ int scan(LfsAccess& acc, flagref_t should_abort) {
     cyw43_wifi_scan_options_t scan_options = {0};
     status.acc = &acc;
 
-    r = lfsorter::open_create_truncate(acc);
+    acc.begin(lfs_path);
+
+    r = acc.open_rw_create_truncate();
     if (r) {
         errored = true;
         goto end_noclose;
@@ -134,8 +138,9 @@ end_noclose:
 int read(LfsAccess& acc, flagref_t should_abort, int n, int k, void* cb_arg, lfsorter::res_cb_fn cb) {
     int r;
     bool errored = false;
+    acc.begin(lfs_path);
 
-    r = lfsorter::open(acc);
+    r = acc.open_r();
     if (r) {
         errored = true;
         goto end_noclose;
@@ -160,8 +165,9 @@ int count(LfsAccess& acc) {
 
     int r;
     bool errored = false;
+    acc.begin(lfs_path);
 
-    r = lfsorter::open(acc);
+    r = acc.open_r();
     if (r) {
         errored = true;
         goto end_noclose;

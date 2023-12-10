@@ -11,6 +11,8 @@
 
 class LoaderLocal : public Loader {
 
+    static constexpr const char* lfs_path = ".tmp_local";
+
     DIR dir;
     FILINFO fileinfo;
 

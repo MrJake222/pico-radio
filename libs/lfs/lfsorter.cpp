@@ -5,30 +5,6 @@
 
 namespace lfsorter {
 
-int open_create_truncate(LfsAccess& acc) {
-    int r;
-    acc.begin(".tmp");
-
-    r = acc.open_rw_create_truncate();
-    if (r < 0)
-        return r;
-
-    puts("lfsorter: created tmp file");
-
-    return 0;
-}
-
-int open(LfsAccess& acc) {
-    int r;
-    acc.begin(".tmp");
-
-    r = acc.open_r();
-    if (r < 0)
-        return r;
-
-    return 0;
-}
-
 bool is_duplicate(LfsAccess& acc, cmp_fn cmp, const char* buf) {
     const int begin_pos = acc.tell();
     char line[LFSS_BUF_SIZE];

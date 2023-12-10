@@ -19,10 +19,9 @@ namespace lfsorter {
 typedef int(*cmp_fn)(const char* e1, const char* e2);
 typedef void(*res_cb_fn)(void* arg, const char* res);
 
-// creates and opens temporary file
-int open_create_truncate(LfsAccess& acc);
-// opens previously created temporary file
-int open(LfsAccess& acc);
+// for opening use LFSAccess functions
+// <begin> to set path (should be module-unique)
+// <open_r> and <open_rw_create_truncate> to open
 
 // checks for duplicates
 bool is_duplicate(LfsAccess& acc, cmp_fn cmp, const char* buf);
