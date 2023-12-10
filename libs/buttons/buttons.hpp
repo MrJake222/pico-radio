@@ -11,6 +11,7 @@ enum ButtonEnum {
 };
 
 #define BUTTONS     5
+const ButtonEnum buttons[BUTTONS] = { UP, DOWN, LEFT, RIGHT, CENTER };
 
 // called from gpio_irq
 void buttons_callback(uint gpio, uint32_t events);

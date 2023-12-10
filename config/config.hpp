@@ -119,8 +119,9 @@
 #define LCD_MAX_KB_INPUT                (WIFI_PWD_MAX_LEN)
 
 // --------------------------------- Buttons --------------------------------- //
-#define BTN_REPEAT_START_TIMEOUT_MS     500
-#define BTN_REPEAT_PER_SECOND           26
+#define BTN_DEBOUNCE_MS         20
+#define BTN_REPEAT_MS           500
+#define BTN_REPEAT_PER_SECOND   26      // this is also a timescale for the task loop
 
 // --------------------------------- PINOUTS --------------------------------- //
 #ifdef PINOUT_PROTOTYPE

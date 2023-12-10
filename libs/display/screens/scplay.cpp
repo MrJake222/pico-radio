@@ -146,9 +146,12 @@ void player_finished_callback(void* arg, bool failed) {
 
     if (failed)
         sc->show_error("odtwarzanie zakończyło się błędem");
-    else if (!sc->player_stop_requested)
-        // just close the screen (if not closed by the user)
+    else if (!sc->player_stop_requested) {
+        // no error & not closed by the user
+        // close the screen & turn on backlight
         screenmng_open(sc->prev);
+        screenmng_backlight_set(true);
+    }
 }
 
 void player_update_callback(void* arg, DecodeBase* dec) {

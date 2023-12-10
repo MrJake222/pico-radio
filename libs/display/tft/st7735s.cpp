@@ -27,6 +27,7 @@ void ST7735S::gpio_setup() {
 }
 
 void ST7735S::bl_set(bool on) {
+    bl = on;
     gpio_put(p_bl, on);
 }
 

@@ -22,6 +22,9 @@ class ST7735S {
     const int p_bl;  // backlight
     void gpio_setup();
 
+    // is backlight active
+    bool bl;
+
     spi_inst_t* const spi;
     void spi_setup();
     void spi_set_bits(int bits);
@@ -68,6 +71,7 @@ public:
 
     void init();
     void bl_set(bool on);
+    bool bl_get() { return bl; }
 
     static const int R_BITS = 5;
     static const int G_BITS = 6;

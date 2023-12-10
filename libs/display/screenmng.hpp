@@ -29,5 +29,6 @@ extern ScWifiConn sc_wifi_conn;
 void screenmng_init();
 void screenmng_open(Screen* new_screen);
 void screenmng_input(ButtonEnum input);
-void screenmng_backlight(bool on);
+void screenmng_backlight_set(bool on);
+bool screenmng_backlight_get();
 void screenmng_show_error(const char* err);

@@ -134,8 +134,12 @@ void screenmng_input(ButtonEnum input) {
     }
 }
 
-void screenmng_backlight(bool on) {
+void screenmng_backlight_set(bool on) {
     display.bl_set(on);
+}
+
+bool screenmng_backlight_get() {
+    return display.bl_get();
 }
 
 void screenmng_show_error(const char* err) {
