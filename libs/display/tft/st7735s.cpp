@@ -19,7 +19,7 @@ void ST7735S::gpio_setup() {
 
     gpio_init(p_bl);
     gpio_set_dir(p_bl, GPIO_OUT);
-    gpio_put(p_bl, true);
+    bl_set(true);
 
     gpio_set_function(p_sck, GPIO_FUNC_SPI);
     gpio_set_function(p_tx, GPIO_FUNC_SPI);
