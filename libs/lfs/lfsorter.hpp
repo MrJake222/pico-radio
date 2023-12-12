@@ -9,7 +9,10 @@
 
 // all buffers +10 for any metadata before the line
 // for example local folders get "0" prefix to be sorted first
-#define LFSS_BUF_SIZE    (ENT_NAME_LEN + 10)
+// using url of the entry because of local playback saving paths here
+#define LFSS_BUF_SIZE    (ENT_URL_LEN + 10)
+
+// TODO lfsorter declare smaller buffer for compares
 
 namespace lfsorter {
 

@@ -3,7 +3,9 @@
 #include <cstdio>
 #include <cassert>
 
-// TODO DS::read_line optimize to use buffer
+// TODO DS::read_line optimize to use buffer for seekable mediums
+// TODO terminate string when overrun
+// TODO calculate line_length when overrun
 int read_line(DataSource* ds, char* buf, int bufsize, int* line_length) {
 
     assert(buf != nullptr || bufsize == 0);
