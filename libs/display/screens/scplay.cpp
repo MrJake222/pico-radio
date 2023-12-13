@@ -175,12 +175,20 @@ bool player_finished_callback(void* arg, bool failed) {
         // list index valid -> select next
         sc->list_index++;
 
+        // silently assuming it can only happen on
+        // a local playback screen
+        auto scprev = (ScLocal*) sc->prev;
+
         // try to play next song from folder
         int cnt = sc->scan.read(FLAG_FALSE, 1, sc->list_index,
                                 arg, player_load_next_callback);
 
         if (cnt > 0) {
             // loaded new entry
+
+            // change selected on previous screen (assuming ScLocal)
+            scprev->set_abs_pos(sc->list_index);
+
             return true; // restart playback
         }
     }

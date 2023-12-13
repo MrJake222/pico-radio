@@ -328,7 +328,14 @@ void ScreenList::begin() {
 }
 
 void ScreenList::set_abs_pos(int abs_index) {
+    const int old_page = page;
     page = abs_index / MAX_ENTRIES;
+
+    if (old_page != page)
+        // if some screen changes page on this one
+        // for example ScPlay plays through entire album
+        // reset preserve
+        preserve = false;
 
     // set to last row of keyboard
     // it's always possible, as opposed to top row (not enough stations below)
