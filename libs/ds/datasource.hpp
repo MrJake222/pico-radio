@@ -13,11 +13,14 @@ public:
 enum ReadLineError {
     RL_OVERRUN = -2,
     RL_ERROR = -1,
+    RL_OK = 0,
 };
 
 // reads whole line, supports both \n or \r\n endings
 // stores length of line without termination (in pointer parameter <line_length>)
 // returns <ReadLineError> on error or 0 on success
-// can be used to skip lines with buf==nullptr and bufsize==0
-//   (will return RL_OVERRUN, but the line length will be calculated properly)
+// can be used to:
+//   skip lines with buf==nullptr and bufsize==0
+//   read partial lines with bufsize set to arbitrary number
+//  (will return RL_OVERRUN, but the line length will be calculated properly)
 int read_line(DataSource* ds, char* buf, int bufsize, int* line_length);

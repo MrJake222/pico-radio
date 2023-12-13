@@ -7,12 +7,13 @@
 #include <lfsaccess.hpp>
 #include <util.hpp>
 
-// all buffers +10 for any metadata before the line
-// for example local folders get "0" prefix to be sorted first
-// using url of the entry because of local playback saving paths here
+// entry buffer, preserves the entire entry length
+// (important, local playback saves paths here), needed for duplicate detection and loading
+// +10 for any metadata before the line (for example local folders get "0" prefix to be sorted first)
 #define LFSS_BUF_SIZE    (ENT_URL_LEN + 10)
 
-// TODO lfsorter declare smaller buffer for compares
+// separate buffer sizes are more trouble than it's worth
+// (for ex. mp3 and wav files are treated as duplicates)
 
 namespace lfsorter {
 
