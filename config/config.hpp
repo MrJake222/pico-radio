@@ -59,7 +59,7 @@
 // Max stations per query
 #define MAX_ENTRIES          16 // max stations returned from search
 #define MAX_ENTRIES_PLS       2 // max stations to resolve from *.pls file
-#define ENT_NAME_LEN         32
+#define ENT_NAME_LEN         64
 #define ENT_URL_LEN         128
 
 // --------------------------------- RTOS --------------------------------- //
