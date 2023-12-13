@@ -69,6 +69,7 @@ add_library(libs
         player/amp.cpp
 
         sd/sd.cpp
+        sd/sdscan.cpp
 
         wifi/wificonnect.cpp
         wifi/wifiscan.cpp

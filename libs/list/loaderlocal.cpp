@@ -1,10 +1,6 @@
 #include "loaderlocal.hpp"
 
-#include <cstring>
-#include <filetype.hpp>
-
-#include <lfsaccess.hpp>
-#include <lfsorter.hpp>
+#include <sdscan.hpp>
 
 void LoaderLocal::begin(Path* path_) {
     Loader::begin();
@@ -14,95 +10,10 @@ void LoaderLocal::begin(Path* path_) {
 void llocal_res_cb(void* arg, const char* res) {
     auto ll = (LoaderLocal*) arg;
 
-    const char* name = res + 1;  // skip dir indicator
-    bool is_dir = res[0] == '0'; // folders were sorted first, remember?
+    const char* name = SDScan::format_decode_name(res);
+    bool is_dir = SDScan::format_decode_is_dir(res);
 
     ll->set_file(name, is_dir);
-}
-
-int LoaderLocal::fatfs_list_dir() {
-    int r;
-    FRESULT res;
-    bool errored = false;
-
-    res = f_opendir(&dir, path->str());
-    if (res != FR_OK) {
-        errored = true;
-        goto end_noclose;
-    }
-
-    while (!should_abort) {
-        res = f_readdir(&dir, &fileinfo);
-        if (res != FR_OK) {
-            errored = true;
-            goto end;
-        }
-
-        if (!fileinfo.fname[0]) {
-            // empty string -> end of folder
-            break;
-        }
-
-        if (!is_valid())
-            continue;
-
-        r = lfsorter::write(acc, 2,
-                            fileinfo.fattrib & AM_DIR ? "0" : "1", // prepend 0 to folders to be sorted first
-                            fileinfo.fname);
-        if (r) {
-            errored = true;
-            goto end;
-        }
-    }
-
-end:
-    f_closedir(&dir);
-
-end_noclose:
-    return errored ? -1 : 0;
-}
-
-void LoaderLocal::task() {
-    int r;
-    int errored = 0;
-    acc.begin(lfs_path);
-
-    if (can_use_cache) {
-        // using cache
-        // only open the existing file
-        r = acc.open_r();
-        if (r) {
-            errored++;
-            goto end_noclose;
-        }
-    }
-    else {
-        // can't use cache
-        // need to create new file and populate it with FatFS dir listing
-
-        r = acc.open_rw_create_truncate();
-        if (r) {
-            errored++;
-            goto end_noclose;
-        }
-
-        r = fatfs_list_dir();
-        if (r) {
-            errored++;
-            goto end;
-        }
-    }
-
-    // this automatically rewinds created file to the beginning
-    lfsorter::get_smallest_n_skip_k(acc, should_abort,
-                                    entries_max, entries_max * page, strcasecmp,
-                                    this, llocal_res_cb);
-
-end:
-    acc.close();
-
-end_noclose:
-    call_all_loaded(errored);
 }
 
 void LoaderLocal::set_file(const char* path_, bool is_dir) {
@@ -115,46 +26,37 @@ void LoaderLocal::set_file(const char* path_, bool is_dir) {
     set_next_entry(1);
 }
 
-int LoaderLocal::get_entry_count_whole() {
-
-    // this is called from all_loaded callback
-    // -> can use cache
-
+void LoaderLocal::task() {
     int r;
     bool errored = false;
-    acc.begin(lfs_path);
 
-    r = acc.open_r();
-    if (r) {
-        errored = true;
-        goto end_noclose;
+    if (!can_use_cache) {
+        r = scan.scan(path->str());
+        if (r) {
+            errored = true;
+            goto end;
+        }
     }
 
-    r = acc.skip_all_lines();
+    r = scan.read(entries_max, page * entries_max,
+                  this, llocal_res_cb);
+
     if (r < 0) {
         errored = true;
         goto end;
     }
 
-end:
-    acc.close();
-
-end_noclose:
-    return errored ? -1 : r;
+    end:
+    call_all_loaded(errored ? 1 : 0);
 }
 
-bool LoaderLocal::is_valid() {
-    if (fileinfo.fname[0] == '.')
-        // hidden file/dir
-        return false;
+void LoaderLocal::load_abort() {
+    Loader::load_abort();
+    scan.abort_wait();
+}
 
-    bool is_dir = fileinfo.fattrib & AM_DIR;
-    if (!is_dir && filetype_from_name(fileinfo.fname) == FileType::UNSUPPORTED) {
-        // file not supported
-        return false;
-    }
-
-    return true;
+int LoaderLocal::get_entry_count_whole() {
+    return scan.count();
 }
 
 int LoaderLocal::check_entry_url(int i) {
