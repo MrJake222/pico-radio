@@ -49,7 +49,7 @@ static volatile int dma_channel_a;
 static volatile int dma_channel_b;
 
 // Playback
-static char filepath[1024];
+static const char* filepath;
 
 HELIX_STATIC_DECLARE();
 static FormatMP3 format_mp3(get_cbuf(), (HMP3Decoder)&mp3DecInfo);
@@ -83,8 +83,8 @@ xTaskHandle player_stat_task_h;
 
 // callbacks
 static void* cb_arg;
-static player_cb_fn_err fin_cb;
-static player_cb_fn_dec upd_cb;
+static player_cb_fn_fin fin_cb;
+static player_cb_fn_upd upd_cb;
 
 // task to notify when playback really ends
 xTaskHandle task_to_notify_end;
@@ -211,6 +211,7 @@ static void dma_start() {
 
 static void player_task(void* arg) {
 
+start:
     FileType type = filetype_from_name(filepath);
     int r;
     bool failed = false;
@@ -303,19 +304,25 @@ clean_up:
     pio_sm_put_blocking(pio, sm, 0);
     dec->end();
 
+clean_up_dec_null:
+    bool should_restart = false;
+    if (fin_cb)
+        should_restart = fin_cb(cb_arg, failed);
+
+    if (should_restart)
+        goto start;
+
+    // if should_restart false
+    // clear dec to null
     r = xSemaphoreTake(dec_mutex, PLAYER_END_TIMEOUT_MS / portTICK_PERIOD_MS);
     if (r != pdTRUE)
         puts("timeout waiting for dec_mutex");
     dec = nullptr;
     xSemaphoreGive(dec_mutex);
 
-clean_up_dec_null:
     // if playback didn't start, notify player stat task to exit
     // (no effect if the playback already started)
     xTaskNotifyGive(player_stat_task_h);
-
-    if (fin_cb)
-        fin_cb(cb_arg, failed);
 
     if (task_to_notify_end)
         xTaskNotifyGive(task_to_notify_end);
@@ -395,10 +402,10 @@ static void player_stat_task(void* arg) {
     vTaskDelete(nullptr);
 }
 
-int player_start(const char* path, void* cb_arg_, player_cb_fn_err fin_cb_, player_cb_fn_dec upd_cb_) {
+int player_start(const char* path, void* cb_arg_, player_cb_fn_fin fin_cb_, player_cb_fn_upd upd_cb_) {
     printf("\nplaying: %s as %s file\n", path, filetype_from_name_string(path));
 
-    strcpy(filepath, path);
+    filepath = path;
     cb_arg = cb_arg_;
     fin_cb = fin_cb_;
     upd_cb = upd_cb_;

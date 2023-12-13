@@ -71,7 +71,7 @@ Screen* ScLocal::run_action(int action) {
                 set_preserve();
 
                 // <i> equals position on search list (not fav list)
-                sc_play.begin(ent, -1, this);
+                sc_play.begin(ent, i, -1, this);
                 return &sc_play;
             }
 

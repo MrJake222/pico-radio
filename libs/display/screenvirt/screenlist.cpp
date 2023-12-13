@@ -207,7 +207,7 @@ void ScreenList::draw_button_entry(int y, bool selected, bool was_selected) {
 
         case le_type_wifi:
             icons[0] = wifi::quality_to_icon(ent->lwifi.quality);
-            if (wifi::is_connected_to(ent->get_name()))
+            if (wifi::is_connected_to(name))
                 icons[1] = &icon_conn;
 
             break;

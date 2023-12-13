@@ -39,6 +39,8 @@ static ListPLS list_pls;
 
 static LfsAccess acc(get_lfs());
 
+static SDScan scan(acc);
+
 // list loaders
 static LoaderSearch sl(
         get_entries(), MAX_ENTRIES,
@@ -53,7 +55,7 @@ static LoaderFav favl(
 
 static LoaderLocal locall(
         get_entries(), MAX_ENTRIES,
-        acc);
+        scan);
 
 static LoaderConst setcl(
         get_entries(), MAX_ENTRIES,
@@ -71,7 +73,7 @@ static LoaderWifiScan wscanl(
 ScFavourites sc_fav(display, mutex_ticker, favl);
 ScSearch sc_search(display, mutex_ticker);
 ScSearchRes sc_search_res(display, mutex_ticker, sl);
-ScPlay sc_play(display, mutex_ticker);
+ScPlay sc_play(display, mutex_ticker, scan);
 ScBattery sc_bat(display, mutex_ticker);
 ScLocal sc_local(display, mutex_ticker, locall);
 ScSettings sc_settings(display, mutex_ticker, setcl);

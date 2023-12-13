@@ -5,11 +5,15 @@
 
 const char* lfs_path = ".tmp_local";
 
+void SDScan::begin(const char* path_) {
+    path = path_;
+}
+
 const char* SDScan::format_encode_dir(bool is_dir) {
     return is_dir ? "0" : "1";
 }
 
-const char* SDScan::format_decode_name(const char* buf) {
+const char* SDScan::format_decode_path(const char* buf) {
     return buf + 1;
 }
 
@@ -31,7 +35,7 @@ bool SDScan::fatfs_is_valid() {
     return true;
 }
 
-int SDScan::fatfs_list_dir(const char* path) {
+int SDScan::fatfs_list_dir(flagref_t should_abort, const char* path) {
     int r;
     bool errored = false;
 
@@ -73,7 +77,7 @@ end_noclose:
     return errored ? -1 : 0;
 }
 
-int SDScan::scan(const char* path) {
+int SDScan::scan(flagref_t should_abort, const char* path) {
     int r;
     bool errored = false;
 
@@ -85,7 +89,7 @@ int SDScan::scan(const char* path) {
         goto end_noclose;
     }
 
-    fatfs_list_dir(path);
+    fatfs_list_dir(should_abort, path);
 
     acc.close();
 
@@ -93,7 +97,7 @@ end_noclose:
     return errored ? -1 : 0;
 }
 
-int SDScan::read(int n, int k, void* cb_arg, lfsorter::res_cb_fn cb) {
+int SDScan::read(flagref_t should_abort, int n, int k, void* cb_arg, lfsorter::res_cb_fn cb) {
     int r;
     bool errored = false;
     acc.begin(lfs_path);
@@ -150,4 +154,15 @@ void SDScan::abort_wait() {
     while (acc.is_open()) {
         vTaskDelay(pdMS_TO_TICKS(WIFI_SCAN_POLL_MS / 2));
     }
+}
+
+const char* SDScan::prepend_path(const char* filepath) {
+    // same as strcpy but returns end pointer
+    char* end = stpcpy(buf, path);
+    // end points to null terminator
+
+    const int buf_left = PATH_LEN - (end - buf);
+    strncpy(end, filepath, buf_left);
+
+    return buf;
 }

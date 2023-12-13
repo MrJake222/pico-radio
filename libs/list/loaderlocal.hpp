@@ -6,19 +6,14 @@
 #include <path.hpp>
 #include <sdscan.hpp>
 
-#define PATH_LEN   (FATFS_MAX_PATH_LEN)
-#define BUF_LEN    (PATH_LEN)
-
 class LoaderLocal : public Loader {
 
     static constexpr const char* lfs_path = ".tmp_local";
 
-    SDScan scan;
+    SDScan& scan;
     Path* path;
 
-    // used in <check_entry_url> to update the path of the entry
-    // to a concatenation of path and entry path
-    char buf[PATH_LEN];
+
 
     friend void llocal_res_cb(void* arg, const char* res);
     void task() override;
@@ -29,9 +24,9 @@ class LoaderLocal : public Loader {
 
 public:
     LoaderLocal(ListEntry* entries_, int entries_max_,
-                LfsAccess& acc_)
+                SDScan& scan_)
             : Loader(entries_, entries_max_)
-            , scan(acc_, should_abort)
+            , scan(scan_)
     { }
 
     void begin(Path* path);

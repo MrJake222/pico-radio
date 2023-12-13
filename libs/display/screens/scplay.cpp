@@ -19,13 +19,13 @@ int ScPlay::size_y() {
 }
 
 const char* ScPlay::get_title() {
-    switch (ent->type) {
+    switch (ent.type) {
         case le_type_radio:
             return "Radio";
 
         case le_type_local:
             // can't play directory
-            assert(!ent->llocal.is_dir);
+            assert(!ent.llocal.is_dir);
             return "Odtwarzacz";
 
         default:
@@ -103,7 +103,7 @@ Screen* ScPlay::run_action(int action) {
             if (fav_index < 0) {
                 // not on fav list
                 // add to persistent storage (and get index back)
-                fav_index = m3u::add(PATH_FAVOURITES, ent);
+                fav_index = m3u::add(PATH_FAVOURITES, &ent);
                 if (fav_index < 0) {
                     show_error("Nie udało się dodać do ulubionych");
                     return nullptr;
@@ -140,18 +140,57 @@ Screen* ScPlay::run_action(int action) {
     return nullptr;
 }
 
-void player_finished_callback(void* arg, bool failed) {
+void player_load_next_callback(void* arg, const char* res) {
+    // called from player_finished_callback
+    auto sc = (ScPlay*) arg;
+
+    const char* filepath = SDScan::format_decode_path(res);
+    const char* fullpath = sc->scan.prepend_path(filepath);
+
+    sc->ent.set_url(fullpath);
+
+    sc->ent.set_name(filepath);
+    sc->update_scrolled_text(sc->meta_idx, filepath);
+}
+
+bool player_finished_callback(void* arg, bool failed) {
     // called from player task
     auto sc = (ScPlay*) arg;
 
-    if (failed)
+    if (failed) {
+        // error
         sc->show_error("odtwarzanie zakończyło się błędem");
-    else if (!sc->player_stop_requested) {
-        // no error & not closed by the user
-        // close the screen & turn on backlight
-        screenmng_open(sc->prev);
         screenmng_backlight_set(true);
+        return false; // don't restart playback
     }
+
+    if (sc->player_stop_requested) {
+        // user requested the stop
+        return false; // don't restart playback
+    }
+
+    // no error & not closed by the user
+
+    if (sc->list_index >= 0) {
+        // list index valid -> select next
+        sc->list_index++;
+
+        // try to play next song from folder
+        int cnt = sc->scan.read(FLAG_FALSE, 1, sc->list_index,
+                                arg, player_load_next_callback);
+
+        if (cnt > 0) {
+            // loaded new entry
+            return true; // restart playback
+        }
+    }
+
+    // list index invalid or no new entry
+
+    // close the screen and turn on the display
+    screenmng_open(sc->prev);
+    screenmng_backlight_set(true);
+    return false; // don't restart playback
 }
 
 void player_update_callback(void* arg, DecodeBase* dec) {
@@ -171,7 +210,7 @@ void player_update_callback(void* arg, DecodeBase* dec) {
     // currently playing song (from metadata)
     int r = dec->get_meta_str(buf, PLAYER_META_BUF_LEN);
 
-    switch (sc->ent->type) {
+    switch (sc->ent.type) {
 
         case le_type_radio:
             // update bottom text
@@ -191,8 +230,8 @@ void player_update_callback(void* arg, DecodeBase* dec) {
             // update top text (only if meta available)
             if (r == 0) {
                 sc->update_scrolled_text(sc->meta_idx, buf);
-                if (sc->ent->no_name()) {
-                    sc->ent->set_name(buf);
+                if (sc->ent.no_name()) {
+                    sc->ent.set_name(buf);
                 }
             }
 
@@ -230,15 +269,26 @@ void player_update_callback(void* arg, DecodeBase* dec) {
             COLOR_BG, COLOR_ACC2);
 }
 
+void ScPlay::start_playback() {
+    int r = player_start(ent.get_url(),
+                         this,
+                         player_finished_callback,
+                         player_update_callback);
+
+    if (r < 0) {
+        show_error("odtwarzanie nie mogło się rozpocząć");
+    }
+}
+
 void ScPlay::show() {
     Screen::show();
 
-    switch (ent->type) {
+    switch (ent.type) {
 
         case le_type_radio:
             // top text -- station name: scrolled or normal (not changeable)
             add_scrolled_text_or_normal(
-                    2, 13, ent->get_name(),
+                    2, 13, ent.get_name(),
                     ubuntu_font_get_size(UbuntuFontSize::FONT_24),
                     COLOR_BG, COLOR_ACC2,
                     display.W - 2*2);
@@ -255,7 +305,7 @@ void ScPlay::show() {
         case le_type_local:
             // top text -- song name: scrolled (save id to change later from metadata)
             meta_idx = add_scrolled_text(
-                    2, 13, ent->get_name(),
+                    2, 13, ent.get_name(),
                     ubuntu_font_get_size(UbuntuFontSize::FONT_24),
                     COLOR_BG, COLOR_ACC2,
                     display.W - 2*2);
@@ -277,20 +327,13 @@ void ScPlay::show() {
                           COLOR_BG, COLOR_FG);
 
     if (!is_overlay_displayed) {
-        int r;
-        r = player_start(ent->get_url(),
-                         this,
-                         player_finished_callback,
-                         player_update_callback);
-
-        if (r < 0) {
-            show_error("odtwarzanie nie mogło się rozpocząć");
-        }
+        start_playback();
     }
 }
 
-void ScPlay::begin(ListEntry* ent_, int fav_index_, Screen* prev_) {
-    ent = ent_;
+void ScPlay::begin(ListEntry* ent_, int list_index_, int fav_index_, Screen* prev_) {
+    ent = *ent_; // make a copy
+    list_index = list_index_;
     fav_index = fav_index_;
     prev = prev_;
     player_stop_requested = false;

@@ -10,10 +10,10 @@ void LoaderLocal::begin(Path* path_) {
 void llocal_res_cb(void* arg, const char* res) {
     auto ll = (LoaderLocal*) arg;
 
-    const char* name = SDScan::format_decode_name(res);
+    const char* path = SDScan::format_decode_path(res);
     bool is_dir = SDScan::format_decode_is_dir(res);
 
-    ll->set_file(name, is_dir);
+    ll->set_file(path, is_dir);
 }
 
 void LoaderLocal::set_file(const char* path_, bool is_dir) {
@@ -29,16 +29,17 @@ void LoaderLocal::set_file(const char* path_, bool is_dir) {
 void LoaderLocal::task() {
     int r;
     bool errored = false;
+    scan.begin(path->str());
 
     if (!can_use_cache) {
-        r = scan.scan(path->str());
+        r = scan.scan(should_abort, path->str());
         if (r) {
             errored = true;
             goto end;
         }
     }
 
-    r = scan.read(entries_max, page * entries_max,
+    r = scan.read(should_abort, entries_max, page * entries_max,
                   this, llocal_res_cb);
 
     if (r < 0) {
@@ -63,14 +64,14 @@ int LoaderLocal::check_entry_url(int i) {
     if (entries[i].llocal.has_full_path)
         return 0;
 
-    // same as strcpy but returns end pointer
-    char* end = stpcpy(buf, path->str());
-    // end points to null terminator
+    ListEntry* ent = get_entry(i);
+    const char* origpath = ent->get_url();
+    const char* fullpath = scan.prepend_path(origpath);
 
-    const int buf_left = BUF_LEN - (end - buf);
+    // in this order, set_url will overwrite origpath pointer
+    ent->set_name(origpath);
+    ent->set_url(fullpath);
 
-    strncpy(end, entries[i].get_url(), buf_left);
-    entries[i].set_url(buf);
     entries[i].llocal.has_full_path = true;
 
     return 0;
