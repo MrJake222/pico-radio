@@ -141,7 +141,7 @@ int SDScan::count() {
         goto end;
     }
 
-    printf("wifi: scanned %d networks\n", r);
+    printf("sd: scanned %d files/dirs\n", r);
 
 end:
     acc.close();

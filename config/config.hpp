@@ -62,6 +62,12 @@
 #define ENT_NAME_LEN         64
 #define ENT_URL_LEN         128
 
+// --------------------------------- Flash --------------------------------- //
+#define LITTLEFS_SIZE             (1<<16) // 64K, base 0x101F0000
+#define LITTLEFS_CACHES           (512)    // 3 blocks of this size + LFSAccess
+#define PATH_FAVOURITES           "/favourites.m3u"
+#define PATH_WIFI                 "/wifi.m3u"
+
 // --------------------------------- RTOS --------------------------------- //
 #define PRI_PLAYER              3  // handles player's buffer ack & playback stop
 #define PRI_PLAYER_STAT         2  // handles player's statistics updates
@@ -80,7 +86,7 @@
 
 #define MIN_FREE_STACK            100
 #define RESV_STACK_FATFS          (((FF_MAX_LFN+1)*2 + ((FF_MAX_LFN + 44U) / 15 * 32)) / sizeof(configSTACK_DEPTH_TYPE))
-#define RESV_STACK_LFSACC         350
+#define RESV_STACK_LFSACC         (100 + LITTLEFS_CACHES / sizeof(configSTACK_DEPTH_TYPE))
 #define STACK_PLAYER              (200 + MIN_FREE_STACK + RESV_STACK_FATFS)
 #define STACK_PLAYER_STAT         (164 + MIN_FREE_STACK)
 #define STACK_FIFO_QUEUE          configMINIMAL_STACK_SIZE // currently unused
@@ -91,12 +97,6 @@
 #define STACK_WIFI_BEST           (410 + MIN_FREE_STACK + RESV_STACK_LFSACC)
 #define STACK_INPUT               (273 + MIN_FREE_STACK)
 #define STACK_SD                  (226 + MIN_FREE_STACK)
-
-// --------------------------------- Flash --------------------------------- //
-#define LITTLEFS_SIZE             (1<<16) // 64K, base 0x101F0000
-#define LITTLEFS_CACHES           1024    // 3 blocks of this size
-#define PATH_FAVOURITES           "/favourites.m3u"
-#define PATH_WIFI                 "/wifi.m3u"
 
 // --------------------------------- WiFi --------------------------------- //
 #define WIFI_SSID_MAX_LEN           32
