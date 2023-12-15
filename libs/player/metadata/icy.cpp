@@ -38,21 +38,24 @@ int ICY::read(volatile CircularBuffer& cbuf) {
         return -1;
     }
 
-    if (icy_len <= ICY_BUF_LEN) {
-        if (icy_len > 1) {
-            // copy only content
-            xSemaphoreTake(buf_mutex,
-                           1000 / portTICK_PERIOD_MS);
+    if (icy_len > 1) {
+        xSemaphoreTake(buf_mutex,
+                       1000 / portTICK_PERIOD_MS);
 
-            cbuf.read_arb(o + 1, (uint8_t*) buf, icy_len - 1);
+        // copy only content (hence o+1, len-1)
+        // size: minimum of length and buffer size
+        // (here the tag is only copied, it is consumed as a whole below with <remove_written>)
+        const int copy_size = MIN(icy_len - 1, ICY_BUF_LEN);
+        cbuf.read_arb(o + 1, (uint8_t*) buf, copy_size - 1);
+        buf[copy_size - 1] = '\0'; // terminate string
 
-            xSemaphoreGive(buf_mutex);
-        }
-
-        // silently ignore 0-len ICY tags (but still consume them below)
+        xSemaphoreGive(buf_mutex);
     }
-    else {
-        puts("ICY: too big");
+
+    // silently ignore 0-len ICY tags (but still consume them below)
+
+    if (icy_len > ICY_BUF_LEN) {
+        // puts("ICY: too big, clipping");
     }
 
     cbuf.remove_written(o, icy_len);
@@ -67,7 +70,8 @@ int ICY::get_stream_title(char* title, int title_len) const {
         return -1;
 
     xSemaphoreTake(buf_mutex, portMAX_DELAY);
-    memcpy(buf_priv, buf, ICY_BUF_LEN);
+    strncpy(buf_priv, buf, ICY_BUF_LEN); // only copies up to a \0 byte (faster)
+                                         // (buf string is always terminated even if buffer overrun)
     xSemaphoreGive(buf_mutex);
 
     // parse
@@ -77,14 +81,15 @@ int ICY::get_stream_title(char* title, int title_len) const {
 
     // search for StreamTitle tag
     while (true) {
+        // strchr returns NULL pointer if not found
         val = strchr(name, '=');
-        if (!*val)
+        if (!val)
             return -1;
 
         *val++ = '\0'; // replace = with \0 and skip
 
         end = strchr(val, ';');
-        if (!*end)
+        if (!end)
             return -1;
 
         *end++ = '\0'; // replace ; with \0 and skip
@@ -97,12 +102,22 @@ int ICY::get_stream_title(char* title, int title_len) const {
 
     // beginning of the tag
     val = strchr(val, '\'');
-    if (val) {
-        // quote found
-        // strip val of '
-        val += 1;                     // skip first '
-        *strrchr(val, '\'') = '\0';   // trim last '
-    }
+    if (!val)
+        // begin not found
+        return -1;
+
+    // quote found
+    // strip first '
+    val += 1;
+
+    // search from end
+    end = strrchr(val, '\'');
+    if (!end)
+        // end not found
+        return -1;
+
+    // trim last '
+    *end = '\0';
 
     strncpy(title, val, title_len);
     return 0;
