@@ -9,7 +9,7 @@ int LfsAccess::open(int flags) {
     int r;
 
     memset(&file_cfg, 0, sizeof(file_cfg));
-    file_cfg.buffer = &file_buf;
+    file_cfg.buffer = &file_cache;
 
     r = lfs_file_opencfg(lfs, &file, path, flags, &file_cfg);
     if (r < 0) {
@@ -19,6 +19,7 @@ int LfsAccess::open(int flags) {
 
     bytes_read = 0;
     is_open_ = true;
+    rc_cache_clear();
 
     return 0;
 }
@@ -38,20 +39,27 @@ int LfsAccess::close() {
 }
 
 int LfsAccess::read_char(char* chr) {
-    int r = lfs_file_read(lfs, &file, chr, 1);
+
+retry:
+    if (rc_cache_index < RC_CACHE_SIZE) {
+        *chr = rc_cache[rc_cache_index++];
+        bytes_read += 1;
+        return 0;
+    }
+
+    int r = lfs_file_read(lfs, &file, rc_cache, RC_CACHE_SIZE);
     if (r < 0) {
         printf("littlefs: failed to read in read_char code %d\n", r);
         return r;
     }
     if (r == 0) {
-        printf("littlefs: eof in read_char (shouldn't happen, check <more_content> before calling this)");
+        puts("littlefs: eof in read_char (shouldn't happen, check <more_content> before calling this)");
         assert(false);
         return -1;
     }
 
-    bytes_read += 1;
-
-    return 0;
+    rc_cache_index = 0;
+    goto retry;
 }
 
 bool LfsAccess::more_content() {
@@ -113,9 +121,11 @@ int LfsAccess::write_str(const char* str) {
 int LfsAccess::seek(int off, int whence) {
     int pos = lfs_file_seek(lfs, &file, off, whence);
 
-    if (pos >= 0)
+    if (pos >= 0) {
         // update only if no error
         bytes_read = pos;
+        rc_cache_clear();
+    }
 
     return pos;
 }
@@ -123,9 +133,11 @@ int LfsAccess::seek(int off, int whence) {
 int LfsAccess::read_raw(char* buf, int buflen) {
     int read = lfs_file_read(lfs, &file, buf, buflen);
 
-    if (read >= 0)
+    if (read >= 0) {
         // update only if no error
         bytes_read += read;
+        rc_cache_clear();
+    }
 
     return read;
 }

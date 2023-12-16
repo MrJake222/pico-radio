@@ -64,7 +64,7 @@
 
 // --------------------------------- Flash --------------------------------- //
 #define LITTLEFS_SIZE             (1<<16) // 64K, base 0x101F0000
-#define LITTLEFS_CACHES           (512)    // 3 blocks of this size + LFSAccess
+#define LITTLEFS_CACHES           512     // 3 blocks of this size + each LFSAccess has two
 #define PATH_FAVOURITES           "/favourites.m3u"
 #define PATH_WIFI                 "/wifi.m3u"
 
@@ -85,8 +85,9 @@
 #include <FreeRTOSConfig.h>
 
 #define MIN_FREE_STACK            100
-#define RESV_STACK_FATFS          (((FF_MAX_LFN+1)*2 + ((FF_MAX_LFN + 44U) / 15 * 32)) / sizeof(configSTACK_DEPTH_TYPE))
-#define RESV_STACK_LFSACC         (100 + LITTLEFS_CACHES / sizeof(configSTACK_DEPTH_TYPE))
+#define STACK(x)                  ((x) / sizeof(configSTACK_DEPTH_TYPE))
+#define RESV_STACK_FATFS          STACK((FF_MAX_LFN+1)*2 + ((FF_MAX_LFN + 44U) / 15 * 32))
+#define RESV_STACK_LFSACC         (100 + STACK(LITTLEFS_CACHES*2)) // 2 = one for file cache, one for line cache
 #define STACK_PLAYER              (200 + MIN_FREE_STACK + RESV_STACK_FATFS)
 #define STACK_PLAYER_STAT         (164 + MIN_FREE_STACK)
 #define STACK_FIFO_QUEUE          configMINIMAL_STACK_SIZE // currently unused

@@ -256,9 +256,9 @@ void ScreenList::load_page(lp_src src_) {
                         display.W);
     }
 
-    if (src == lp_src_new_page)
-        // only if new page
-        get_ll().use_cache();
+    // only if new page
+    // else set false
+    get_ll().use_cache(src == lp_src_new_page);
 
     get_ll().load(page);
 }

@@ -6,10 +6,12 @@
 
 class LfsAccess : public DataSource {
 
+    static const int RC_CACHE_SIZE = LITTLEFS_CACHES;
+
     lfs_t* lfs;
     lfs_file_t file;
     lfs_file_config file_cfg;
-    char file_buf[LITTLEFS_CACHES];
+    char file_cache[LITTLEFS_CACHES];
 
     char path[LFS_NAME_MAX];
 
@@ -17,6 +19,10 @@ class LfsAccess : public DataSource {
     bool is_open_;
 
     int open(int flags);
+
+    char rc_cache[RC_CACHE_SIZE];
+    int rc_cache_index;
+    void rc_cache_clear() { rc_cache_index = RC_CACHE_SIZE; }
 
 public:
     LfsAccess(lfs_t* lfs_)

@@ -57,7 +57,7 @@ public:
 
     void begin();
 
-    void use_cache() { can_use_cache = true; }
+    void use_cache(bool cache) { can_use_cache = cache; }
 
     // set callback to call when all loading is done
     void set_cb_arg(void* arg) { cb_arg = arg; }
