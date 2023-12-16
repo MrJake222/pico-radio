@@ -69,13 +69,14 @@ public:
     virtual int get_meta_str(char* meta, int meta_len) = 0;
 };
 
-#define CHECK_ERROR(ferr)           \
+#define CHECK_ERROR(ferr, tag)      \
     switch (ferr) {                 \
         case Error::OK:             \
             break;                  \
         case Error::FAILED:         \
             /* severe error */      \
             /* pass upward */       \
+            printf("ferror in %s\n", tag); \
             return -1;              \
         case Error::ABORT:          \
         case Error::ENDOFSTREAM:    \

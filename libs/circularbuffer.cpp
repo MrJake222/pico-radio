@@ -3,7 +3,7 @@
 #include <cstring>
 #include <pico/platform.h>
 #include <cstdio>
-#include "util.hpp"
+#include <util.hpp>
 
 int CircularBuffer::data_left() volatile const {
     return (int) (written_bytes - read_bytes);
@@ -58,6 +58,8 @@ void CircularBuffer::read_reverse(unsigned int bytes) volatile {
 
 void CircularBuffer::read_ack_large(unsigned int bytes, const bool& abort) volatile {
     // 10% of the size
+    // (to allow data to load from a possibly slow medium)
+    // TODO try to ack data_left_continuous() bytes
     const int max_ack = size / 10;
 
     while (bytes > 0) {
@@ -69,9 +71,9 @@ void CircularBuffer::read_ack_large(unsigned int bytes, const bool& abort) volat
     }
 }
 
-int CircularBuffer::wait_for_health(int min_health, const bool& abort) const volatile {
+int CircularBuffer::wait_for_health_2p(int min_health, const bool& p1, const bool& p2) const volatile {
     while (health() < min_health) {
-        if (abort)
+        if (p1 || p2)
             return -1;
     }
 

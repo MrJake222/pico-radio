@@ -19,7 +19,7 @@ class FormatMP3 : public Format {
     bool stats_print;
     void calculate_stats();
 
-    FormatMP3::Error align_buffer(uint8_t *orig_read_ptr);
+    FormatMP3::Error align_buffer(b_type orig_read_bytes);
     int decode_up_to_one_frame(uint32_t* audio_pcm_buf);
 
     unsigned long long bitrate_sum;

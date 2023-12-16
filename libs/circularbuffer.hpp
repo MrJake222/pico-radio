@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "util.hpp"
 
 typedef unsigned long long b_type;
 using rw_callback_fn = void(*)(void*, unsigned int);
@@ -95,9 +96,10 @@ public:
     void read_ack_large(unsigned int bytes, const bool& abort) volatile;
 
     // waits for certain amount of data to be available
-    // uses <abort> reference for external abortion of waiting (returns -1)
+    // uses predicate references <p_n> for external termination of waiting (returns -1)
     // on success returns 0
-    int wait_for_health(int min_health, const bool& abort) volatile const;
+    int wait_for_health_2p(int min_health, const bool& p1, const bool& p2) volatile const;
+    inline int wait_for_health(int min_health, const bool& p1) volatile const { return wait_for_health_2p(min_health, p1, FLAG_FALSE); }
 
     // wrapping
     // 'can' returns whether remaining data will fit into

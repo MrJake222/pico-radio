@@ -5,11 +5,18 @@
 #include <pico/platform.h>
 #include <cstring>
 
-FormatMP3::Error FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
+FormatMP3::Error FormatMP3::align_buffer(b_type orig_read_bytes) {
 
     const int max_check_len = 1024;
-    int tries_left = raw_buf.size / max_check_len;
     int matched;
+
+    // wait indefinitely
+    // this is core1, so we can block
+    // only end to this loop is:
+    //   match at least 2 repeated MP3 frames
+    //   buffer underflow
+    //     with eof
+    //     with abort
     do {
         if (raw_buf.data_left() < MP3_HEADER_SIZE) {
             Error ret = wrap_buffer_wait_for_data();
@@ -25,12 +32,11 @@ FormatMP3::Error FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
         if (sync_word_offset < 0) {
             // failed (read all <check_len>, and no sync word)
             raw_buf.read_ack(check_len);
+            matched = 0;
         }
         else {
             // success after <sync_word_offset> bytes
             raw_buf.read_ack(sync_word_offset);
-
-            printf("offset %5d (%4d)  avail %d  ", raw_buf.get_read_offset(), raw_buf.read_ptr() - orig_read_ptr, raw_buf.data_left());
 
             matched = MP3CheckSyncWordRepeated(hMP3Decoder, raw_buf.read_ptr(), raw_buf.data_left_continuous());
             if (matched == 0) {
@@ -38,14 +44,15 @@ FormatMP3::Error FormatMP3::align_buffer(uint8_t* orig_read_ptr) {
                 raw_buf.read_ack(1);
             }
 
-            printf("matched: %d\n", matched);
+            printf("offset %5d (%6llu)  avail %5d (%3d%%)  matched %2d\n",
+                   raw_buf.get_read_offset(),
+                   raw_buf.read_bytes_total() - orig_read_bytes,
+                   raw_buf.data_left(),
+                   raw_buf.health(),
+                   matched);
         }
 
-        tries_left--;
-    } while (matched < 1 && tries_left > 0);
-
-    if (matched == 0)
-        return Error::FAILED;
+    } while (matched < 1);
 
     return Error::OK;
 }
@@ -69,7 +76,7 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
         if (raw_buf.data_left_continuous() < MP3_HEADER_SIZE) {
             // even the header won't fit in continuous buffer
             ferr = wrap_buffer_wait_for_data();
-            CHECK_ERROR(ferr);
+            CHECK_ERROR(ferr, "wrap_buffer_wait_for_data");
         }
 
         uint8_t* dptr_orig = raw_buf.read_ptr();
@@ -88,7 +95,7 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
 
         bytes_consumed = dptr - dptr_orig;
 
-        uint8_t* orig_read;
+        b_type orig_read_bytes;
 
         again = false;
         switch (res) {
@@ -98,7 +105,7 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
 
             case ERR_MP3_INDATA_UNDERFLOW:
                 ferr = wrap_buffer_wait_for_data();
-                CHECK_ERROR(ferr);
+                CHECK_ERROR(ferr, "wrap_buffer_wait_for_data");
 
                 again = true;
                 break;
@@ -106,15 +113,15 @@ int FormatMP3::decode_up_to_one_frame(uint32_t* audio_pcm_buf) {
             case ERR_MP3_INVALID_FRAMEHEADER:
                 printf("o %d  wrong sync-word  health %2d%%\n", raw_buf.get_read_offset(), raw_buf.health());
 
-                orig_read = raw_buf.read_ptr();
+                orig_read_bytes = raw_buf.read_bytes_total();
 #if BUF_REVERSE
                 rev = MAX(0, bytes_consumed_last - MP3_HEADER_SIZE);
                 // mp3_buf.debug_read(256, rev);
                 printf("reversing buffer by %d: %ld -> %ld\n", rev, raw_buf.get_read_offset(), raw_buf.get_read_offset() - rev);
                 raw_buf.read_reverse(rev);
 #endif
-                ferr = align_buffer(orig_read);
-                CHECK_ERROR(ferr);
+                ferr = align_buffer(orig_read_bytes);
+                CHECK_ERROR(ferr, "align_buffer");
 
                 again = true;
                 break;
@@ -174,7 +181,7 @@ int FormatMP3::decode_header() {
             break;
 
         else if (r == ERR_MP3_INVALID_FRAMEHEADER) {
-            Error ferr = align_buffer(raw_buf.read_ptr());
+            Error ferr = align_buffer(raw_buf.read_bytes_total());
             if (ferr != Error::OK) {
                 puts("align_buffer failed");
                 return -1;
