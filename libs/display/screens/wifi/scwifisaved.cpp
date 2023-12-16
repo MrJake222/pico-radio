@@ -50,10 +50,10 @@ Screen* ScWifiSaved::run_action(int action) {
 
     switch ((Action) action) {
         case LIST:
-            i = get_selected_station_index();
+            i = get_selected_entry_index_on_page();
             ent = ll.get_entry(i);
 
-            sc_wifi_conn.begin(this, ent, i + get_page() * MAX_ENTRIES);
+            sc_wifi_conn.begin(this, ent, get_selected_entry_index_absolute());
             return &sc_wifi_conn;
 
         case BACK:

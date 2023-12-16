@@ -52,7 +52,7 @@ Screen* ScLocal::run_action(int action) {
 
     switch ((Action) action) {
         case LIST:
-            i = get_selected_station_index();
+            i = get_selected_entry_index_on_page();
             ent = ll.get_entry(i);
 
             // this is local playback screen
@@ -71,7 +71,7 @@ Screen* ScLocal::run_action(int action) {
                 set_preserve();
 
                 // <i> equals position on search list (not fav list)
-                sc_play.begin(ent, i, -1, this);
+                sc_play.begin(ent, get_selected_entry_index_absolute(), -1, this);
                 return &sc_play;
             }
 

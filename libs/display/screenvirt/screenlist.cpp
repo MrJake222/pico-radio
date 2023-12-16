@@ -116,7 +116,7 @@ bool ScreenList::dex() {
 }
 
 bool ScreenList::iny() {
-    if (current_y == last_list_row() && get_selected_station_index() + 1 < station_count) {
+    if (current_y == last_list_row() && get_selected_entry_index_on_page() + 1 < station_count) {
         // last kb row
         // hidden station below exists
         base_y++;
@@ -329,7 +329,7 @@ void ScreenList::begin() {
 
 void ScreenList::set_abs_pos(int abs_index) {
     const int old_page = page;
-    page = abs_index / MAX_ENTRIES;
+    page = abs_index / get_max_entries();
 
     if (old_page != page)
         // if some screen changes page on this one
@@ -340,7 +340,7 @@ void ScreenList::set_abs_pos(int abs_index) {
     // set to last row of keyboard
     // it's always possible, as opposed to top row (not enough stations below)
     int offset = KB_BUTTONS_MAX - 1; // from bottom to top row
-    base_y = (abs_index % MAX_ENTRIES) - offset;
+    base_y = (abs_index % get_max_entries()) - offset;
     current_y = rows_above() + offset;
 
     if (base_y < 0) {

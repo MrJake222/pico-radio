@@ -72,7 +72,7 @@ Screen* ScFavourites::run_action(int action) {
 
     switch ((Action) action) {
         case LIST:
-            i = get_selected_station_index();
+            i = get_selected_entry_index_on_page();
             ent = ll.get_entry(i);
 
             if (ent->type == le_type_radio && !wifi::is_connected_ip()) {
@@ -92,7 +92,7 @@ Screen* ScFavourites::run_action(int action) {
 
             // <i> equals position on the fav list (in relation to loaded stations)
             // need to adjust fav_index for current page
-            sc_play.begin(ll.get_entry(i), -1, i + get_page() * MAX_ENTRIES, this);
+            sc_play.begin(ll.get_entry(i), -1, get_selected_entry_index_absolute(), this);
             return &sc_play;
 
         case LOCAL:

@@ -44,7 +44,7 @@ int LoaderSearch::get_provider_count() {
 }
 
 int LoaderSearch::get_station_count_per_provider() {
-    return MAX_ENTRIES / get_provider_count();
+    return get_entry_max_count() / get_provider_count();
 }
 
 void client_err_cb(void* arg, int err) {

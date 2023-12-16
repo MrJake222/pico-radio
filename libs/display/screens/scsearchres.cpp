@@ -44,7 +44,7 @@ Screen* ScSearchRes::run_action(int action) {
 
     switch ((Action) action) {
         case LIST:
-            i = get_selected_station_index();
+            i = get_selected_entry_index_on_page();
             r = ll.check_entry_url(i);
             if (r < 0) {
                 show_error("Błąd: nie można otworzyć strumienia");

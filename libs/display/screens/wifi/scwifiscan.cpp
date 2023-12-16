@@ -42,7 +42,7 @@ Screen* ScWifiScan::run_action(int action) {
 
     switch ((Action) action) {
         case LIST:
-            i = get_selected_station_index();
+            i = get_selected_entry_index_on_page();
             ent = ll.get_entry(i);
 
             set_preserve();

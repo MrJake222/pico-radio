@@ -85,7 +85,9 @@ protected:
     // draws entry buttons, pass variables from draw_button
     void draw_button_entry(int y, bool selected, bool was_selected);
 
-    int get_selected_station_index() { return base_y + current_y - rows_above(); }
+    inline int get_max_entries() { return get_ll().get_entry_max_count(); }
+    inline int get_selected_entry_index_on_page() { return base_y + current_y - rows_above(); }
+    inline int get_selected_entry_index_absolute() { return get_page() * get_ll().get_entry_max_count() + get_selected_entry_index_on_page(); }
 
     const int s_base_x;     // list starting x coordinate
     const int s_base_y;     // list starting y coordinate

@@ -69,6 +69,7 @@ public:
     virtual void load_abort();
 
     int get_entry_count() { return entries_offset; }
+    int get_entry_max_count() { return entries_max; }
     ListEntry* get_entry(int i) { return &entries[i]; }
     // can be overridden to handle special url updates
     // such as *.pls format or recursive path updates
