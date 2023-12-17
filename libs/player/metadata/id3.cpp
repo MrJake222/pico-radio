@@ -37,42 +37,106 @@ int ID3::try_parse() {
             break;
         }
 
-        memcpy(&frame, cbuf.read_ptr(), sizeof(id3_frame));
-        const char frame_name[5] = { frame.id[0], frame.id[1], frame.id[2], frame.id[3], '\0' };
+        char fname[5];
+        id3_ftype ftype;
+        int fhdrsize;
+        int fsize;
 
-        // only id3v2.4 encodes frame sizes as sync-safe integers
-        const uint32_t frame_size =
-                hdr.v_major >= 4
-                    ? decode_synchsafe(frame.size, 4)
-                    : big_to_little_endian(frame.size);
+        switch (hdr.v_major) {
+            case 4:
+            case 3:
+                read_frame_header_id3v2_4_3_0(fname, &ftype, &fhdrsize, &fsize);
+                break;
 
-        printf("  found frame '%s' len=%lu: ", frame_name, frame_size);
-        cbuf.read_ack(10); // ack header
+            case 2:
+                read_frame_header_id3v2_2_0(fname, &ftype, &fhdrsize, &fsize);
+                break;
 
-        if (frame_name[0] == 'T') {
-            puts("text field");
-            text_field_to_utf8(cbuf.read_ptr(), (int)frame_size, buf_field);
+            default:
+                puts("unsupported major ID3 version");
+                return -1;
+        }
+
+        printf("  found frame '%s' len=%3d: ", fname, fsize);
+
+        if (fname[0] == 'T') {
+            text_field_to_utf8(cbuf.read_ptr(), fsize, buf_field);
+            printf("text field: %s\n", buf_field);
         }
         else {
             puts("unsupported");
             buf_field[0] = '\0';
         }
 
-        if (strcmp(frame_name, "TPE1") == 0) {
+        if (ftype == id3_artist) {
             // artist tag
             strcpy(artist, buf_field);
         }
-        else if (strcmp(frame_name, "TIT2") == 0) {
+        else if (ftype == id3_title) {
             // title tag
             strcpy(title, buf_field);
         }
 
         // ack frame
-        cbuf.read_ack_large(frame_size, FLAG_FALSE);
-        size_left -= frame_size + 10; // + header size
+        cbuf.read_ack_large(fsize, FLAG_FALSE);
+        size_left -= fsize + fhdrsize;
     }
 
     return 0;
+}
+
+void ID3::read_frame_header_id3v2_4_3_0(char* fname, id3_ftype* ftype, int* fhdrsize, int* fsize) {
+    struct id3_frame_43_hdr frame;
+    memcpy(&frame, cbuf.read_ptr(), sizeof(frame));
+    *fhdrsize = sizeof(frame);
+
+    memcpy(fname, frame.id, 4);
+    fname[4] = '\0';
+
+    if (strcmp(fname, "TPE1") == 0) {
+        // artist tag
+        *ftype = id3_artist;
+    }
+    else if (strcmp(fname, "TIT2") == 0) {
+        // title tag
+        *ftype = id3_title;
+    }
+    else {
+        *ftype = id3_unknown;
+    }
+
+    // only id3v2.4.0 encodes frame sizes as sync-safe integers
+    *fsize = hdr.v_major >= 4
+              ? (int) decode_synchsafe(frame.size, 4)
+              : (int) big_to_little_endian(frame.size, 4);
+
+    cbuf.read_ack(sizeof(frame)); // ack frame header
+}
+
+void ID3::read_frame_header_id3v2_2_0(char* fname, id3_ftype* ftype, int* fhdrsize, int* fsize) {
+    struct id3_frame_2_hdr frame;
+    memcpy(&frame, cbuf.read_ptr(), sizeof(frame));
+    *fhdrsize = sizeof(frame);
+
+    memcpy(fname, frame.id, 3);
+    fname[3] = '\0';
+
+    if (strcmp(fname, "TP1") == 0) {
+        // artist tag
+        *ftype = id3_artist;
+    }
+    else if (strcmp(fname, "TT2") == 0) {
+        // title tag
+        *ftype = id3_title;
+    }
+    else {
+        *ftype = id3_unknown;
+    }
+
+    // id3v2.2.0 has 3-byte long size
+    *fsize = (int) big_to_little_endian(frame.size, 3);
+
+    cbuf.read_ack(sizeof(frame)); // ack frame header
 }
 
 // don't do ack here
@@ -140,11 +204,11 @@ void ID3::text_field_to_utf8(uint8_t* p, int frame_size, char* out) {
     out[out_len] = '\0';
 }
 
-uint32_t ID3::decode_synchsafe(const uint8_t* b, int b_len) {
+uint32_t ID3::convert_bytes(const uint8_t* b, int b_len, int b_width) {
     uint32_t out = 0;
 
     for (int i=0; i<b_len; i++) {
-        out |= ((uint32_t)b[i]) << ((b_len-1-i) * 7);
+        out |= ((uint32_t)b[i]) << ((b_len-1-i) * b_width);
     }
 
     return out;
@@ -166,11 +230,4 @@ void ID3::utf16_to_utf8(const uint16_t utf16, uint8_t* utf8, int* utf8_len) {
         utf8[2] = utf16 & 0x3F;        // last   6/16 bytes
         *utf8_len = 3;
     }
-}
-
-uint32_t ID3::big_to_little_endian(const uint8_t data[4]) {
-    return data[0] << 24
-         | data[1] << 16
-         | data[2] << 8
-         | data[3];
 }

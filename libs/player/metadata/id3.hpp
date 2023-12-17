@@ -16,11 +16,18 @@ struct id3_hdr_ext {
     // TODO id3_hdr_ext: support more options
 };
 
-struct id3_frame {
+// v2.4.0 or v2.3.0
+struct id3_frame_43_hdr {
     char id[4];
     uint8_t size[4];
     uint8_t f1;
     uint8_t f2; // "flags"
+};
+
+// v2.2.0
+struct id3_frame_2_hdr {
+    char id[3];
+    uint8_t size[3];
 };
 
 enum {
@@ -36,6 +43,12 @@ enum bom_value {
     bom_be
 };
 
+enum id3_ftype {
+    id3_title,
+    id3_artist,
+    id3_unknown
+};
+
 #define ID3_HDR_UNSYNC(flags) ((flags) & (1<<7))
 #define ID3_HDR_EXT(flags)    ((flags) & (1<<6))
 #define ID3_HDR_EXP(flags)    ((flags) & (1<<5))
@@ -49,18 +62,25 @@ class ID3 {
 
     struct id3_hdr hdr;
     struct id3_hdr_ext hdr_ext;
-    struct id3_frame frame;
 
     char buf_field[ID3_BUF_LEN];
 
     char artist[ID3_BUF_LEN];
     char title[ID3_BUF_LEN];
 
+    // read frame header
+    // v2.4.0 or v2.3.0
+    void read_frame_header_id3v2_4_3_0(char* fname, id3_ftype* ftype, int* fhdrsize, int* fsize);
+    // v2.2.0
+    void read_frame_header_id3v2_2_0(char* fname, id3_ftype* ftype, int* fhdrsize, int* fsize);
+
     void text_field_to_utf8(uint8_t* p, int frame_size, char* out);
 
-    static uint32_t decode_synchsafe(const uint8_t* b, int b_len);
+    static uint32_t convert_bytes(const uint8_t* b, int b_len, int b_width);
+    inline static uint32_t decode_synchsafe(const uint8_t* b, int b_len)     { return convert_bytes(b, b_len, 7); }
+    inline static uint32_t big_to_little_endian(const uint8_t* b, int b_len) { return convert_bytes(b, b_len, 8); }
+
     static void utf16_to_utf8(uint16_t utf16, uint8_t* utf8, int* utf8_len);
-    static uint32_t big_to_little_endian(const uint8_t data[4]);
 
 public:
     ID3(volatile CircularBuffer& cbuf_)
