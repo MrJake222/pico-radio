@@ -127,6 +127,9 @@ static inline uint btn_is_pressed(ButtonEnum btn) {
 
             // if there was no backlight during interaction, turn in on
             screenmng_backlight_set(true);
+
+            // log stack usage on button press
+            printf("input unused stack: %ld\n", uxTaskGetStackHighWaterMark(nullptr));
         }
 
         if ((time_us_32() - interaction_time_us) >  LCD_BL_TIMEOUT_MS*1000 && player_is_started()) {

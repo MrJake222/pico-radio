@@ -41,7 +41,7 @@ int LfsAccess::close() {
 int LfsAccess::read_char(char* chr) {
 
 retry:
-    if (rc_cache_index < RC_CACHE_SIZE) {
+    if (rc_cache_left()) {
         *chr = rc_cache[rc_cache_index++];
         bytes_read += 1;
         return 0;
@@ -116,6 +116,19 @@ int LfsAccess::write_str(const char* str) {
     assert(r == strlen(str));
 
     return 0;
+}
+
+int LfsAccess::tell() {
+    int pos = lfs_file_tell(lfs, &file);
+
+    if (pos >= 0) {
+        // update only if no error
+        // <pos> is position where cached read ended
+        // retract <pos> by the count of bytes left to be read from cache
+        pos -= rc_cache_left();
+    }
+
+    return pos;
 }
 
 int LfsAccess::seek(int off, int whence) {

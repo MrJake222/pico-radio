@@ -22,7 +22,8 @@ class LfsAccess : public DataSource {
 
     char rc_cache[RC_CACHE_SIZE];
     int rc_cache_index;
-    void rc_cache_clear() { rc_cache_index = RC_CACHE_SIZE; }
+    inline void rc_cache_clear() { rc_cache_index = RC_CACHE_SIZE; }
+    inline int rc_cache_left() { return RC_CACHE_SIZE - rc_cache_index; }
 
 public:
     LfsAccess(lfs_t* lfs_)
@@ -57,7 +58,7 @@ public:
 
     // passthrough interface (raw access to lfs), but keeps <bytes_read> up-to-date
     // file pointer
-    inline int tell() { return lfs_file_tell(lfs, &file); }
+    int tell();
     int seek(int off, int whence);
     inline int truncate(int size) { return lfs_file_truncate(lfs, &file, size); }
     // read/write
