@@ -171,7 +171,7 @@ int DecodeBase::dma_preload() {
     return 0;
 
 fail:
-    notify_playback_end(false);
+    notify_playback_end(true);
     return -1;
 }
 
