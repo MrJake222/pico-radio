@@ -14,6 +14,7 @@ void LoaderWifiScan::set_result(const char* ssid, int p) {
     ListEntry* entry = get_current_entry();
 
     entry->set_name(ssid);
+    entry->set_url("");
     entry->lwifi.quality = p;
 
     set_next_entry(1);

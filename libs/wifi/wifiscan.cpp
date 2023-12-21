@@ -67,6 +67,10 @@ int scan_res_cb(void* arg, const cyw43_ev_scan_result_t* res) {
     if (status.should_abort)
         return 0;
 
+    if (res->ssid_len == 0)
+        // hidden network
+        return 0;
+
     int q = rssi_to_percent(res->rssi);
     format_encode(buf, LFSS_BUF_SIZE, (const char*) res->ssid, q);
 
@@ -94,13 +98,6 @@ int scan(LfsAccess& acc, flagref_t should_abort) {
         errored = true;
         goto end_noclose;
     }
-
-    // TODO fix this
-    // if the user quickly reenters this screen after abort,
-    // the new scan will return 0 results, so wait for it to end
-    // puts("wifi: scan wait");
-    // for (int i=0; i<WIFI_SCAN_POLL_MAX_TIMES && cyw43_wifi_scan_active(&cyw43_state); i++)
-    //     vTaskDelay(pdMS_TO_TICKS(WIFI_SCAN_POLL_MS));
 
     printf("wifi: scan start (active=%d)\n", cyw43_wifi_scan_active(&cyw43_state));
 
