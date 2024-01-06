@@ -1,5 +1,7 @@
 #include "lfsaccess.hpp"
 
+#include <pico/platform.h> // for min
+
 void LfsAccess::begin(const char* path_) {
     strcpy(path, path_);
     is_open_ = false;
@@ -47,7 +49,7 @@ retry:
         return 0;
     }
 
-    int r = lfs_file_read(lfs, &file, rc_cache, RC_CACHE_SIZE);
+    int r = lfs_file_read(lfs, &file, rc_cache, RC_CACHE_MAX_SIZE);
     if (r < 0) {
         printf("littlefs: failed to read in read_char code %d\n", r);
         return r;
@@ -58,6 +60,7 @@ retry:
         return -1;
     }
 
+    rc_cache_size = r;
     rc_cache_index = 0;
     goto retry;
 }
@@ -106,18 +109,6 @@ int LfsAccess::skip_all_lines() {
     return n;
 }
 
-int LfsAccess::write_str(const char* str) {
-    int r = lfs_file_write(lfs, &file, str, strlen(str));
-    if (r < 0) {
-        printf("littlefs: failed to write in write_str code %d\n", r);
-        return r;
-    }
-
-    assert(r == strlen(str));
-
-    return 0;
-}
-
 int LfsAccess::tell() {
     int pos = lfs_file_tell(lfs, &file);
 
@@ -132,6 +123,18 @@ int LfsAccess::tell() {
 }
 
 int LfsAccess::seek(int off, int whence) {
+    if (whence == LFS_SEEK_CUR) {
+        // seek relative to current pointer
+        // but lfs read ptr is off by rc_cache_left()
+
+        // true formula is
+        // off = -(rc_cache_left() - off)
+        // so in case of
+        //    forward skip (off>0): file needs to be rewinded by number of bytes in cache (already read) minus the forward skip
+        //   backward skip (off<0): file needs to be rewinded by number of bytes in cache (already read) plus the backward skip
+        off -= rc_cache_left();
+    }
+
     int pos = lfs_file_seek(lfs, &file, off, whence);
 
     if (pos >= 0) {
@@ -143,14 +146,39 @@ int LfsAccess::seek(int off, int whence) {
     return pos;
 }
 
+// Tried refactoring this one to use caching
+// It caused issues with write pointer
+// stashed on npc as "lfsaccess read_raw & seek cache support"
 int LfsAccess::read_raw(char* buf, int buflen) {
-    int read = lfs_file_read(lfs, &file, buf, buflen);
+    // first read what's left from cache
+    const int read_cache = MIN(rc_cache_left(), buflen);
+    memcpy(buf, rc_cache + rc_cache_index, read_cache);
+    rc_cache_index += read_cache;
+    bytes_read += read_cache;
 
-    if (read >= 0) {
-        // update only if no error
-        bytes_read += read;
-        rc_cache_clear();
+    if (read_cache == buflen)
+        return read_cache;
+
+    const int read_lfs = lfs_file_read(
+            lfs, &file,
+            buf + read_cache,
+            buflen - read_cache);
+
+    if (read_lfs < 0)
+        return read_lfs; // return error code
+
+    bytes_read += read_lfs;
+    return read_cache + read_lfs;
+}
+
+int LfsAccess::write_str(const char* str) {
+    int r = lfs_file_write(lfs, &file, str, strlen(str));
+    if (r < 0) {
+        printf("littlefs: failed to write in write_str code %d\n", r);
+        return r;
     }
 
-    return read;
+    assert(r == strlen(str));
+
+    return 0;
 }
