@@ -11,7 +11,17 @@ void cbuf_write_cb(void* arg, unsigned int bytes) {
     auto dec = (DecodeStream*) arg;
 
     // read all ICY metadata chunks
-    while (dec->metadata_icy.read(dec->cbuf) == 0);
+    dec->icy_read_all();
+}
+
+int DecodeStream::icy_read() {
+    int bytes = metadata_icy.read(cbuf);
+
+    if (bytes > 0)
+        // if something was read, ACK it
+        ack_bytes(bytes);
+
+    return bytes;
 }
 
 void DecodeStream::begin(const char* path_, Format* format_) {
@@ -44,8 +54,8 @@ int DecodeStream::play() {
         // callback for further checks atomically
         cyw43_arch_lwip_begin();
 
-        // read all ICY metadata chunks that have been already read
-        while (metadata_icy.read(cbuf) == 0);
+        // read all ICY metadata chunks that already had been received
+        icy_read_all();
         // set callback for further readings
         cbuf.set_write_ack_callback(this, cbuf_write_cb);
 

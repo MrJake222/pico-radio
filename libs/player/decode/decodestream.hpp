@@ -13,6 +13,11 @@ class DecodeStream : public DecodeBase {
     friend void cbuf_write_cb(void* arg, unsigned int bytes);
 
     ICY metadata_icy;
+    // reads metadata and ACKs read bytes
+    int icy_read();
+    // read all metadata (until the size is greater than zero)
+    inline void icy_read_all() { while (icy_read() > 0); }
+
 
 public:
     void begin(const char* path_, Format* format_) override;

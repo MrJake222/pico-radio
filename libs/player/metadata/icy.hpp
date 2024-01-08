@@ -29,7 +29,7 @@ public:
 
     int start(int hdr_len, int metaint);
 
-    // returns 0 when read of ICY chunk successful
+    // returns ICY chunk length on successful read
     // -1 on no chunk detected
     int read(volatile CircularBuffer& cbuf);
 

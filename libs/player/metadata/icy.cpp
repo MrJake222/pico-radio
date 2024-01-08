@@ -60,7 +60,7 @@ int ICY::read(volatile CircularBuffer& cbuf) {
 
     cbuf.remove_written(o, icy_len);
     next += step;
-    return 0;
+    return icy_len;
 }
 
 int ICY::get_stream_title(char* title, int title_len) const {
