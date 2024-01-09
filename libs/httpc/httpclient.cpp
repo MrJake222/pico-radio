@@ -268,7 +268,7 @@ int HttpClient::get(const char* url) {
         return -1;
     }
 
-    res = send_string("User-agent: PicoRadio/0.1\r\n", true);
+    res = send_string("User-agent: PicoRadio/1.0\r\n", true);
     if (res < 0) {
         puts("send header User-agent failed");
         return -1;
