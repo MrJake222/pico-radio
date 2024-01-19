@@ -43,11 +43,11 @@ int ICY::read(volatile CircularBuffer& cbuf) {
                        1000 / portTICK_PERIOD_MS);
 
         // copy only content (hence o+1, len-1)
-        // size: minimum of length and buffer size
+        // size: minimum of content length and buffer size - 1 (because of a terminating zero-byte)
         // (here the tag is only copied, it is consumed as a whole below with <remove_written>)
-        const int copy_size = MIN(icy_len - 1, ICY_BUF_LEN);
-        cbuf.read_arb(o + 1, (uint8_t*) buf, copy_size - 1);
-        buf[copy_size - 1] = '\0'; // terminate string
+        const int copy_size = MIN(icy_len - 1, ICY_BUF_LEN - 1);
+        cbuf.read_arb(o + 1, (uint8_t*) buf, copy_size);
+        buf[copy_size] = '\0'; // terminate string
 
         xSemaphoreGive(buf_mutex);
     }
