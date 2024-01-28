@@ -95,7 +95,7 @@
 #define STACK_DISPLAY_TICKER      (160 + MIN_FREE_STACK)
 #define STACK_INIT                (225 + MIN_FREE_STACK)
 #define STACK_WIFI_CONN           (250 + MIN_FREE_STACK)
-#define STACK_WIFI_BEST           (410 + MIN_FREE_STACK + RESV_STACK_LFSACC)
+#define STACK_WIFI_BEST           (410 + MIN_FREE_STACK + RESV_STACK_LFSACC*2)
 #define STACK_INPUT               (273 + MIN_FREE_STACK)
 #define STACK_SD                  (226 + MIN_FREE_STACK)
 

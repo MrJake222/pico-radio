@@ -1,6 +1,7 @@
 #include "loaderlocal.hpp"
 
 #include <sdscan.hpp>
+#include <hardware/timer.h>
 
 void LoaderLocal::begin(Path* path_) {
     Loader::begin();
@@ -32,22 +33,22 @@ void LoaderLocal::task() {
     scan.begin(path->str());
 
     if (!can_use_cache) {
-        r = scan.scan(should_abort, path->str());
+        r = scan.scan(should_abort);
         if (r) {
             errored = true;
             goto end;
         }
     }
 
-    r = scan.read(should_abort, entries_max, page * entries_max,
-                  this, llocal_res_cb);
+    r = scan.get_smallest_n_skip_k(should_abort, entries_max, page * entries_max,
+                                   this, llocal_res_cb);
 
     if (r < 0) {
         errored = true;
         goto end;
     }
 
-    end:
+end:
     call_all_loaded(errored ? 1 : 0);
 }
 

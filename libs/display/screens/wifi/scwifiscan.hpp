@@ -21,7 +21,8 @@ public:
                : ScreenList(display_, mutex_ticker_,
                             3, 25,
                             147, 20, 1, 2,
-                            5, 2, true, true)
+                            5, 2,
+                            true, true, true)
                , ll(ll_)
                { }
 

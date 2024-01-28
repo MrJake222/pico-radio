@@ -247,7 +247,9 @@ void ScreenList::load_page(lp_src src_) {
 
     reset_scrolled_texts(); // TODO reset only owned
 
-    if (((src == lp_src_show) && info_load_show) || ((src != lp_src_show) && info_load)) {
+    if (((src == lp_src_show)     && info_load_show)
+     || ((src == lp_src_new_page) && info_load_new_page)
+     || ((src == lp_src_dir)      && info_load_dir)) {
         clear_subarea();
 
         add_normal_text(10, 40, "Ładowanie",

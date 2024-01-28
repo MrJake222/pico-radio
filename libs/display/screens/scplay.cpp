@@ -180,8 +180,10 @@ bool player_finished_callback(void* arg, bool failed) {
         auto scprev = (ScLocal*) sc->prev;
 
         // try to play next song from folder
-        int cnt = sc->scan.read(FLAG_FALSE, 1, sc->list_index,
-                                arg, player_load_next_callback);
+        // <scan> is initialized in previous screen
+        int cnt = sc->scan.get_smallest_n_skip_k(
+                FLAG_FALSE, 1, sc->list_index,
+                arg, player_load_next_callback);
 
         if (cnt > 0) {
             // loaded new entry

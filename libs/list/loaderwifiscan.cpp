@@ -6,8 +6,8 @@ void lwifi_sorter_cb(void* arg, const char* res) {
     auto ld = (LoaderWifiScan*) arg;
 
     ld->set_result(
-            wifi::lfs::format_decode_ssid(res),
-            wifi::lfs::format_decode_quality(res));
+            WifiScan::format_decode_ssid(res),
+            WifiScan::format_decode_quality(res));
 }
 
 void LoaderWifiScan::set_result(const char* ssid, int p) {
@@ -24,17 +24,20 @@ void LoaderWifiScan::task() {
     int r;
     bool errored = false;
 
+    scan.begin();
+
     if (!can_use_cache) {
-        r = wifi::lfs::scan(acc, should_abort);
+        r = scan.scan(should_abort);
         if (r) {
             errored = true;
             goto end;
         }
     }
 
-    r = wifi::lfs::read(acc, should_abort,
-                        entries_max, page * entries_max,
-                       this, lwifi_sorter_cb);
+    r = scan.get_smallest_n_skip_k(
+            should_abort,
+            entries_max, page * entries_max,
+            this, lwifi_sorter_cb);
 
     if (r < 0) {
         errored = true;
@@ -47,9 +50,9 @@ end:
 
 void LoaderWifiScan::load_abort() {
     Loader::load_abort();
-    wifi::lfs::abort_wait(acc);
+    scan.abort_wait();
 }
 
 int LoaderWifiScan::get_entry_count_whole() {
-    return wifi::lfs::count(acc);
+    return scan.count();
 }

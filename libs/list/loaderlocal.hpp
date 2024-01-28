@@ -13,8 +13,6 @@ class LoaderLocal : public Loader {
     SDScan& scan;
     Path* path;
 
-
-
     friend void llocal_res_cb(void* arg, const char* res);
     void task() override;
     void set_file(const char* path_, bool is_dir);

@@ -38,8 +38,10 @@ static ListM3U list_m3u;
 static ListPLS list_pls;
 
 static LfsAccess acc(get_lfs());
+static LfsAccess acc2(get_lfs());
 
-static SDScan scan(acc);
+static SDScan scan_sd(acc, acc2);
+static WifiScan scan_wifi(acc, acc2);
 
 // list loaders
 static LoaderSearch sl(
@@ -55,7 +57,7 @@ static LoaderFav favl(
 
 static LoaderLocal locall(
         get_entries(), MAX_ENTRIES,
-        scan);
+        scan_sd);
 
 static LoaderConst setcl(
         get_entries(), MAX_ENTRIES,
@@ -68,12 +70,12 @@ static LoaderWifiSaved wsavedl(
 
 static LoaderWifiScan wscanl(
         get_entries(), MAX_ENTRIES,
-        acc);
+        scan_wifi);
 
 ScFavourites sc_fav(display, mutex_ticker, favl);
 ScSearch sc_search(display, mutex_ticker);
 ScSearchRes sc_search_res(display, mutex_ticker, sl);
-ScPlay sc_play(display, mutex_ticker, scan);
+ScPlay sc_play(display, mutex_ticker, scan_sd);
 ScBattery sc_bat(display, mutex_ticker);
 ScLocal sc_local(display, mutex_ticker, locall);
 ScSettings sc_settings(display, mutex_ticker, setcl);

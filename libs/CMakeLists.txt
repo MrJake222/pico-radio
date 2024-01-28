@@ -52,6 +52,7 @@ add_library(libs
         lfs/lfs.cpp
         lfs/lfsaccess.cpp
         lfs/lfsorter.cpp
+        lfs/lfsscan.cpp
 
         mcorefifo/mcorefifo.cpp
 

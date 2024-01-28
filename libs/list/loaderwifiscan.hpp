@@ -3,11 +3,11 @@
 #include <pico/cyw43_arch.h>
 
 #include <loader.hpp>
-#include <lfsaccess.hpp>
+#include <wifiscan.hpp>
 
 class LoaderWifiScan : public Loader {
 
-    LfsAccess& acc;
+    WifiScan& scan;
 
     int get_entry_count_whole() override;
     void task() override;
@@ -19,9 +19,9 @@ class LoaderWifiScan : public Loader {
 
 public:
     LoaderWifiScan(ListEntry* entries_, int entries_max_,
-                   LfsAccess& acc_)
+                   WifiScan& scan_)
             : Loader(entries_, entries_max_)
-            , acc(acc_)
+            , scan(scan_)
     { }
 
     void load_abort() override;

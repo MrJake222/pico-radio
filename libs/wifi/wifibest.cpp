@@ -22,8 +22,8 @@ static void best_cb_fn(void* arg, const char* res) {
     char pwd[WIFI_PWD_MAX_LEN + 1];
     int r;
 
-    const char* ssid = lfs::format_decode_ssid(res);
-    int q = lfs::format_decode_quality(res);
+    const char* ssid = WifiScan::format_decode_ssid(res);
+    int q = WifiScan::format_decode_quality(res);
 
     r = m3u::get(
             PATH_WIFI,
@@ -53,10 +53,14 @@ static void connect_best_task(void* arg) {
     // defined on stack, because this task is really short-lived and
     // will exit after connecting (won't hold memory for too long)
     LfsAccess acc(get_lfs());
+    LfsAccess acc2(get_lfs());
+    WifiScan scan(acc, acc2);
 
     printf("connect_best_saved unused stack entry: %ld, lfsaccess: %d frames\n", uxTaskGetStackHighWaterMark(nullptr), sizeof(acc) / sizeof(StackType_t));
 
-    r = lfs::scan(acc, FLAG_FALSE);
+    scan.begin();
+
+    r = scan.scan(FLAG_FALSE);
     if (r) {
         puts("wifi-best: scan failed");
         return;
@@ -67,7 +71,7 @@ static void connect_best_task(void* arg) {
     struct status status = { false, 0 };
 
     for (int skip=0; !is_connected_link(); skip++) {
-        r = lfs::read(acc, FLAG_FALSE, 1, skip, &status, best_cb_fn);
+        r = scan.get_smallest_n_skip_k(FLAG_FALSE, 1, skip, &status, best_cb_fn);
         if (r < 0) {
             puts("wifi-best: read failed");
             return;
