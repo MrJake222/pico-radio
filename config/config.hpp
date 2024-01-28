@@ -118,6 +118,7 @@
 #define LCD_TICK_INTERVAL_MS            50
 #define LCD_BL_TIMEOUT_MS               30000
 #define LCD_MAX_KB_INPUT                (WIFI_PWD_MAX_LEN)
+#define LCD_TIME_FLASH_SEC              5
 
 // --------------------------------- Buttons --------------------------------- //
 #define BTN_DEBOUNCE_MS         20

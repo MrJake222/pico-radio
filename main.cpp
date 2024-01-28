@@ -11,6 +11,7 @@
 #include <gpio_irq.hpp>
 #include <wificonnect.hpp>
 #include <wifibest.hpp>
+#include <rtc.hpp>
 
 void init_lowlevel() {
     set_sys_clock_khz(150000, true);
@@ -38,6 +39,11 @@ void init_lowlevel() {
     puts("analog init ok");
 }
 
+void conn_up() {
+    rtc::start_sntp();
+    puts("rtc init done");
+}
+
 void task_init(void* arg) {
     // LittleFS config
     // (before screen because some try read favourites)
@@ -49,7 +55,7 @@ void task_init(void* arg) {
     // (before screen because some try to scan)
     wifi::init();
     puts("wifi init+sta done");
-    wifi::connect_best_saved();
+    wifi::connect_best_saved(conn_up);
 
     // Display config
     // TODO make init screen show first

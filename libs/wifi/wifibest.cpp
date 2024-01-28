@@ -9,6 +9,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <screenmng.hpp>
+#include <lwip/apps/sntp.h>
 
 namespace wifi {
 
@@ -87,26 +88,38 @@ static void connect_best_task(void* arg) {
         // the flags are correctly set now
     }
 
-    if (status.conn_attempted && !is_connected_link()) {
-        // attempted and failed
-        char buf[52];
-        sprintf(buf, "Błąd połączenia z zapisaną siecią: %s (kod %d)\n",
-                err_to_string(status.conn_error),
-                status.conn_error);
+    if (!is_connected_link()) {
+        if (status.conn_attempted) {
+            // attempted and failed
+            char buf[52];
+            sprintf(buf, "Błąd połączenia z zapisaną siecią: %s (kod %d)\n",
+                    err_to_string(status.conn_error),
+                    status.conn_error);
 
-        screenmng_show_error(buf);
+            screenmng_show_error(buf);
+        }
+    }
+    else {
+        // has link
+        int tries = 100;
+        while (!is_connected_ip() && tries--)
+            vTaskDelay(pdMS_TO_TICKS(100));
+
+        if (is_connected_ip() && arg) {
+            ((conn_cb)arg)();
+        }
     }
 
     printf("connect_best_saved unused stack end: %ld\n", uxTaskGetStackHighWaterMark(nullptr));
     vTaskDelete(nullptr);
 }
 
-void connect_best_saved() {
+void connect_best_saved(conn_cb cb) {
     xTaskCreate(
             connect_best_task,
             "wifi best",
             STACK_WIFI_BEST,
-            nullptr,
+            (void*)cb,
             PRI_WIFI_BEST,
             nullptr);
 }

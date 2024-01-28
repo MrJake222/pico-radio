@@ -76,6 +76,8 @@ add_library(libs
         wifi/wifiscan.cpp
         wifi/wifibest.cpp
 
+        rtc/rtc.cpp
+
         static.cpp
         circularbuffer.cpp
         util.cpp
@@ -101,6 +103,7 @@ target_include_directories(libs PUBLIC
         display/assets
         display/tft
         ds
+        rtc
         .
         )
 
@@ -114,4 +117,5 @@ target_link_libraries(libs
         hardware_adc
 
         pico_cyw43_arch_lwip_sys_freertos
+        pico_lwip_sntp
         )

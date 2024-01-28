@@ -6,6 +6,8 @@
 
 #include <ubuntu_mono.hpp>
 #include <cstdio>
+#include <hardware/rtc.h>
+#include <rtc.hpp>
 
 bool Screen::inx() {
     current_x++;
@@ -157,10 +159,28 @@ void Screen::tick_sec(int sec) {
     // update top-of-the-screen status icons
 
     // important for drawing title
-    icon_x = 149;
+    icon_x = display.W;
     const int y = 2;
 
+    const int w = 34;
+    display.fill_rect(icon_x - w, y, w, 11, COLOR_BG);
+
+    if (sec % (2*LCD_TIME_FLASH_SEC) / LCD_TIME_FLASH_SEC) {
+        const struct font* font = ubuntu_font_get_size(UbuntuFontSize::FONT_12);
+        const int width = 5 * font->W;
+
+        char timestr[6];
+        int r = rtc::get_hm(timestr);
+        if (r == 0) {
+            // rtc running
+            icon_x -= width + 2; // + margin=2
+            add_normal_text(icon_x, 1, timestr, font, COLOR_BG, COLOR_FG, width);
+            return;
+        }
+    }
+
     // battery
+    icon_x -= 10; // width=8 + margin=2
     const int p = analog::battery_percentage();
     if (p >= 60)
         display.draw_icon(icon_x, y, &icon_battery_100, COLOR_BG, COLOR_FG_GOOD);
@@ -178,10 +198,12 @@ void Screen::tick_sec(int sec) {
     // wifi
     icon_x -= 13; // width=11 + margin=2
     display.draw_icon(icon_x, y,
-                      wifi::is_in_progress() ? icon_wifi[sec % 4] // animate
-                      : wifi::is_connected_ip() ? wifi::quality_to_icon(wifi::connected_quality()) // current signal
-                      : &icon_wifi_3_x, // disabled
-                      COLOR_BG, COLOR_FG);
+                      wifi::is_in_progress() ? icon_wifi[sec % 4] // in progress -> animate
+                        : wifi::is_connected_ip() ? wifi::quality_to_icon(wifi::connected_quality()) // connected -> current signal
+                        : &icon_wifi_3_x, // else -> disabled
+                      COLOR_BG,
+                      wifi::is_in_progress() ? COLOR_FG_WARN
+                        : COLOR_FG);
 }
 
 void Screen::tick() {
