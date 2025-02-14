@@ -193,7 +193,7 @@ void Screen::tick_sec(int sec) {
     icon_x -= 10; // width=8 + margin=2
     display.draw_icon(icon_x, y,
                       sd::is_card_mounted() ? &icon_sd : &icon_sd_disabled,
-                      COLOR_BG, COLOR_FG);
+                      COLOR_BG, sd::has_card_failed() ? COLOR_FG_ERR : COLOR_FG);
 
     // wifi
     icon_x -= 13; // width=11 + margin=2

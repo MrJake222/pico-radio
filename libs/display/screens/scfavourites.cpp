@@ -96,6 +96,10 @@ Screen* ScFavourites::run_action(int action) {
             return &sc_play;
 
         case LOCAL:
+            if (sd::has_card_failed()) {
+                show_warn("Uwaga: karty SD nie udało się zamontować");
+                return nullptr;
+            }
             if (!sd::is_card_mounted()) {
                 show_warn("Uwaga: brak karty SD");
                 return nullptr;

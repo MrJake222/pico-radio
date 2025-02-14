@@ -19,6 +19,7 @@ namespace sd {
 static TaskHandle_t sd_task_h;
 static bool card_present;
 static bool card_mounted;
+static bool card_failed;
 static volatile int last_interrupt_time_us;
 
 void sd_cd_callback(uint gpio, uint32_t events) {
@@ -72,6 +73,7 @@ static int unmount(sd_card_t* pSD) {
     }
 
     card_mounted = false;
+    card_failed = false;
     last_interrupt_time_us = 0;
 
     // enable interrupts
@@ -103,12 +105,15 @@ static int unmount(sd_card_t* pSD) {
         // check SD status (present if shorted to ground)
         card_present = gpio_get(SD_CD) == 0;
         printf("present=%d mounted=%d\n", card_present, card_mounted);
+        card_failed = false;
 
         if (card_present && !card_mounted) {
             puts("mounting sd card");
             int r = mount(pSD);
             if (r == 0)
                 card_mounted = true;
+            else
+                card_failed = true;
         }
 
         if (!card_present && card_mounted) {
@@ -141,6 +146,10 @@ void init() {
 
 bool is_card_mounted() {
     return card_mounted;
+}
+
+bool has_card_failed() {
+    return card_failed;
 }
 
 } // namespace sd
